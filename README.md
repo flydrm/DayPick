@@ -1,6 +1,6 @@
-# Pace Pilot（pace-pilot）
+# DayPick · 一页今日（pace-pilot）
 
-一款 **本地优先（Local-first）/离线可用/无登录** 的个人工作节奏 App，把「任务 → 专注 → 留痕 → 复盘」打成低摩擦闭环，并把 AI 做成“可控可信”的效率工具台（只在你触发时工作）。
+一款 **本地优先（Local-first）/离线可用/无登录** 的个人工作台：把「任务 → 专注 → 留痕 → 复盘」打成低摩擦闭环，并把 AI 做成“可控可信”的效率工具台（只在你触发时工作）。
 
 ## 功能概览（MVP）
 
@@ -62,7 +62,7 @@ flutter build apk --release
 工作流：`.github/workflows/android-apk.yml`
 
 - 触发：push/PR 到 `main`/`master`
-- 产物：构建 `release` APK 并上传 Actions Artifact `pace-pilot-apk`
+- 产物：构建 `release` APK 并上传 Actions Artifact `daypick-apk`，同时会更新 `nightly` Release
 
 ## 仓库结构
 

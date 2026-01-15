@@ -99,7 +99,7 @@ class DataSettingsPage extends ConsumerWidget {
 
   Future<void> _exportJson(BuildContext context, WidgetRef ref) async {
     final service = ref.read(dataExportServiceProvider);
-    final fileName = 'pace_pilot_export_${_ts(DateTime.now())}.json';
+    final fileName = 'daypick_export_${_ts(DateTime.now())}.json';
     final bytes = await _runWithProgress(
       context,
       label: '生成中…',
@@ -110,7 +110,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 导出（JSON）',
+        subject: 'DayPick 导出（JSON）',
         files: [
           XFile.fromData(bytes, name: fileName, mimeType: 'application/json'),
         ],
@@ -120,7 +120,7 @@ class DataSettingsPage extends ConsumerWidget {
 
   Future<void> _exportMarkdown(BuildContext context, WidgetRef ref) async {
     final service = ref.read(dataExportServiceProvider);
-    final fileName = 'pace_pilot_export_${_ts(DateTime.now())}.md';
+    final fileName = 'daypick_export_${_ts(DateTime.now())}.md';
     final bytes = await _runWithProgress(
       context,
       label: '生成中…',
@@ -131,7 +131,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 导出（Markdown）',
+        subject: 'DayPick 导出（Markdown）',
         files: [
           XFile.fromData(bytes, name: fileName, mimeType: 'text/markdown'),
         ],
@@ -141,7 +141,7 @@ class DataSettingsPage extends ConsumerWidget {
 
   Future<void> _exportTasksMarkdown(BuildContext context, WidgetRef ref) async {
     final service = ref.read(dataExportServiceProvider);
-    final fileName = 'pace_pilot_tasks_${_ts(DateTime.now())}.md';
+    final fileName = 'daypick_tasks_${_ts(DateTime.now())}.md';
     final bytes = await _runWithProgress(
       context,
       label: '生成中…',
@@ -152,7 +152,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 导出（任务）',
+        subject: 'DayPick 导出（任务）',
         files: [
           XFile.fromData(bytes, name: fileName, mimeType: 'text/markdown'),
         ],
@@ -162,7 +162,7 @@ class DataSettingsPage extends ConsumerWidget {
 
   Future<void> _exportNotesMarkdown(BuildContext context, WidgetRef ref) async {
     final service = ref.read(dataExportServiceProvider);
-    final fileName = 'pace_pilot_notes_${_ts(DateTime.now())}.md';
+    final fileName = 'daypick_notes_${_ts(DateTime.now())}.md';
     final bytes = await _runWithProgress(
       context,
       label: '生成中…',
@@ -173,7 +173,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 导出（笔记）',
+        subject: 'DayPick 导出（笔记）',
         files: [
           XFile.fromData(bytes, name: fileName, mimeType: 'text/markdown'),
         ],
@@ -186,7 +186,7 @@ class DataSettingsPage extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final service = ref.read(dataExportServiceProvider);
-    final fileName = 'pace_pilot_reviews_${_ts(DateTime.now())}.md';
+    final fileName = 'daypick_reviews_${_ts(DateTime.now())}.md';
     final bytes = await _runWithProgress(
       context,
       label: '生成中…',
@@ -197,7 +197,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 导出（复盘）',
+        subject: 'DayPick 导出（复盘）',
         files: [
           XFile.fromData(bytes, name: fileName, mimeType: 'text/markdown'),
         ],
@@ -234,7 +234,7 @@ class DataSettingsPage extends ConsumerWidget {
     if (!context.mounted) return;
 
     final fileName =
-        'pace_pilot_backup_${_ts(DateTime.now())}.${data.DataBackupService.fileExtension}';
+        'daypick_backup_${_ts(DateTime.now())}.${data.DataBackupService.fileExtension}';
     final savedPath = await _runWithProgress(
       context,
       label: '保存到应用内…',
@@ -250,7 +250,7 @@ class DataSettingsPage extends ConsumerWidget {
 
     await SharePlus.instance.share(
       ShareParams(
-        subject: 'Pace Pilot 备份',
+        subject: 'DayPick 备份',
         text: '备份已加密（PIN 丢失将无法恢复）。',
         files: [
           XFile.fromData(
@@ -267,7 +267,7 @@ class DataSettingsPage extends ConsumerWidget {
     final file = await openFile(
       acceptedTypeGroups: [
         const XTypeGroup(
-          label: 'Pace Pilot 备份',
+          label: 'DayPick 备份',
           extensions: [data.DataBackupService.fileExtension],
         ),
       ],
@@ -339,7 +339,7 @@ class DataSettingsPage extends ConsumerWidget {
     if (!context.mounted) return;
 
     final safetyName =
-        'pace_pilot_safety_before_restore_${_ts(DateTime.now())}.${data.DataBackupService.fileExtension}';
+        'daypick_safety_before_restore_${_ts(DateTime.now())}.${data.DataBackupService.fileExtension}';
     final safetyPath = await _runWithProgress(
       context,
       label: '写入安全备份包…',
@@ -384,7 +384,7 @@ class DataSettingsPage extends ConsumerWidget {
             onPressed: () async {
               await SharePlus.instance.share(
                 ShareParams(
-                  subject: 'Pace Pilot 恢复前安全备份包',
+                  subject: 'DayPick 恢复前安全备份包',
                   files: [
                     XFile.fromData(
                       safetyBytes,

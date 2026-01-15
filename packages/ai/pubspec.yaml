@@ -1,5 +1,5 @@
 name: ai
-description: "Pace Pilot AI layer (OpenAI-compatible client, prompts, schemas)."
+description: "DayPick AI layer (OpenAI-compatible client, prompts, schemas)."
 version: 0.0.1
 publish_to: "none"
 

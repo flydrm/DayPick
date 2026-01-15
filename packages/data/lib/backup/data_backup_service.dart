@@ -384,7 +384,7 @@ class DataBackupService {
   }) async {
     if (encryptedBytes.length < 8) throw const BackupException('备份文件过短或已损坏');
     final magic = utf8.decode(encryptedBytes.sublist(0, 4));
-    if (magic != 'PPBK') throw const BackupException('不是 Pace Pilot 备份文件');
+    if (magic != 'PPBK') throw const BackupException('不是 DayPick 备份文件');
 
     final headerLen = ByteData.sublistView(encryptedBytes, 4, 8).getUint32(0, Endian.big);
     final headerStart = 8;

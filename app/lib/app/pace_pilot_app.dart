@@ -18,7 +18,7 @@ class PacePilotApp extends ConsumerWidget {
     );
 
     return MaterialApp.router(
-      title: 'Pace Pilot',
+      title: 'DayPick · 一页今日',
       theme: buildAppTheme(
         brightness: Brightness.light,
         appearance: appearance,

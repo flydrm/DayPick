@@ -1,5 +1,5 @@
 name: domain
-description: "Pace Pilot domain layer (entities, value objects, use cases)."
+description: "DayPick domain layer (entities, value objects, use cases)."
 version: 0.0.1
 publish_to: "none"
 

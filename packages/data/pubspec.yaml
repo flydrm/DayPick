@@ -1,5 +1,5 @@
 name: data
-description: "Pace Pilot data layer (database, repositories, backup/export)."
+description: "DayPick data layer (database, repositories, backup/export)."
 version: 0.0.1
 publish_to: "none"
 

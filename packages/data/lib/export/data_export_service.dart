@@ -138,7 +138,7 @@ class DataExportService {
     buffer.writeln('exportedAtUtcMs: ${snap.exportedAtUtcMillis}');
     buffer.writeln('---');
     buffer.writeln();
-    buffer.writeln('# Pace Pilot 导出');
+    buffer.writeln('# DayPick 导出');
     buffer.writeln();
     buffer.writeln('- 任务：${snap.taskCount}');
     buffer.writeln('- 笔记：${snap.noteCount}');
@@ -250,7 +250,7 @@ class DataExportService {
     buffer.writeln('exportedAtUtcMs: ${snap.exportedAtUtcMillis}');
     buffer.writeln('---');
     buffer.writeln();
-    buffer.writeln('# Pace Pilot 任务清单');
+    buffer.writeln('# DayPick 任务清单');
     buffer.writeln();
     buffer.writeln('- 任务：${snap.taskCount}');
     buffer.writeln();
@@ -297,7 +297,7 @@ class DataExportService {
     buffer.writeln('exportedAtUtcMs: ${snap.exportedAtUtcMillis}');
     buffer.writeln('---');
     buffer.writeln();
-    buffer.writeln('# Pace Pilot 笔记导出');
+    buffer.writeln('# DayPick 笔记导出');
     buffer.writeln();
     buffer.writeln('- 笔记：${snap.noteCount}');
     buffer.writeln();
@@ -348,7 +348,7 @@ class DataExportService {
     buffer.writeln('exportedAtUtcMs: ${snap.exportedAtUtcMillis}');
     buffer.writeln('---');
     buffer.writeln();
-    buffer.writeln('# Pace Pilot 复盘导出');
+    buffer.writeln('# DayPick 复盘导出');
     buffer.writeln();
     buffer.writeln('- 复盘（按笔记计）：${reviews.length}');
     buffer.writeln();
