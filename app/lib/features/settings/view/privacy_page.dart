@@ -45,6 +45,7 @@ class PrivacyPage extends StatelessWidget {
           const SizedBox(height: 6),
           const Text(
             '- 通知权限仅用于番茄到点提醒（你开始专注后才会请求）。\n'
+            '- 联网能力仅用于你主动触发 AI 时向你配置的 baseUrl 发起请求（普通权限，不会弹窗）。\n'
             '- 文件选择/分享仅在你导出/备份/恢复时触发。',
           ),
         ],
