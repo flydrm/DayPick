@@ -19,11 +19,25 @@ class BackupFileStore {
 
   Future<Directory> _ensureDir() async {
     final root = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(root.path, 'pace_pilot_backups'));
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+    final dir = Directory(p.join(root.path, 'daypick_backups'));
+    if (await dir.exists()) return dir;
+
+    final backupDirs = await root
+        .list()
+        .where((e) => e is Directory)
+        .map((e) => e as Directory)
+        .where((d) => p.basename(d.path).endsWith('_backups'))
+        .toList();
+    if (backupDirs.length == 1) {
+      try {
+        await backupDirs.single.rename(dir.path);
+        return dir;
+      } catch (_) {
+        return backupDirs.single;
+      }
     }
+
+    await dir.create(recursive: true);
     return dir;
   }
 }
-

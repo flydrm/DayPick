@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:domain/domain.dart' as domain;
 
-import 'app/pace_pilot_app.dart';
+import 'app/daypick_app.dart';
 import 'core/providers/app_providers.dart';
 import 'routing/app_router.dart';
 
@@ -24,7 +24,7 @@ Future<void> main() async {
 
   await _rescheduleActivePomodoroNotification(container);
 
-  runApp(UncontrolledProviderScope(container: container, child: const PacePilotApp()));
+  runApp(UncontrolledProviderScope(container: container, child: const DayPickApp()));
 
   final launchTaskId = _taskIdFromPayload(launchPayload);
   if (launchTaskId != null) {

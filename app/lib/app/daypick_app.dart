@@ -5,8 +5,8 @@ import 'package:domain/domain.dart' as domain;
 import '../core/providers/app_providers.dart';
 import '../routing/app_router.dart';
 
-class PacePilotApp extends ConsumerWidget {
-  const PacePilotApp({super.key});
+class DayPickApp extends ConsumerWidget {
+  const DayPickApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

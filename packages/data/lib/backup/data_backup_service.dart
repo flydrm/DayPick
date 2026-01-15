@@ -40,7 +40,7 @@ class DataBackupService {
       files: {
         'manifest.json': utf8.encode(
           jsonEncode({
-            'format': 'pace-pilot-backup',
+            'format': 'daypick-backup',
             'backupFormatVersion': backupFormatVersion,
             'schemaVersion': DataExportService.exportSchemaVersion,
             'exportedAt': exportedAtUtcMillis,
@@ -349,7 +349,7 @@ class DataBackupService {
     );
 
     final header = {
-      'format': 'pace-pilot-backup',
+      'format': 'daypick-backup',
       'version': backupFormatVersion,
       'cipher': 'AES-256-GCM',
       'kdf': 'PBKDF2-HMAC-SHA256',

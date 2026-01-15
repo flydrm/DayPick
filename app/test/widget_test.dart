@@ -10,11 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:domain/domain.dart' as domain;
 
-import 'package:pace_pilot/app/pace_pilot_app.dart';
-import 'package:pace_pilot/core/providers/app_providers.dart';
-import 'package:pace_pilot/features/focus/providers/focus_providers.dart';
-import 'package:pace_pilot/features/tasks/providers/task_providers.dart';
-import 'package:pace_pilot/features/today/providers/today_plan_providers.dart';
+import 'package:daypick/app/daypick_app.dart';
+import 'package:daypick/core/providers/app_providers.dart';
+import 'package:daypick/features/focus/providers/focus_providers.dart';
+import 'package:daypick/features/tasks/providers/task_providers.dart';
+import 'package:daypick/features/today/providers/today_plan_providers.dart';
 
 void main() {
   testWidgets('默认进入今天 + 底部 5 Tab 顺序正确', (WidgetTester tester) async {
@@ -40,7 +40,7 @@ void main() {
             (ref) => Stream.value(const domain.AppearanceConfig()),
           ),
         ],
-        child: const PacePilotApp(),
+        child: const DayPickApp(),
       ),
     );
     await tester.pumpAndSettle();
@@ -88,7 +88,7 @@ void main() {
             (ref) => Stream.value(const domain.AppearanceConfig()),
           ),
         ],
-        child: const PacePilotApp(),
+        child: const DayPickApp(),
       ),
     );
     await tester.pumpAndSettle();

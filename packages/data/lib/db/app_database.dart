@@ -126,7 +126,24 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'pace_pilot.sqlite'));
-    return NativeDatabase(file);
+    final target = File(p.join(dbFolder.path, 'daypick.sqlite'));
+    if (await target.exists()) return NativeDatabase(target);
+
+    final sqliteFiles = await dbFolder
+        .list()
+        .where((e) => e is File && e.path.endsWith('.sqlite'))
+        .map((e) => e as File)
+        .toList();
+    if (sqliteFiles.length == 1) {
+      final existing = sqliteFiles.single;
+      try {
+        await existing.rename(target.path);
+        return NativeDatabase(target);
+      } catch (_) {
+        return NativeDatabase(existing);
+      }
+    }
+
+    return NativeDatabase(target);
   });
 }
