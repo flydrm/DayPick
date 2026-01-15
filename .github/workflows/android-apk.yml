@@ -11,7 +11,7 @@ jobs:
   build-apk:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     defaults:
       run:
         working-directory: app
@@ -50,3 +50,21 @@ jobs:
           name: pace-pilot-apk
           path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
+
+      - name: Prepare release asset
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cp build/app/outputs/flutter-apk/app-release.apk build/pace-pilot-nightly.apk
+
+      - name: Publish to GitHub Releases (nightly)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: nightly
+          name: Nightly
+          prerelease: true
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: app/build/pace-pilot-nightly.apk
+          body: |
+            自动构建：${{ github.sha }}
+            分支：${{ github.ref_name }}
