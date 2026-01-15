@@ -1,4 +1,4 @@
-package com.example.pace_pilot
+package com.xx.daypick
 
 import io.flutter.embedding.android.FlutterActivity
 
