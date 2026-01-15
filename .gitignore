@@ -4,6 +4,11 @@
 # Temp/work dirs
 .tmp_*/
 
+# Product/UX artifacts (keep local)
+docs/
+_bmad-output/
+_bmad/
+
 # OS files
 .DS_Store
 
