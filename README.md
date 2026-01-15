@@ -70,8 +70,7 @@ flutter build apk --release
 - `packages/domain/`：实体、UseCases、Repository 接口
 - `packages/data/`：drift 数据库、Repository 实现、导出/备份/恢复、通知、密文存储
 - `packages/ai/`：OpenAI-compatible 客户端与结构化输出解析
-- `docs/`：PRD 等产品文档
-- `_bmad-output/`：规划/设计/实现过程工件（BMad Method）
+> 注：规划/设计等过程文档为本地文件，已加入 `.gitignore`，不会提交到仓库。
 
 ## 开发说明（可选）
 
