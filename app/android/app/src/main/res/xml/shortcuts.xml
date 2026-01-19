@@ -4,9 +4,9 @@
         android:shortcutId="quick_create_memo"
         android:enabled="true"
         android:icon="@mipmap/ic_launcher"
-        android:shortcutShortLabel="闪念"
-        android:shortcutLongLabel="快速闪念"
-        android:shortcutDisabledMessage="快捷入口不可用">
+        android:shortcutShortLabel="@string/shortcut_memo_short"
+        android:shortcutLongLabel="@string/shortcut_memo_long"
+        android:shortcutDisabledMessage="@string/shortcut_disabled_message">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.xx.daypick"
@@ -18,9 +18,9 @@
         android:shortcutId="quick_create_task"
         android:enabled="true"
         android:icon="@mipmap/ic_launcher"
-        android:shortcutShortLabel="任务"
-        android:shortcutLongLabel="快速创建任务"
-        android:shortcutDisabledMessage="快捷入口不可用">
+        android:shortcutShortLabel="@string/shortcut_task_short"
+        android:shortcutLongLabel="@string/shortcut_task_long"
+        android:shortcutDisabledMessage="@string/shortcut_disabled_message">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.xx.daypick"
@@ -32,9 +32,9 @@
         android:shortcutId="quick_focus"
         android:enabled="true"
         android:icon="@mipmap/ic_launcher"
-        android:shortcutShortLabel="专注"
-        android:shortcutLongLabel="开始专注（选择任务）"
-        android:shortcutDisabledMessage="快捷入口不可用">
+        android:shortcutShortLabel="@string/shortcut_focus_short"
+        android:shortcutLongLabel="@string/shortcut_focus_long"
+        android:shortcutDisabledMessage="@string/shortcut_disabled_message">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.xx.daypick"

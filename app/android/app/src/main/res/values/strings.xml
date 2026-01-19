@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_memo_short">闪念</string>
+    <string name="shortcut_memo_long">快速闪念</string>
+
+    <string name="shortcut_task_short">任务</string>
+    <string name="shortcut_task_long">快速创建任务</string>
+
+    <string name="shortcut_focus_short">专注</string>
+    <string name="shortcut_focus_long">开始专注（选择任务）</string>
+
+    <string name="shortcut_disabled_message">快捷入口不可用</string>
+</resources>
