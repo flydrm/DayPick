@@ -7,9 +7,10 @@ import 'package:timezone/timezone.dart' as tz;
 
 typedef NotificationTapCallback = void Function(String? payload);
 
-class LocalNotificationsService implements domain.PomodoroNotificationScheduler {
+class LocalNotificationsService
+    implements domain.PomodoroNotificationScheduler {
   LocalNotificationsService({FlutterLocalNotificationsPlugin? plugin})
-      : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const int _pomodoroNotificationId = 2001;
   static const String _pomodoroChannelId = 'pomodoro';
@@ -40,8 +41,10 @@ class LocalNotificationsService implements domain.PomodoroNotificationScheduler 
     );
 
     if (Platform.isAndroid) {
-      final androidPlugin =
-          _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await androidPlugin?.createNotificationChannel(
         const AndroidNotificationChannel(
           _pomodoroChannelId,
@@ -58,8 +61,10 @@ class LocalNotificationsService implements domain.PomodoroNotificationScheduler 
   Future<bool> requestNotificationsPermissionIfNeeded() async {
     if (!Platform.isAndroid) return true;
 
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin == null) return true;
 
     try {
@@ -108,7 +113,13 @@ class LocalNotificationsService implements domain.PomodoroNotificationScheduler 
 
     final payload = 'pomodoro_end:$taskId';
     if (!endAt.isAfter(now)) {
-      await _plugin.show(_pomodoroNotificationId, title, body, details, payload: payload);
+      await _plugin.show(
+        _pomodoroNotificationId,
+        title,
+        body,
+        details,
+        payload: payload,
+      );
       return;
     }
 

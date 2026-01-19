@@ -13,6 +13,7 @@ import 'tables/notes.dart';
 import 'tables/pomodoro_configs.dart';
 import 'tables/appearance_configs.dart';
 import 'tables/today_plan_items.dart';
+import 'tables/weave_links.dart';
 
 part 'app_database.g.dart';
 
@@ -26,6 +27,7 @@ part 'app_database.g.dart';
     PomodoroConfigs,
     AppearanceConfigs,
     TodayPlanItems,
+    WeaveLinks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -39,59 +41,156 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (migrator) async {
-          await migrator.createAll();
-          await _ensureDefaultSingletons();
-        },
-        onUpgrade: (migrator, from, to) async {
-          if (from < 2) {
-            await migrator.createTable(activePomodoros);
-            await migrator.createTable(pomodoroSessions);
-          }
-          if (from < 3) {
-            await migrator.createTable(notes);
-          }
-          if (from < 4) {
-            await migrator.createTable(pomodoroConfigs);
-            await migrator.createTable(appearanceConfigs);
-            await _ensureDefaultSingletons();
-          }
-          if (from < 5) {
-            if (from >= 4) {
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.shortBreakMinutes);
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.longBreakMinutes);
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.longBreakEvery);
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.autoStartBreak);
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.autoStartFocus);
-              await migrator.addColumn(pomodoroConfigs, pomodoroConfigs.notificationSound);
-              await migrator.addColumn(
-                pomodoroConfigs,
-                pomodoroConfigs.notificationVibration,
-              );
-            }
-            if (from >= 2) {
-              await migrator.addColumn(activePomodoros, activePomodoros.phase);
-            }
-            await _ensureDefaultSingletons();
-          }
-          if (from < 6) {
-            await migrator.createTable(todayPlanItems);
-          }
-          if (from < 7) {
-            if (from >= 4) {
-              await migrator.addColumn(
-                appearanceConfigs,
-                appearanceConfigs.accent,
-              );
-            }
-            await _ensureDefaultSingletons();
-          }
-        },
-      );
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await _ensureDefaultSingletons();
+    },
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.createTable(activePomodoros);
+        await migrator.createTable(pomodoroSessions);
+      }
+      if (from < 3) {
+        await migrator.createTable(notes);
+      }
+      if (from < 4) {
+        await migrator.createTable(pomodoroConfigs);
+        await migrator.createTable(appearanceConfigs);
+      }
+      if (from < 5) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.shortBreakMinutes,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.longBreakMinutes,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.longBreakEvery,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.autoStartBreak,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.autoStartFocus,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.notificationSound,
+          );
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.notificationVibration,
+          );
+        }
+        if (from >= 2) {
+          await migrator.addColumn(activePomodoros, activePomodoros.phase);
+        }
+      }
+      if (from < 6) {
+        await migrator.createTable(todayPlanItems);
+      }
+      if (from < 7) {
+        if (from >= 4) {
+          await migrator.addColumn(appearanceConfigs, appearanceConfigs.accent);
+        }
+      }
+      if (from < 8) {
+        await migrator.addColumn(tasks, tasks.triageStatus);
+        await migrator.addColumn(notes, notes.kind);
+        await migrator.addColumn(notes, notes.triageStatus);
+        await migrator.createTable(weaveLinks);
+      }
+      if (from < 9) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.defaultTab,
+          );
+        }
+      }
+      if (from < 10) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            pomodoroConfigs,
+            pomodoroConfigs.dailyBudgetPomodoros,
+          );
+        }
+      }
+      if (from < 11) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.statsEnabled,
+          );
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.todayModulesJson,
+          );
+        }
+      }
+      if (from < 12) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.inboxTypeFilter,
+          );
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.inboxTodayOnly,
+          );
+        }
+      }
+      if (from < 13) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.timeboxingStartMinutes,
+          );
+        }
+      }
+      if (from < 14) {
+        if (from >= 2) {
+          await migrator.addColumn(activePomodoros, activePomodoros.focusNote);
+        }
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.timeboxingLayout,
+          );
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.timeboxingWorkdayStartMinutes,
+          );
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.timeboxingWorkdayEndMinutes,
+          );
+        }
+        if (from >= 6) {
+          await migrator.addColumn(todayPlanItems, todayPlanItems.segment);
+        }
+      }
+      if (from < 15) {
+        if (from >= 4) {
+          await migrator.addColumn(
+            appearanceConfigs,
+            appearanceConfigs.onboardingDone,
+          );
+        }
+      }
+      await _ensureDefaultSingletons();
+    },
+  );
 
   Future<void> _ensureDefaultSingletons() async {
     const singletonId = 1;
@@ -102,6 +201,7 @@ class AppDatabase extends _$AppDatabase {
         shortBreakMinutes: const Value(5),
         longBreakMinutes: const Value(15),
         longBreakEvery: const Value(4),
+        dailyBudgetPomodoros: const Value(8),
         autoStartBreak: const Value(false),
         autoStartFocus: const Value(false),
         notificationSound: const Value(false),
@@ -116,6 +216,14 @@ class AppDatabase extends _$AppDatabase {
         themeMode: const Value(0),
         density: const Value(0),
         accent: const Value(0),
+        defaultTab: const Value(2),
+        onboardingDone: const Value(false),
+        statsEnabled: const Value(false),
+        todayModulesJson: const Value(
+          '["nextStep","todayPlan","capture","weave","budget","focus","shortcuts","yesterdayReview"]',
+        ),
+        inboxTypeFilter: const Value(0),
+        inboxTodayOnly: const Value(false),
         updatedAtUtcMillis: DateTime.now().toUtc().millisecondsSinceEpoch,
       ),
       mode: InsertMode.insertOrIgnore,

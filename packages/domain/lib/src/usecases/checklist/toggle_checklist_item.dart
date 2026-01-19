@@ -7,8 +7,8 @@ class ToggleChecklistItemUseCase {
   ToggleChecklistItemUseCase({
     required TaskChecklistRepository repository,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _now = now;
+  }) : _repository = repository,
+       _now = now;
 
   final TaskChecklistRepository _repository;
   final _Now _now;

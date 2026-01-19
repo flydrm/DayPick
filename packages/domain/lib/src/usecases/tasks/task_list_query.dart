@@ -1,4 +1,5 @@
 import '../../entities/task.dart';
+import '../../entities/triage_status.dart';
 
 enum TaskStatusFilter {
   /// 默认：仅未完成（todo + inProgress）
@@ -24,6 +25,8 @@ class TaskListQuery {
     this.tag,
     this.dueToday = false,
     this.overdue = false,
+    this.includeInbox = false,
+    this.includeArchived = false,
   });
 
   final TaskStatusFilter statusFilter;
@@ -31,16 +34,23 @@ class TaskListQuery {
   final String? tag;
   final bool dueToday;
   final bool overdue;
+  final bool includeInbox;
+  final bool includeArchived;
 
   List<Task> apply(List<Task> tasks, DateTime now) {
     final startOfToday = DateTime(now.year, now.month, now.day);
+    final normalizedTag = tag?.trim();
 
     bool predicate(Task task) {
       if (!_matchesStatus(task.status)) return false;
-      if (priority != null && task.priority != priority) return false;
-      if (tag != null && tag!.trim().isNotEmpty && !task.tags.contains(tag)) {
+      if (!includeInbox && task.triageStatus == TriageStatus.inbox)
         return false;
-      }
+      if (!includeArchived && task.triageStatus == TriageStatus.archived)
+        return false;
+      if (priority != null && task.priority != priority) return false;
+      if (normalizedTag != null &&
+          normalizedTag.isNotEmpty &&
+          !task.tags.contains(normalizedTag)) return false;
 
       if (dueToday && !_isDueToday(task.dueAt, startOfToday)) return false;
       if (overdue && !_isOverdue(task.dueAt, startOfToday)) return false;
@@ -54,7 +64,8 @@ class TaskListQuery {
 
   bool _matchesStatus(TaskStatus status) {
     return switch (statusFilter) {
-      TaskStatusFilter.open => status == TaskStatus.todo || status == TaskStatus.inProgress,
+      TaskStatusFilter.open =>
+        status == TaskStatus.todo || status == TaskStatus.inProgress,
       TaskStatusFilter.todo => status == TaskStatus.todo,
       TaskStatusFilter.inProgress => status == TaskStatus.inProgress,
       TaskStatusFilter.done => status == TaskStatus.done,
@@ -90,4 +101,3 @@ int defaultCompare(Task a, Task b) {
 
   return b.createdAt.compareTo(a.createdAt);
 }
-

@@ -3,6 +3,7 @@
 
 # Temp/work dirs
 .tmp_*/
+.tmp_pub_cache
 
 # Product/UX artifacts (keep local)
 docs/
@@ -11,23 +12,43 @@ _bmad/
 
 # OS files
 .DS_Store
+Thumbs.db
+desktop.ini
 
 # IDE/editor
 **/.idea/
+**/.vscode/
+**/.fleet/
+**/.history/
 **/*.iml
 **/*.ipr
 **/*.iws
+
+# Local env/secrets (never commit)
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+
+# Editor/backup files
+**/*~
+**/*.swp
+**/*.swo
+**/*.orig
+**/*.bak
 
 # Dart/Flutter/Pub (monorepo-friendly)
 **/.dart_tool/
 **/.flutter-plugins
 **/.flutter-plugins-dependencies
+**/.packages
 **/.pub-cache/
 **/.pub/
 **/build/
 **/coverage/
 **/doc/api/
 **/ios/Flutter/.last_build_id
+**/ios/Flutter/flutter_export_environment.sh
 
 # Android local config
 **/android/local.properties

@@ -6,4 +6,3 @@ abstract interface class PomodoroConfigRepository {
   Future<void> save(PomodoroConfig config);
   Future<void> clear();
 }
-

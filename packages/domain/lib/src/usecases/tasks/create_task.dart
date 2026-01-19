@@ -1,4 +1,5 @@
 import '../../entities/task.dart';
+import '../../entities/triage_status.dart';
 import '../../repositories/task_repository.dart';
 import '../../value_objects/task_title.dart';
 
@@ -10,9 +11,9 @@ class CreateTaskUseCase {
     required TaskRepository repository,
     required TaskIdGenerator generateId,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _generateId = generateId,
-        _now = now;
+  }) : _repository = repository,
+       _generateId = generateId,
+       _now = now;
 
   final TaskRepository _repository;
   final TaskIdGenerator _generateId;
@@ -25,6 +26,7 @@ class CreateTaskUseCase {
     DateTime? dueAt,
     List<String> tags = const [],
     int? estimatedPomodoros,
+    TriageStatus triageStatus = TriageStatus.scheduledLater,
   }) async {
     final now = _now();
     final task = Task(
@@ -38,6 +40,7 @@ class CreateTaskUseCase {
       estimatedPomodoros: estimatedPomodoros,
       createdAt: now,
       updatedAt: now,
+      triageStatus: triageStatus,
     );
     await _repository.upsertTask(task);
     return task;

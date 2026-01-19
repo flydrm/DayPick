@@ -7,8 +7,8 @@ class ResumePomodoroUseCase {
   ResumePomodoroUseCase({
     required ActivePomodoroRepository repository,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _now = now;
+  }) : _repository = repository,
+       _now = now;
 
   final ActivePomodoroRepository _repository;
   final _Now _now;
@@ -27,6 +27,7 @@ class ResumePomodoroUseCase {
       status: ActivePomodoroStatus.running,
       startAt: active.startAt,
       endAt: endAt,
+      focusNote: active.focusNote,
       updatedAt: now,
     );
     await _repository.upsert(running);

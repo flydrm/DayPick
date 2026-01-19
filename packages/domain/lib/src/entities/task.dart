@@ -1,8 +1,15 @@
 import '../value_objects/task_title.dart';
+import 'triage_status.dart';
 
 enum TaskStatus { todo, inProgress, done }
 
 enum TaskPriority { low, medium, high }
+
+class _Unset {
+  const _Unset();
+}
+
+const _unset = _Unset();
 
 class Task {
   const Task({
@@ -16,6 +23,7 @@ class Task {
     required this.updatedAt,
     this.description,
     this.dueAt,
+    this.triageStatus = TriageStatus.scheduledLater,
   });
 
   final String id;
@@ -28,28 +36,33 @@ class Task {
   final int? estimatedPomodoros;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final TriageStatus triageStatus;
 
   Task copyWith({
     TaskTitle? title,
-    String? description,
+    Object? description = _unset,
     TaskStatus? status,
     TaskPriority? priority,
-    DateTime? dueAt,
+    Object? dueAt = _unset,
     List<String>? tags,
     int? estimatedPomodoros,
     DateTime? updatedAt,
+    TriageStatus? triageStatus,
   }) {
     return Task(
       id: id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      description: identical(description, _unset)
+          ? this.description
+          : description as String?,
       status: status ?? this.status,
       priority: priority ?? this.priority,
-      dueAt: dueAt ?? this.dueAt,
+      dueAt: identical(dueAt, _unset) ? this.dueAt : dueAt as DateTime?,
       tags: tags ?? this.tags,
       estimatedPomodoros: estimatedPomodoros ?? this.estimatedPomodoros,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      triageStatus: triageStatus ?? this.triageStatus,
     );
   }
 }

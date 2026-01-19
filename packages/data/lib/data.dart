@@ -17,3 +17,4 @@ export 'repositories/drift_pomodoro_config_repository.dart';
 export 'repositories/drift_note_repository.dart';
 export 'repositories/drift_appearance_config_repository.dart';
 export 'repositories/drift_today_plan_repository.dart';
+export 'repositories/drift_weave_link_repository.dart';

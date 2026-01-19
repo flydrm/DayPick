@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+import '../../../ui/tokens/dp_spacing.dart';
 
 class PinEntryRequest {
   const PinEntryRequest({
@@ -49,50 +52,74 @@ class _PinEntrySheetState extends State<PinEntrySheet> {
   Widget build(BuildContext context) {
     final request = widget.request;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
+        padding: EdgeInsets.fromLTRB(
+          DpSpacing.lg,
+          DpSpacing.lg,
+          DpSpacing.lg,
+          DpSpacing.lg + bottomInset,
+        ),
         child: Form(
           key: _formKey,
           child: ListView(
             shrinkWrap: true,
             children: [
-              Text(
-                request.title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      request.title,
+                      style: shadTheme.textTheme.h4.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.foreground,
+                      ),
+                    ),
+                  ),
+                  Tooltip(
+                    message: '关闭',
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.of(context).pop<String?>(null),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: DpSpacing.sm),
               Text(
                 request.hintText,
-                style: const TextStyle(color: Colors.black54),
+                style: shadTheme.textTheme.muted.copyWith(
+                  color: colorScheme.mutedForeground,
+                ),
               ),
               if (request.requireConfirmation) ...[
-                const SizedBox(height: 4),
-                const Text(
-                  '提示：PIN 丢失将无法恢复，请务必记住。',
-                  style: TextStyle(color: Colors.black54),
+                const SizedBox(height: DpSpacing.md),
+                const ShadAlert(
+                  icon: Icon(Icons.warning_amber_outlined),
+                  title: Text('请务必记住 PIN'),
+                  description: Text('PIN 丢失将无法恢复。'),
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: DpSpacing.md),
+              ShadInputFormField(
                 controller: _pinController,
                 keyboardType: TextInputType.number,
-                textInputAction:
-                    request.requireConfirmation ? TextInputAction.next : TextInputAction.done,
+                textInputAction: request.requireConfirmation
+                    ? TextInputAction.next
+                    : TextInputAction.done,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(6),
                 ],
                 obscureText: true,
-                decoration: InputDecoration(
-                  labelText: request.primaryLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                label: Text(request.primaryLabel),
                 validator: (v) => _validatePin(v),
               ),
               if (request.requireConfirmation) ...[
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: DpSpacing.md),
+                ShadInputFormField(
                   controller: _confirmController,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.done,
@@ -101,10 +128,7 @@ class _PinEntrySheetState extends State<PinEntrySheet> {
                     LengthLimitingTextInputFormatter(6),
                   ],
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: request.secondaryLabel ?? '再次输入 PIN',
-                    border: const OutlineInputBorder(),
-                  ),
+                  label: Text(request.secondaryLabel ?? '再次输入 PIN'),
                   validator: (v) {
                     final base = _validatePin(v);
                     if (base != null) return base;
@@ -115,18 +139,18 @@ class _PinEntrySheetState extends State<PinEntrySheet> {
                   },
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: DpSpacing.md),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: ShadButton.outline(
                       onPressed: () => Navigator.of(context).pop<String?>(null),
                       child: const Text('取消'),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: DpSpacing.sm),
                   Expanded(
-                    child: FilledButton(
+                    child: ShadButton(
                       onPressed: _submit,
                       child: const Text('确定'),
                     ),
@@ -151,4 +175,3 @@ class _PinEntrySheetState extends State<PinEntrySheet> {
     return null;
   }
 }
-

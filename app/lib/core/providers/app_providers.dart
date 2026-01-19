@@ -16,17 +16,22 @@ final taskIdGeneratorProvider = Provider<domain.TaskIdGenerator>((ref) {
 
 final checklistItemIdGeneratorProvider =
     Provider<domain.ChecklistItemIdGenerator>((ref) {
-  final uuid = ref.watch(uuidProvider);
-  return () => uuid.v4();
-});
+      final uuid = ref.watch(uuidProvider);
+      return () => uuid.v4();
+    });
 
 final pomodoroSessionIdGeneratorProvider =
     Provider<domain.PomodoroSessionIdGenerator>((ref) {
+      final uuid = ref.watch(uuidProvider);
+      return () => uuid.v4();
+    });
+
+final noteIdGeneratorProvider = Provider<domain.NoteIdGenerator>((ref) {
   final uuid = ref.watch(uuidProvider);
   return () => uuid.v4();
 });
 
-final noteIdGeneratorProvider = Provider<domain.NoteIdGenerator>((ref) {
+final weaveLinkIdGeneratorProvider = Provider<String Function()>((ref) {
   final uuid = ref.watch(uuidProvider);
   return () => uuid.v4();
 });
@@ -51,43 +56,48 @@ final noteRepositoryProvider = Provider<domain.NoteRepository>((ref) {
 
 final taskChecklistRepositoryProvider =
     Provider<domain.TaskChecklistRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return data.DriftTaskChecklistRepository(db);
-});
+      final db = ref.watch(appDatabaseProvider);
+      return data.DriftTaskChecklistRepository(db);
+    });
 
 final activePomodoroRepositoryProvider =
     Provider<domain.ActivePomodoroRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return data.DriftActivePomodoroRepository(db);
-});
+      final db = ref.watch(appDatabaseProvider);
+      return data.DriftActivePomodoroRepository(db);
+    });
 
 final pomodoroSessionRepositoryProvider =
     Provider<domain.PomodoroSessionRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return data.DriftPomodoroSessionRepository(db);
-});
+      final db = ref.watch(appDatabaseProvider);
+      return data.DriftPomodoroSessionRepository(db);
+    });
 
 final pomodoroConfigRepositoryProvider =
     Provider<domain.PomodoroConfigRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return data.DriftPomodoroConfigRepository(db);
-});
+      final db = ref.watch(appDatabaseProvider);
+      return data.DriftPomodoroConfigRepository(db);
+    });
 
 final appearanceConfigRepositoryProvider =
     Provider<domain.AppearanceConfigRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return data.DriftAppearanceConfigRepository(db);
-});
+      final db = ref.watch(appDatabaseProvider);
+      return data.DriftAppearanceConfigRepository(db);
+    });
 
 final todayPlanRepositoryProvider = Provider<domain.TodayPlanRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return data.DriftTodayPlanRepository(db);
 });
 
+final weaveLinkRepositoryProvider = Provider<domain.WeaveLinkRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return data.DriftWeaveLinkRepository(db);
+});
+
 final localNotificationsServiceProvider =
     Provider<data.LocalNotificationsService>((ref) {
-  return data.LocalNotificationsService();
-});
+      return data.LocalNotificationsService();
+    });
 
 final aiConfigRepositoryProvider = Provider<domain.AiConfigRepository>((ref) {
   if (_isFlutterTest) {
@@ -111,27 +121,31 @@ final createNoteUseCaseProvider = Provider<domain.CreateNoteUseCase>((ref) {
 });
 
 final updateNoteUseCaseProvider = Provider<domain.UpdateNoteUseCase>((ref) {
-  return domain.UpdateNoteUseCase(repository: ref.watch(noteRepositoryProvider));
+  return domain.UpdateNoteUseCase(
+    repository: ref.watch(noteRepositoryProvider),
+  );
 });
 
 final updateTaskUseCaseProvider = Provider<domain.UpdateTaskUseCase>((ref) {
-  return domain.UpdateTaskUseCase(repository: ref.watch(taskRepositoryProvider));
+  return domain.UpdateTaskUseCase(
+    repository: ref.watch(taskRepositoryProvider),
+  );
 });
 
 final createChecklistItemUseCaseProvider =
     Provider<domain.CreateChecklistItemUseCase>((ref) {
-  return domain.CreateChecklistItemUseCase(
-    repository: ref.watch(taskChecklistRepositoryProvider),
-    generateId: ref.watch(checklistItemIdGeneratorProvider),
-  );
-});
+      return domain.CreateChecklistItemUseCase(
+        repository: ref.watch(taskChecklistRepositoryProvider),
+        generateId: ref.watch(checklistItemIdGeneratorProvider),
+      );
+    });
 
 final toggleChecklistItemUseCaseProvider =
     Provider<domain.ToggleChecklistItemUseCase>((ref) {
-  return domain.ToggleChecklistItemUseCase(
-    repository: ref.watch(taskChecklistRepositoryProvider),
-  );
-});
+      return domain.ToggleChecklistItemUseCase(
+        repository: ref.watch(taskChecklistRepositoryProvider),
+      );
+    });
 
 final pomodoroConfigProvider = StreamProvider<domain.PomodoroConfig>((ref) {
   return ref.watch(pomodoroConfigRepositoryProvider).watch();
@@ -141,19 +155,25 @@ final appearanceConfigProvider = StreamProvider<domain.AppearanceConfig>((ref) {
   return ref.watch(appearanceConfigRepositoryProvider).watch();
 });
 
-final startPomodoroUseCaseProvider = Provider<domain.StartPomodoroUseCase>((ref) {
+final startPomodoroUseCaseProvider = Provider<domain.StartPomodoroUseCase>((
+  ref,
+) {
   return domain.StartPomodoroUseCase(
     repository: ref.watch(activePomodoroRepositoryProvider),
   );
 });
 
-final pausePomodoroUseCaseProvider = Provider<domain.PausePomodoroUseCase>((ref) {
+final pausePomodoroUseCaseProvider = Provider<domain.PausePomodoroUseCase>((
+  ref,
+) {
   return domain.PausePomodoroUseCase(
     repository: ref.watch(activePomodoroRepositoryProvider),
   );
 });
 
-final resumePomodoroUseCaseProvider = Provider<domain.ResumePomodoroUseCase>((ref) {
+final resumePomodoroUseCaseProvider = Provider<domain.ResumePomodoroUseCase>((
+  ref,
+) {
   return domain.ResumePomodoroUseCase(
     repository: ref.watch(activePomodoroRepositoryProvider),
   );
@@ -161,26 +181,26 @@ final resumePomodoroUseCaseProvider = Provider<domain.ResumePomodoroUseCase>((re
 
 final schedulePomodoroNotificationUseCaseProvider =
     Provider<domain.SchedulePomodoroNotificationUseCase>((ref) {
-  return domain.SchedulePomodoroNotificationUseCase(
-    scheduler: ref.watch(localNotificationsServiceProvider),
-  );
-});
+      return domain.SchedulePomodoroNotificationUseCase(
+        scheduler: ref.watch(localNotificationsServiceProvider),
+      );
+    });
 
 final cancelPomodoroNotificationUseCaseProvider =
     Provider<domain.CancelPomodoroNotificationUseCase>((ref) {
-  return domain.CancelPomodoroNotificationUseCase(
-    scheduler: ref.watch(localNotificationsServiceProvider),
-  );
-});
+      return domain.CancelPomodoroNotificationUseCase(
+        scheduler: ref.watch(localNotificationsServiceProvider),
+      );
+    });
 
 final completePomodoroUseCaseProvider =
     Provider<domain.CompletePomodoroUseCase>((ref) {
-  return domain.CompletePomodoroUseCase(
-    activeRepository: ref.watch(activePomodoroRepositoryProvider),
-    sessionRepository: ref.watch(pomodoroSessionRepositoryProvider),
-    generateSessionId: ref.watch(pomodoroSessionIdGeneratorProvider),
-  );
-});
+      return domain.CompletePomodoroUseCase(
+        activeRepository: ref.watch(activePomodoroRepositoryProvider),
+        sessionRepository: ref.watch(pomodoroSessionRepositoryProvider),
+        generateSessionId: ref.watch(pomodoroSessionIdGeneratorProvider),
+      );
+    });
 
 class _InMemoryAiConfigRepository implements domain.AiConfigRepository {
   domain.AiProviderConfig? _config;
@@ -191,6 +211,18 @@ class _InMemoryAiConfigRepository implements domain.AiConfigRepository {
   @override
   Future<void> saveConfig(domain.AiProviderConfig config) async {
     _config = config;
+  }
+
+  @override
+  Future<void> clearApiKey() async {
+    final current = _config;
+    if (current == null) return;
+    _config = domain.AiProviderConfig(
+      baseUrl: current.baseUrl,
+      model: current.model,
+      apiKey: null,
+      updatedAt: DateTime.now(),
+    );
   }
 
   @override

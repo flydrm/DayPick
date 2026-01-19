@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT/app"
+
+FLUTTERW="$ROOT/tool/flutterw"
+
+if [[ ! -f ".dart_tool/package_config.json" ]]; then
+  "$FLUTTERW" pub get --offline
+fi
+
+exec "$FLUTTERW" test --no-pub "$@"

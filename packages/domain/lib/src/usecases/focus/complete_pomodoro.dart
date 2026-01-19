@@ -12,10 +12,10 @@ class CompletePomodoroUseCase {
     required PomodoroSessionRepository sessionRepository,
     required PomodoroSessionIdGenerator generateSessionId,
     _Now now = DateTime.now,
-  })  : _activeRepository = activeRepository,
-        _sessionRepository = sessionRepository,
-        _generateSessionId = generateSessionId,
-        _now = now;
+  }) : _activeRepository = activeRepository,
+       _sessionRepository = sessionRepository,
+       _generateSessionId = generateSessionId,
+       _now = now;
 
   final ActivePomodoroRepository _activeRepository;
   final PomodoroSessionRepository _sessionRepository;
@@ -40,7 +40,9 @@ class CompletePomodoroUseCase {
       startAt: active.startAt,
       endAt: endAt,
       isDraft: isDraft,
-      progressNote: progressNote?.trim().isEmpty == true ? null : progressNote?.trim(),
+      progressNote: progressNote?.trim().isEmpty == true
+          ? null
+          : progressNote?.trim(),
       createdAt: now,
     );
 

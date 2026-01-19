@@ -1,4 +1,5 @@
 import '../../entities/task.dart';
+import '../../entities/triage_status.dart';
 import '../tasks/task_list_query.dart';
 
 class TodayQueueResult {
@@ -14,7 +15,17 @@ class TodayQueueRule {
   final int maxItems;
 
   TodayQueueResult call(List<Task> tasks, DateTime now) {
-    final openTasks = tasks.where((t) => t.status != TaskStatus.done).toList();
+    final openTasks = tasks
+        .where(
+          (t) =>
+              t.status == TaskStatus.todo || t.status == TaskStatus.inProgress,
+        )
+        .where(
+          (t) =>
+              t.triageStatus != TriageStatus.inbox &&
+              t.triageStatus != TriageStatus.archived,
+        )
+        .toList();
     final startOfToday = DateTime(now.year, now.month, now.day);
 
     bool isDueToday(Task task) {
@@ -62,4 +73,3 @@ class TodayQueueRule {
     return TodayQueueResult(nextStep: nextStep, todayQueue: queue);
   }
 }
-

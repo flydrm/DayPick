@@ -1,5 +1,8 @@
 class TimeRangeKey {
-  const TimeRangeKey({required this.startInclusive, required this.endExclusive});
+  const TimeRangeKey({
+    required this.startInclusive,
+    required this.endExclusive,
+  });
 
   final DateTime startInclusive;
   final DateTime endExclusive;
@@ -7,12 +10,15 @@ class TimeRangeKey {
   @override
   bool operator ==(Object other) {
     return other is TimeRangeKey &&
-        other.startInclusive.millisecondsSinceEpoch == startInclusive.millisecondsSinceEpoch &&
-        other.endExclusive.millisecondsSinceEpoch == endExclusive.millisecondsSinceEpoch;
+        other.startInclusive.millisecondsSinceEpoch ==
+            startInclusive.millisecondsSinceEpoch &&
+        other.endExclusive.millisecondsSinceEpoch ==
+            endExclusive.millisecondsSinceEpoch;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(startInclusive.millisecondsSinceEpoch, endExclusive.millisecondsSinceEpoch);
+  int get hashCode => Object.hash(
+    startInclusive.millisecondsSinceEpoch,
+    endExclusive.millisecondsSinceEpoch,
+  );
 }
-

@@ -1,9 +1,14 @@
 import 'package:domain/domain.dart' as domain;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../ui/kit/dp_section_card.dart';
+import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
+import '../../../ui/tokens/dp_insets.dart';
+import '../../../ui/tokens/dp_spacing.dart';
 import '../../ai/providers/ai_providers.dart';
 
 class AiSettingsPage extends ConsumerStatefulWidget {
@@ -14,8 +19,6 @@ class AiSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
-  final _formKey = GlobalKey<FormState>();
-
   late final TextEditingController _baseUrlController;
   late final TextEditingController _modelController;
   late final TextEditingController _apiKeyController;
@@ -52,84 +55,99 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
+    final busy = _saving || _testing;
     return AppPageScaffold(
       title: 'AI 设置',
+      showCreateAction: false,
+      showSearchAction: false,
       showSettingsAction: false,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: DpInsets.page,
         children: [
-          const Text(
-            '提示：apiKey 仅本地密文存储，不会被备份导出。',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
+          const ShadAlert(
+            icon: Icon(Icons.lock_outline),
+            title: Text('本地密文存储'),
+            description: Text('apiKey 仅本地密文存储，不会被备份导出。'),
           ),
-          const SizedBox(height: 12),
-          Form(
-            key: _formKey,
+          const SizedBox(height: DpSpacing.md),
+          DpSectionCard(
+            title: '连接配置',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
+                ShadInput(
                   controller: _baseUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'baseUrl',
-                    hintText: '例如：https://api.openai.com 或 https://xxx/v1',
-                    border: OutlineInputBorder(),
+                  enabled: !busy,
+                  keyboardType: TextInputType.url,
+                  placeholder: Text(
+                    'baseUrl（例如：https://api.openai.com 或 https://xxx/v1）',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
                   ),
-                  validator: (value) {
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return '请输入 baseUrl';
-                    if (!v.startsWith('http://') && !v.startsWith('https://')) {
-                      return 'baseUrl 需以 http:// 或 https:// 开头';
-                    }
-                    return null;
-                  },
+                  leading: const Icon(Icons.link_outlined, size: 18),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: DpSpacing.md),
+                ShadInput(
                   controller: _modelController,
-                  decoration: const InputDecoration(
-                    labelText: 'model',
-                    hintText: '例如：gpt-4o-mini',
-                    border: OutlineInputBorder(),
+                  enabled: !busy,
+                  placeholder: Text(
+                    'model（例如：gpt-4o-mini）',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
                   ),
-                  validator: (value) {
-                    if ((value ?? '').trim().isEmpty) return '请输入 model';
-                    return null;
-                  },
+                  leading: const Icon(Icons.smart_toy_outlined, size: 18),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: DpSpacing.md),
+                ShadInput(
                   controller: _apiKeyController,
-                  decoration: const InputDecoration(
-                    labelText: 'apiKey',
-                    hintText: '以 sk-... 开头（不会展示）',
-                    border: OutlineInputBorder(),
-                  ),
+                  enabled: !busy,
                   obscureText: true,
                   enableSuggestions: false,
                   autocorrect: false,
+                  placeholder: Text(
+                    'apiKey（以 sk-... 开头；不会展示）',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  ),
+                  leading: const Icon(Icons.key_outlined, size: 18),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: DpSpacing.md),
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: ShadButton.outline(
                         onPressed: _testing ? null : _testConnection,
+                        leading: _testing
+                            ? const DpSpinner(size: 16, strokeWidth: 2)
+                            : const Icon(
+                                Icons.wifi_tethering_outlined,
+                                size: 18,
+                              ),
                         child: Text(_testing ? '测试中…' : '测试连接'),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: FilledButton(
+                      child: ShadButton(
                         onPressed: _saving ? null : _save,
+                        leading: _saving
+                            ? const DpSpinner(size: 16, strokeWidth: 2)
+                            : const Icon(Icons.save_outlined, size: 18),
                         child: Text(_saving ? '保存中…' : '保存'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _saving || _testing ? null : _clear,
+                const SizedBox(height: DpSpacing.sm),
+                ShadButton.ghost(
+                  size: ShadButtonSize.sm,
+                  onPressed: busy ? null : _clear,
+                  leading: const Icon(Icons.delete_outline, size: 18),
                   child: const Text('清除配置'),
                 ),
               ],
@@ -142,44 +160,65 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
 
   domain.AiProviderConfig _configFromForm() {
     return domain.AiProviderConfig(
-      baseUrl: _baseUrlController.text,
-      model: _modelController.text,
-      apiKey: _apiKeyController.text.trim().isEmpty ? null : _apiKeyController.text,
+      baseUrl: _baseUrlController.text.trim(),
+      model: _modelController.text.trim(),
+      apiKey: _apiKeyController.text.trim().isEmpty
+          ? null
+          : _apiKeyController.text,
       updatedAt: DateTime.now(),
     );
   }
 
+  String? _validateMessage() {
+    final baseUrl = _baseUrlController.text.trim();
+    if (baseUrl.isEmpty) return '请输入 baseUrl';
+    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      return 'baseUrl 需以 http:// 或 https:// 开头';
+    }
+    final model = _modelController.text.trim();
+    if (model.isEmpty) return '请输入 model';
+    return null;
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final error = _validateMessage();
+    if (error != null) {
+      _showSnack(error);
+      return;
+    }
     setState(() => _saving = true);
     try {
       final config = _configFromForm();
       await ref.read(aiConfigRepositoryProvider).saveConfig(config);
       ref.invalidate(aiConfigProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已保存 AI 配置')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('已保存 AI 配置')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _testConnection() async {
-    if (!_formKey.currentState!.validate()) return;
+    final error = _validateMessage();
+    if (error != null) {
+      _showSnack(error);
+      return;
+    }
     setState(() => _testing = true);
     try {
       final config = _configFromForm();
       await ref.read(openAiClientProvider).testConnection(config: config);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('连接成功')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('连接成功')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('连接失败：$e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('连接失败：$e')));
     } finally {
       if (mounted) setState(() => _testing = false);
     }
@@ -191,11 +230,18 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
       await ref.read(aiConfigRepositoryProvider).clear();
       ref.invalidate(aiConfigProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已清除 AI 配置')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('已清除 AI 配置')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

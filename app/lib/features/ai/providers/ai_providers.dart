@@ -14,8 +14,11 @@ final aiConfigProvider = FutureProvider<domain.AiProviderConfig?>((ref) async {
 });
 
 final pomodoroSessionsBetweenProvider =
-    StreamProvider.family<List<domain.PomodoroSession>, TimeRangeKey>((ref, range) {
-  return ref
-      .watch(pomodoroSessionRepositoryProvider)
-      .watchBetween(range.startInclusive, range.endExclusive);
-});
+    StreamProvider.family<List<domain.PomodoroSession>, TimeRangeKey>((
+      ref,
+      range,
+    ) {
+      return ref
+          .watch(pomodoroSessionRepositoryProvider)
+          .watchBetween(range.startInclusive, range.endExclusive);
+    });

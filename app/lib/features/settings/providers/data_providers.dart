@@ -15,7 +15,8 @@ final backupFileStoreProvider = Provider<data.BackupFileStore>((ref) {
   return const data.BackupFileStore();
 });
 
-final dataMaintenanceServiceProvider = Provider<data.DataMaintenanceService>((ref) {
+final dataMaintenanceServiceProvider = Provider<data.DataMaintenanceService>((
+  ref,
+) {
   return data.DataMaintenanceService(ref.watch(appDatabaseProvider));
 });
-

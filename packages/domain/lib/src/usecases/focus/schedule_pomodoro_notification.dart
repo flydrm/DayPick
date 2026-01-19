@@ -1,8 +1,9 @@
 import '../../repositories/pomodoro_notification_scheduler.dart';
 
 class SchedulePomodoroNotificationUseCase {
-  SchedulePomodoroNotificationUseCase({required PomodoroNotificationScheduler scheduler})
-      : _scheduler = scheduler;
+  SchedulePomodoroNotificationUseCase({
+    required PomodoroNotificationScheduler scheduler,
+  }) : _scheduler = scheduler;
 
   final PomodoroNotificationScheduler _scheduler;
 

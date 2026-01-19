@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FLUTTER_ROOT="$ROOT/.tooling/flutter"
+LEGACY_PUB_CACHE_DIR="$ROOT/.tmp_pub_cache"
+PUB_CACHE_DIR="$ROOT/.tooling/pub-cache"
+TOOLING_HOME="$ROOT/.tooling/home"
+
+if [[ ! -x "$FLUTTER_ROOT/bin/dart" ]]; then
+  echo "Dart SDK not found: $FLUTTER_ROOT/bin/dart" >&2
+  echo "Expected Flutter 3.38.6 to be installed under: $FLUTTER_ROOT" >&2
+  exit 1
+fi
+
+if [[ -d "$LEGACY_PUB_CACHE_DIR" && ! -d "$PUB_CACHE_DIR" ]]; then
+  mkdir -p "$(dirname "$PUB_CACHE_DIR")"
+  mv "$LEGACY_PUB_CACHE_DIR" "$PUB_CACHE_DIR"
+fi
+
+mkdir -p "$PUB_CACHE_DIR" "$TOOLING_HOME"
+
+if [[ ! -e "$LEGACY_PUB_CACHE_DIR" ]]; then
+  ln -s "$PUB_CACHE_DIR" "$LEGACY_PUB_CACHE_DIR"
+fi
+
+export HOME="$TOOLING_HOME"
+export PUB_CACHE="$PUB_CACHE_DIR"
+export PATH="$FLUTTER_ROOT/bin:$PATH"
+
+exec "$FLUTTER_ROOT/bin/dart" "$@"

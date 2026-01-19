@@ -13,4 +13,3 @@ class PomodoroSessions extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
-

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:domain/domain.dart' as domain;
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../core/providers/app_providers.dart';
 import '../routing/app_router.dart';
@@ -17,18 +18,32 @@ class DayPickApp extends ConsumerWidget {
       orElse: () => const domain.AppearanceConfig(),
     );
 
-    return MaterialApp.router(
-      title: 'DayPick · 一页今日',
-      theme: buildAppTheme(
-        brightness: Brightness.light,
-        appearance: appearance,
-      ),
-      darkTheme: buildAppTheme(
-        brightness: Brightness.dark,
-        appearance: appearance,
-      ),
+    return ShadApp.custom(
       themeMode: _toThemeMode(appearance.themeMode),
-      routerConfig: router,
+      theme: _buildShadThemeData(
+        appearance: appearance,
+        brightness: Brightness.light,
+      ),
+      darkTheme: _buildShadThemeData(
+        appearance: appearance,
+        brightness: Brightness.dark,
+      ),
+      appBuilder: (context) {
+        final baseTheme = Theme.of(context);
+        final materialTheme = ThemeData.from(
+          colorScheme: baseTheme.colorScheme,
+          textTheme: baseTheme.textTheme,
+          useMaterial3: false,
+        ).copyWith(visualDensity: _toVisualDensity(appearance.density));
+        return MaterialApp.router(
+          title: 'DayPick · 一页今日',
+          debugShowCheckedModeBanner: false,
+          theme: materialTheme,
+          routerConfig: router,
+          builder: (context, child) =>
+              ShadAppBuilder(child: child ?? const SizedBox.shrink()),
+        );
+      },
     );
   }
 }
@@ -48,49 +63,22 @@ VisualDensity _toVisualDensity(domain.AppDensity density) {
   };
 }
 
-Color _seedColorFor(domain.AppAccent accent, Brightness brightness) {
-  final isDark = brightness == Brightness.dark;
+String _shadSchemeNameFor(domain.AppAccent accent) {
   return switch (accent) {
-    domain.AppAccent.a => isDark
-        ? const Color(0xFF7AA6FF) // Slate Blue (dark)
-        : const Color(0xFF2F5D9B), // Slate Blue (light)
-    domain.AppAccent.b => isDark
-        ? const Color(0xFF44C2B3) // Deep Teal (dark)
-        : const Color(0xFF0F766E), // Deep Teal (light)
-    domain.AppAccent.c => isDark
-        ? const Color(0xFFB8C48A) // Olive Gray (dark)
-        : const Color(0xFF5B6B3A), // Olive Gray (light)
+    domain.AppAccent.a => 'blue',
+    domain.AppAccent.b => 'green',
+    domain.AppAccent.c => 'stone',
   };
 }
 
-ThemeData buildAppTheme({
+ShadThemeData _buildShadThemeData({
   required domain.AppearanceConfig appearance,
-  Brightness brightness = Brightness.light,
+  required Brightness brightness,
 }) {
-  final seedColor = _seedColorFor(appearance.accent, brightness);
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: seedColor,
+  final schemeName = _shadSchemeNameFor(appearance.accent);
+  final colorScheme = ShadColorScheme.fromName(
+    schemeName,
     brightness: brightness,
   );
-  final isDark = brightness == Brightness.dark;
-
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    visualDensity: _toVisualDensity(appearance.density),
-    scaffoldBackgroundColor:
-        isDark ? const Color(0xFF0B0F14) : const Color(0xFFF6F7F9),
-    appBarTheme: AppBarTheme(
-      backgroundColor:
-          isDark ? const Color(0xFF0B0F14) : const Color(0xFFF6F7F9),
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      centerTitle: false,
-      titleTextStyle: TextStyle(
-        color: colorScheme.onSurface,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
+  return ShadThemeData(brightness: brightness, colorScheme: colorScheme);
 }

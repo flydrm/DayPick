@@ -5,6 +5,7 @@ class ExportSnapshot {
     required this.todayPlanItems,
     required this.taskCheckItems,
     required this.notes,
+    required this.weaveLinks,
     required this.pomodoroSessions,
     required this.pomodoroConfig,
     required this.appearanceConfig,
@@ -15,12 +16,14 @@ class ExportSnapshot {
   final List<Map<String, Object?>> todayPlanItems;
   final List<Map<String, Object?>> taskCheckItems;
   final List<Map<String, Object?>> notes;
+  final List<Map<String, Object?>> weaveLinks;
   final List<Map<String, Object?>> pomodoroSessions;
   final Map<String, Object?> pomodoroConfig;
   final Map<String, Object?> appearanceConfig;
 
   int get taskCount => tasks.length;
   int get noteCount => notes.length;
+  int get weaveLinkCount => weaveLinks.length;
   int get sessionCount => pomodoroSessions.length;
   int get checklistCount => taskCheckItems.length;
   int get todayPlanItemCount => todayPlanItems.length;

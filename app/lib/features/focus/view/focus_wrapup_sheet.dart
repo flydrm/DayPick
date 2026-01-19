@@ -1,107 +1,213 @@
 import 'package:ai/ai.dart' as ai;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../ai/providers/ai_providers.dart';
+import '../../../ui/kit/dp_spinner.dart';
+import '../../../ui/tokens/dp_insets.dart';
+import '../../../ui/tokens/dp_spacing.dart';
 
 enum FocusWrapUpAction { save, later, discard }
 
 class FocusWrapUpResult {
-  const FocusWrapUpResult({required this.action, this.note});
+  const FocusWrapUpResult({
+    required this.action,
+    this.progressNote,
+    this.nextStepTitle,
+    this.addNextStepToToday = false,
+  });
 
   final FocusWrapUpAction action;
-  final String? note;
+  final String? progressNote;
+  final String? nextStepTitle;
+  final bool addNextStepToToday;
 }
 
 class FocusWrapUpSheet extends ConsumerStatefulWidget {
-  const FocusWrapUpSheet({super.key, required this.taskTitle});
+  const FocusWrapUpSheet({
+    super.key,
+    required this.taskTitle,
+    this.initialProgressNote,
+  });
 
   final String taskTitle;
+  final String? initialProgressNote;
 
   @override
   ConsumerState<FocusWrapUpSheet> createState() => _FocusWrapUpSheetState();
 }
 
 class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _progressController = TextEditingController();
+  final TextEditingController _nextStepController = TextEditingController();
   ai.AiCancelToken? _cancelToken;
   bool _aiLoading = false;
-  bool _hasInput = false;
+  bool _hasProgress = false;
+  bool _hasNextStep = false;
+  bool _addNextStepToToday = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialProgressNote?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      _progressController.text = initial;
+      _hasProgress = true;
+    }
+    _progressController.addListener(() {
+      final next = _progressController.text.trim().isNotEmpty;
+      if (next == _hasProgress) return;
+      if (!mounted) return;
+      setState(() => _hasProgress = next);
+    });
+    _nextStepController.addListener(() {
+      final next = _nextStepController.text.trim().isNotEmpty;
+      if (next == _hasNextStep) return;
+      if (!mounted) return;
+      setState(() => _hasNextStep = next);
+    });
+  }
 
   @override
   void dispose() {
     _cancelToken?.cancel('dispose');
-    _controller.dispose();
+    _progressController.dispose();
+    _nextStepController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final configAsync = ref.watch(aiConfigProvider);
     final ready = configAsync.maybeWhen(
       data: (c) => c != null && (c.apiKey?.trim().isNotEmpty ?? false),
       orElse: () => false,
     );
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
+        padding: EdgeInsets.fromLTRB(
+          DpSpacing.lg,
+          DpSpacing.md,
+          DpSpacing.lg,
+          DpSpacing.lg + bottomInset,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '收尾 · ${widget.taskTitle}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '收尾 · ${widget.taskTitle}',
+                    style: shadTheme.textTheme.h4.copyWith(
+                      color: colorScheme.foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Tooltip(
+                  message: '关闭',
+                  child: ShadIconButton.ghost(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: '一句话进展',
-                hintText: '例如：完成了接口对齐与参数校验（也可直接点 AI 生成/优化）',
-                border: OutlineInputBorder(),
+            ShadCard(
+              padding: DpInsets.card,
+              title: Text(
+                '进展（可选）',
+                style: shadTheme.textTheme.small.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.foreground,
+                ),
               ),
-              minLines: 2,
-              maxLines: 5,
-              onChanged: (v) => setState(() => _hasInput = v.trim().isNotEmpty),
+              child: ShadInput(
+                controller: _progressController,
+                autofocus: true,
+                minLines: 3,
+                maxLines: 6,
+                placeholder: Text(
+                  '一句话也可以；写清楚“做了什么/结果如何”。',
+                  style: shadTheme.textTheme.muted.copyWith(
+                    color: colorScheme.mutedForeground,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            const Text(
-              '将发送：任务标题 + 你在此处输入的一句话（如有）。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+            const SizedBox(height: 10),
+            ShadCard(
+              padding: DpInsets.card,
+              title: Text(
+                '下一步（可选）',
+                style: shadTheme.textTheme.small.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.foreground,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ShadInput(
+                    controller: _nextStepController,
+                    minLines: 1,
+                    maxLines: 3,
+                    placeholder: Text(
+                      '写成一句话任务标题，例如：联调并修复边界case',
+                      style: shadTheme.textTheme.muted.copyWith(
+                        color: colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ShadCheckbox(
+                    value: _addNextStepToToday,
+                    enabled: _hasNextStep,
+                    onChanged: (v) => setState(() => _addNextStepToToday = v),
+                    label: const Text('把“下一步”加入今天计划'),
+                    sublabel: const Text('保存后自动创建任务并加入 Today 队列'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: !ready
-                  ? null
-                  : (_aiLoading ? _cancelAiPolish : _aiAssist),
-              icon: _aiLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.auto_awesome_outlined),
-              label: Text(
-                !ready
-                    ? 'AI 未配置'
-                    : (_aiLoading
-                          ? (_hasInput ? 'AI 优化中…（点此停止）' : 'AI 生成中…（点此停止）')
-                          : (_hasInput ? 'AI 优化' : 'AI 生成')),
+            const SizedBox(height: 10),
+            ShadCard(
+              padding: DpInsets.card,
+              child: ShadButton.outline(
+                onPressed: _aiLoading
+                    ? _cancelAiPolish
+                    : () => _assist(ready: ready),
+                leading: _aiLoading
+                    ? const DpSpinner(size: 16, strokeWidth: 2)
+                    : const Icon(Icons.auto_awesome_outlined, size: 16),
+                child: Text(
+                  _aiLoading
+                      ? (_hasProgress ? 'AI 优化中…（点此停止）' : 'AI 生成中…（点此停止）')
+                      : (ready
+                            ? (_hasProgress ? 'AI 优化进展' : 'AI 生成进展')
+                            : '离线模板'),
+                ),
               ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: ShadButton.outline(
                     onPressed: () => Navigator.of(context).pop(
                       FocusWrapUpResult(
                         action: FocusWrapUpAction.later,
-                        note: _controller.text,
+                        progressNote: _progressController.text,
+                        nextStepTitle: _nextStepTitleOrNull(),
+                        addNextStepToToday: _hasNextStep && _addNextStepToToday,
                       ),
                     ),
                     child: const Text('稍后补'),
@@ -109,11 +215,13 @@ class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(
+                  child: ShadButton(
                     onPressed: () => Navigator.of(context).pop(
                       FocusWrapUpResult(
                         action: FocusWrapUpAction.save,
-                        note: _controller.text,
+                        progressNote: _progressController.text,
+                        nextStepTitle: _nextStepTitleOrNull(),
+                        addNextStepToToday: _hasNextStep && _addNextStepToToday,
                       ),
                     ),
                     child: const Text('保存'),
@@ -122,7 +230,7 @@ class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
               ],
             ),
             const SizedBox(height: 8),
-            TextButton(
+            ShadButton.ghost(
               onPressed: () => Navigator.of(
                 context,
               ).pop(const FocusWrapUpResult(action: FocusWrapUpAction.discard)),
@@ -134,12 +242,22 @@ class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
     );
   }
 
+  String? _nextStepTitleOrNull() {
+    final v = _nextStepController.text.trim();
+    return v.isEmpty ? null : v;
+  }
+
   void _cancelAiPolish() {
     _cancelToken?.cancel('user');
   }
 
-  Future<void> _aiAssist() async {
-    final input = _controller.text.trim();
+  Future<void> _assist({required bool ready}) async {
+    if (!ready) {
+      _applyOfflineTemplate();
+      return;
+    }
+
+    final input = _progressController.text.trim();
     final config = await ref.read(aiConfigProvider.future);
     if (config == null || (config.apiKey?.trim().isEmpty ?? true)) {
       _showSnack('请先完成 AI 配置');
@@ -167,8 +285,8 @@ class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
             );
       if (!mounted) return;
       setState(() {
-        _controller.text = nextText;
-        _hasInput = nextText.trim().isNotEmpty;
+        _progressController.text = nextText;
+        _hasProgress = nextText.trim().isNotEmpty;
       });
     } on ai.AiClientCancelledException {
       _showSnack('已取消');
@@ -180,6 +298,18 @@ class _FocusWrapUpSheetState extends ConsumerState<FocusWrapUpSheet> {
       }
       if (mounted) setState(() => _aiLoading = false);
     }
+  }
+
+  void _applyOfflineTemplate() {
+    final current = _progressController.text.trim();
+    if (current.isNotEmpty) return;
+
+    const template = '进展：\n- \n\n阻塞（可选）：\n- \n';
+    setState(() {
+      _progressController.text = template;
+      _hasProgress = true;
+    });
+    _showSnack('已插入离线模板（可直接改）');
   }
 
   void _showSnack(String message) {

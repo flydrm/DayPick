@@ -14,4 +14,3 @@ class NoteTitle {
 class NoteTitleEmptyException implements Exception {
   const NoteTitleEmptyException();
 }
-

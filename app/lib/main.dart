@@ -24,7 +24,9 @@ Future<void> main() async {
 
   await _rescheduleActivePomodoroNotification(container);
 
-  runApp(UncontrolledProviderScope(container: container, child: const DayPickApp()));
+  runApp(
+    UncontrolledProviderScope(container: container, child: const DayPickApp()),
+  );
 
   final launchTaskId = _taskIdFromPayload(launchPayload);
   if (launchTaskId != null) {
@@ -42,7 +44,9 @@ String? _taskIdFromPayload(String? payload) {
   return taskId.isEmpty ? null : taskId;
 }
 
-Future<void> _rescheduleActivePomodoroNotification(ProviderContainer container) async {
+Future<void> _rescheduleActivePomodoroNotification(
+  ProviderContainer container,
+) async {
   final config = await container.read(pomodoroConfigRepositoryProvider).get();
   final active = await container.read(activePomodoroRepositoryProvider).get();
   if (active == null) {
@@ -50,7 +54,8 @@ Future<void> _rescheduleActivePomodoroNotification(ProviderContainer container) 
     return;
   }
 
-  if (active.status != domain.ActivePomodoroStatus.running || active.endAt == null) {
+  if (active.status != domain.ActivePomodoroStatus.running ||
+      active.endAt == null) {
     await container.read(cancelPomodoroNotificationUseCaseProvider)();
     return;
   }
@@ -58,18 +63,15 @@ Future<void> _rescheduleActivePomodoroNotification(ProviderContainer container) 
   final endAt = active.endAt!;
   if (!endAt.isAfter(DateTime.now())) return;
 
-  final title = await _notificationTitleForActive(
-    container,
-    active,
-  );
+  final title = await _notificationTitleForActive(container, active);
 
   await container.read(schedulePomodoroNotificationUseCaseProvider)(
-        taskId: active.taskId,
-        taskTitle: title,
-        endAt: endAt,
-        playSound: config.notificationSound,
-        enableVibration: config.notificationVibration,
-      );
+    taskId: active.taskId,
+    taskTitle: title,
+    endAt: endAt,
+    playSound: config.notificationSound,
+    enableVibration: config.notificationVibration,
+  );
 }
 
 Future<String> _notificationTitleForActive(
@@ -78,11 +80,13 @@ Future<String> _notificationTitleForActive(
 ) async {
   return switch (active.phase) {
     domain.PomodoroPhase.focus => () async {
-        final task = await container.read(taskRepositoryProvider).getTaskById(active.taskId);
-        final taskTitle = task?.title.value.trim() ?? '';
-        if (taskTitle.isEmpty) return '专注结束';
-        return '专注结束 · $taskTitle';
-      }(),
+      final task = await container
+          .read(taskRepositoryProvider)
+          .getTaskById(active.taskId);
+      final taskTitle = task?.title.value.trim() ?? '';
+      if (taskTitle.isEmpty) return '专注结束';
+      return '专注结束 · $taskTitle';
+    }(),
     domain.PomodoroPhase.shortBreak => '短休结束',
     domain.PomodoroPhase.longBreak => '长休结束',
   };

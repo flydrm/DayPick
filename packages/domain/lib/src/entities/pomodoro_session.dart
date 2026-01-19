@@ -19,4 +19,3 @@ class PomodoroSession {
 
   Duration get duration => endAt.difference(startAt);
 }
-

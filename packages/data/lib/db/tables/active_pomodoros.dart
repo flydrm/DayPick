@@ -9,6 +9,7 @@ class ActivePomodoros extends Table {
   IntColumn get startAtUtcMillis => integer()();
   IntColumn get endAtUtcMillis => integer().nullable()();
   IntColumn get remainingMs => integer().nullable()();
+  TextColumn get focusNote => text().nullable()();
   IntColumn get updatedAtUtcMillis => integer()();
 
   @override

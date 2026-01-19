@@ -68,6 +68,7 @@ class DriftTaskRepository implements domain.TaskRepository {
         task.dueAt == null ? null : task.dueAt!.toUtc().millisecondsSinceEpoch,
       ),
       tagsJson: Value(jsonEncode(task.tags)),
+      triageStatus: Value(task.triageStatus.index),
       estimatedPomodoros: Value(task.estimatedPomodoros),
       createdAtUtcMillis: task.createdAt.toUtc().millisecondsSinceEpoch,
       updatedAtUtcMillis: task.updatedAt.toUtc().millisecondsSinceEpoch,
@@ -88,6 +89,7 @@ class DriftTaskRepository implements domain.TaskRepository {
               isUtc: true,
             ).toLocal(),
       tags: _decodeTags(row.tagsJson),
+      triageStatus: _decodeTriageStatus(row.triageStatus),
       estimatedPomodoros: row.estimatedPomodoros,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         row.createdAtUtcMillis,
@@ -98,6 +100,13 @@ class DriftTaskRepository implements domain.TaskRepository {
         isUtc: true,
       ).toLocal(),
     );
+  }
+
+  domain.TriageStatus _decodeTriageStatus(int value) {
+    if (value < 0 || value >= domain.TriageStatus.values.length) {
+      return domain.TriageStatus.scheduledLater;
+    }
+    return domain.TriageStatus.values[value];
   }
 
   List<String> _decodeTags(String tagsJson) {

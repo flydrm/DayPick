@@ -5,14 +5,20 @@ import 'package:domain/domain.dart' as domain;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
+import '../../../ui/tokens/dp_insets.dart';
+import '../../../ui/tokens/dp_spacing.dart';
 import '../../notes/providers/note_providers.dart';
 import '../../tasks/providers/task_providers.dart';
 import '../model/ai_evidence_item.dart';
 import '../model/time_range_key.dart';
 import '../providers/ai_providers.dart';
+import 'ai_send_field_chip.dart';
+import 'ai_send_preview_sheet.dart';
 
 class AiDailyReviewPage extends ConsumerStatefulWidget {
   const AiDailyReviewPage({super.key});
@@ -29,6 +35,12 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
   String? _tagFilter;
   String _query = '';
   final Set<String> _selectedKeys = <String>{};
+
+  bool _sendIncludeTaskDescription = true;
+  bool _sendIncludeTaskDueDate = true;
+  bool _sendIncludeTags = true;
+  bool _sendIncludeNoteSnippet = true;
+  bool _sendIncludeSessionProgressNote = true;
 
   ai.AiCancelToken? _cancelToken;
   bool _generating = false;
@@ -51,6 +63,8 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     final configAsync = ref.watch(aiConfigProvider);
     final tasksAsync = ref.watch(tasksStreamProvider);
     final notesAsync = ref.watch(notesStreamProvider);
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
 
     final range = _yesterdayRange(DateTime.now());
     final sessionsAsync = ref.watch(
@@ -78,6 +92,11 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
       sessions: sessions,
       startInclusive: range.startInclusive,
       endExclusive: range.endExclusive,
+      includeTaskDescription: _sendIncludeTaskDescription,
+      includeTaskDueDate: _sendIncludeTaskDueDate,
+      includeTags: _sendIncludeTags,
+      includeNoteSnippet: _sendIncludeNoteSnippet,
+      includeSessionProgressNote: _sendIncludeSessionProgressNote,
     );
     final availableTags = _availableTags(evidenceAll);
     final evidence = _applyFilters(evidenceAll);
@@ -87,167 +106,340 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     return AppPageScaffold(
       title: '昨日回顾（AI）',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: DpInsets.page,
         children: [
           _buildConfigCard(context, configAsync),
-          const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.date_range_outlined),
-              title: const Text('范围：昨天'),
-              subtitle: Text(_formatDateYmd(range.startInclusive)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    '关注点（可选）',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _focusController,
-                    enabled: !_generating && !_saving,
-                    decoration: const InputDecoration(
-                      hintText: '例如：阻塞/风险、客户沟通、交付节奏',
-                      border: OutlineInputBorder(),
-                    ),
-                    minLines: 1,
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: (!ready || _saving)
-                        ? null
-                        : (_generating ? _cancelGenerate : _generate),
-                    child: Text(_generating ? '生成中…（点此停止）' : '生成昨日回顾草稿'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    '证据（昨天）',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFilterRow(),
-                  if (availableTags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ChoiceChip(
-                          label: const Text('全部标签'),
-                          selected: _tagFilter == null,
-                          onSelected: _generating || _saving
-                              ? null
-                              : (_) => setState(() => _tagFilter = null),
-                        ),
-                        for (final tag in availableTags)
-                          ChoiceChip(
-                            label: Text(tag),
-                            selected: _tagFilter == tag,
-                            onSelected: _generating || _saving
-                                ? null
-                                : (_) {
-                                    final next = _tagFilter == tag ? null : tag;
-                                    setState(() => _tagFilter = next);
-                                  },
-                          ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  if (isLoading)
-                    const LinearProgressIndicator()
-                  else if (tasksAsync.hasError ||
-                      notesAsync.hasError ||
-                      sessionsAsync.hasError)
-                    Text(
-                      '加载失败：${tasksAsync.error ?? notesAsync.error ?? sessionsAsync.error}',
-                    )
-                  else if (evidenceAll.isEmpty)
-                    const Text('昨天没有可用证据。可以先补充笔记或完成一次专注。')
-                  else if (evidence.isEmpty)
-                    const Text('没有匹配的证据，请调整筛选条件。')
-                  else ...[
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: _generating || _saving
-                              ? null
-                              : () => setState(
-                                  () => _selectedKeys
-                                    ..clear()
-                                    ..addAll(evidence.map((e) => e.key)),
-                                ),
-                          child: const Text('全选当前'),
-                        ),
-                        TextButton(
-                          onPressed: _generating || _saving
-                              ? null
-                              : () => setState(() => _selectedKeys.clear()),
-                          child: const Text('清空'),
-                        ),
-                        const Spacer(),
-                        Text('已选 ${_selectedKeys.length}'),
-                      ],
-                    ),
-                    const Divider(height: 0),
-                    for (final item in evidence) ...[
-                      CheckboxListTile(
-                        value: _selectedKeys.contains(item.key),
-                        onChanged: _generating || _saving
-                            ? null
-                            : (v) => setState(() {
-                                if (v == true) {
-                                  _selectedKeys.add(item.key);
-                                } else {
-                                  _selectedKeys.remove(item.key);
-                                }
-                              }),
-                        title: Text(
-                          '${item.typeLabel} · ${item.title}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          item.snippet.isEmpty
-                              ? _formatDate(item.at)
-                              : '${_formatDate(item.at)} · ${item.snippet}',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        secondary: IconButton(
-                          tooltip: '打开',
-                          onPressed: () => context.push(item.route),
-                          icon: const Icon(Icons.open_in_new_outlined),
+          const SizedBox(height: DpSpacing.md),
+          ShadCard(
+            padding: DpInsets.card,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.date_range_outlined,
+                  color: colorScheme.mutedForeground,
+                ),
+                const SizedBox(width: DpSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '范围：昨天',
+                        style: shadTheme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.foreground,
                         ),
                       ),
-                      const Divider(height: 0),
+                      const SizedBox(height: DpSpacing.xs),
+                      Text(
+                        _formatDateYmd(range.startInclusive),
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
                     ],
-                  ],
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DpSpacing.md),
+          ShadCard(
+            padding: DpInsets.card,
+            title: Text(
+              '关注点（可选）',
+              style: shadTheme.textTheme.small.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.foreground,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ShadInput(
+                  controller: _focusController,
+                  enabled: !_generating && !_saving,
+                  minLines: 1,
+                  maxLines: 3,
+                  placeholder: Text(
+                    '例如：阻塞/风险、客户沟通、交付节奏',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  ),
+                  leading: const Icon(
+                    Icons.center_focus_strong_outlined,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(height: DpSpacing.md),
+                ShadButton(
+                  onPressed: _saving
+                      ? null
+                      : (_generating ? _cancelGenerate : _generate),
+                  leading: _generating
+                      ? const DpSpinner(size: 16, strokeWidth: 2)
+                      : const Icon(Icons.auto_awesome_outlined, size: 18),
+                  child: Text(
+                    _generating
+                        ? '生成中…（点此停止）'
+                        : (ready ? '生成昨日回顾草稿' : '生成离线草稿'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: DpSpacing.md),
+          ShadCard(
+            padding: DpInsets.card,
+            title: Text(
+              '证据（昨天）',
+              style: shadTheme.textTheme.small.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.foreground,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '发送字段（可切换）：',
+                  style: shadTheme.textTheme.small.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.foreground,
+                  ),
+                ),
+                const SizedBox(height: DpSpacing.sm),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    AiSendFieldChip(
+                      label: '任务描述',
+                      selected: _sendIncludeTaskDescription,
+                      enabled: !_generating && !_saving,
+                      onTap: () => setState(() {
+                        _sendIncludeTaskDescription =
+                            !_sendIncludeTaskDescription;
+                        _resetResult();
+                      }),
+                    ),
+                    AiSendFieldChip(
+                      label: '任务到期',
+                      selected: _sendIncludeTaskDueDate,
+                      enabled: !_generating && !_saving,
+                      onTap: () => setState(() {
+                        _sendIncludeTaskDueDate = !_sendIncludeTaskDueDate;
+                        _resetResult();
+                      }),
+                    ),
+                    AiSendFieldChip(
+                      label: '标签',
+                      selected: _sendIncludeTags,
+                      enabled: !_generating && !_saving,
+                      onTap: () => setState(() {
+                        _sendIncludeTags = !_sendIncludeTags;
+                        _resetResult();
+                      }),
+                    ),
+                    AiSendFieldChip(
+                      label: '笔记摘要',
+                      selected: _sendIncludeNoteSnippet,
+                      enabled: !_generating && !_saving,
+                      onTap: () => setState(() {
+                        _sendIncludeNoteSnippet = !_sendIncludeNoteSnippet;
+                        _resetResult();
+                      }),
+                    ),
+                    AiSendFieldChip(
+                      label: '专注进展',
+                      selected: _sendIncludeSessionProgressNote,
+                      enabled: !_generating && !_saving,
+                      onTap: () => setState(() {
+                        _sendIncludeSessionProgressNote =
+                            !_sendIncludeSessionProgressNote;
+                        _resetResult();
+                      }),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: DpSpacing.md),
+                _buildFilterRow(),
+                if (availableTags.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      (_tagFilter == null)
+                          ? ShadButton.secondary(
+                              size: ShadButtonSize.sm,
+                              onPressed: _generating || _saving
+                                  ? null
+                                  : () => setState(() => _tagFilter = null),
+                              child: const Text('全部标签'),
+                            )
+                          : ShadButton.outline(
+                              size: ShadButtonSize.sm,
+                              onPressed: _generating || _saving
+                                  ? null
+                                  : () => setState(() => _tagFilter = null),
+                              child: const Text('全部标签'),
+                            ),
+                      for (final tag in availableTags)
+                        (_tagFilter == tag)
+                            ? ShadButton.secondary(
+                                size: ShadButtonSize.sm,
+                                onPressed: _generating || _saving
+                                    ? null
+                                    : () => setState(() => _tagFilter = null),
+                                child: Text(tag),
+                              )
+                            : ShadButton.outline(
+                                size: ShadButtonSize.sm,
+                                onPressed: _generating || _saving
+                                    ? null
+                                    : () => setState(() => _tagFilter = tag),
+                                child: Text(tag),
+                              ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: DpSpacing.md),
+                if (isLoading)
+                  const ShadProgress(minHeight: 8)
+                else if (tasksAsync.hasError ||
+                    notesAsync.hasError ||
+                    sessionsAsync.hasError)
+                  ShadAlert.destructive(
+                    icon: const Icon(Icons.error_outline),
+                    title: const Text('加载失败'),
+                    description: Text(
+                      '${tasksAsync.error ?? notesAsync.error ?? sessionsAsync.error}',
+                    ),
+                  )
+                else if (evidenceAll.isEmpty)
+                  Text(
+                    '昨天没有可用证据。可以先补充笔记或完成一次专注。',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  )
+                else if (evidence.isEmpty)
+                  Text(
+                    '没有匹配的证据，请调整筛选条件。',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      ShadButton.ghost(
+                        size: ShadButtonSize.sm,
+                        onPressed: _generating || _saving
+                            ? null
+                            : () => setState(
+                                () => _selectedKeys
+                                  ..clear()
+                                  ..addAll(evidence.map((e) => e.key)),
+                              ),
+                        child: const Text('全选当前'),
+                      ),
+                      ShadButton.ghost(
+                        size: ShadButtonSize.sm,
+                        onPressed: _generating || _saving
+                            ? null
+                            : () => setState(() => _selectedKeys.clear()),
+                        child: const Text('清空'),
+                      ),
+                      const Spacer(),
+                      Tooltip(
+                        message: '预览本次发送',
+                        child: ShadIconButton.ghost(
+                          icon: const Icon(Icons.visibility_outlined, size: 18),
+                          onPressed:
+                              (_generating || _saving || _selectedKeys.isEmpty)
+                              ? null
+                              : () => _openSendPreview(
+                                  context,
+                                  config: config,
+                                  range: range,
+                                  evidenceAll: evidenceAll,
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '已选 ${_selectedKeys.length}',
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(height: 0, color: colorScheme.border),
+                  ShadCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < evidence.length; i++) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: ShadCheckbox(
+                                    value: _selectedKeys.contains(
+                                      evidence[i].key,
+                                    ),
+                                    enabled: !_generating && !_saving,
+                                    onChanged: (v) => setState(() {
+                                      if (v) {
+                                        _selectedKeys.add(evidence[i].key);
+                                      } else {
+                                        _selectedKeys.remove(evidence[i].key);
+                                      }
+                                    }),
+                                    label: Text(
+                                      '${evidence[i].typeLabel} · ${evidence[i].title}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    sublabel: Text(
+                                      evidence[i].snippet.isEmpty
+                                          ? _formatDate(evidence[i].at)
+                                          : '${_formatDate(evidence[i].at)} · ${evidence[i].snippet}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                Tooltip(
+                                  message: '打开',
+                                  child: ShadIconButton.ghost(
+                                    icon: const Icon(
+                                      Icons.open_in_new_outlined,
+                                      size: 18,
+                                    ),
+                                    onPressed: () =>
+                                        context.push(evidence[i].route),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (i != evidence.length - 1)
+                            Divider(height: 0, color: colorScheme.border),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: DpSpacing.md),
           if (_answer != null) _buildDraftCard(context),
         ],
       ),
@@ -258,49 +450,128 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     BuildContext context,
     AsyncValue<domain.AiProviderConfig?> configAsync,
   ) {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     return configAsync.when(
-      loading: () => const LinearProgressIndicator(),
-      error: (error, stack) => Card(
-        child: ListTile(
-          leading: const Icon(Icons.error_outline),
-          title: const Text('AI 配置读取失败'),
-          subtitle: Text('$error'),
-          trailing: TextButton(
-            onPressed: () => context.push('/settings/ai'),
-            child: const Text('去设置'),
-          ),
+      loading: () => const ShadProgress(minHeight: 8),
+      error: (error, stack) => ShadCard(
+        padding: DpInsets.card,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.destructive),
+            const SizedBox(width: DpSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'AI 配置读取失败',
+                    style: shadTheme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.foreground,
+                    ),
+                  ),
+                  const SizedBox(height: DpSpacing.xs),
+                  Text(
+                    '$error',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: DpSpacing.md),
+            ShadButton.secondary(
+              size: ShadButtonSize.sm,
+              onPressed: () => context.push('/settings/ai'),
+              child: const Text('去设置'),
+            ),
+          ],
         ),
       ),
       data: (config) {
         final ready =
             config != null && (config.apiKey?.trim().isNotEmpty ?? false);
         if (!ready) {
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: const Text('AI 未配置'),
-              subtitle: const Text('先在设置里配置 baseUrl / model / apiKey'),
-              trailing: TextButton(
-                onPressed: () => context.push('/settings/ai'),
-                child: const Text('设置'),
-              ),
-              onTap: () => context.push('/settings/ai'),
+          return ShadCard(
+            padding: DpInsets.card,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber_outlined,
+                  color: colorScheme.mutedForeground,
+                ),
+                const SizedBox(width: DpSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'AI 未配置',
+                        style: shadTheme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.foreground,
+                        ),
+                      ),
+                      const SizedBox(height: DpSpacing.xs),
+                      Text(
+                        '先在设置里配置 baseUrl / model / apiKey',
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: DpSpacing.md),
+                ShadButton.secondary(
+                  size: ShadButtonSize.sm,
+                  onPressed: () => context.push('/settings/ai'),
+                  child: const Text('设置'),
+                ),
+              ],
             ),
           );
         }
 
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.check_circle_outline),
-            title: const Text('AI 已就绪'),
-            subtitle: Text(
-              '${config.model} · ${_shortBaseUrl(config.baseUrl)}',
-            ),
-            trailing: TextButton(
-              onPressed: () => context.push('/settings/ai'),
-              child: const Text('设置'),
-            ),
-            onTap: () => context.push('/settings/ai'),
+        return ShadCard(
+          padding: DpInsets.card,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.check_circle_outline, color: colorScheme.primary),
+              const SizedBox(width: DpSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'AI 已就绪',
+                      style: shadTheme.textTheme.small.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: DpSpacing.xs),
+                    Text(
+                      '${config.model} · ${_shortBaseUrl(config.baseUrl)}',
+                      style: shadTheme.textTheme.muted.copyWith(
+                        color: colorScheme.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: DpSpacing.md),
+              ShadButton.secondary(
+                size: ShadButtonSize.sm,
+                onPressed: () => context.push('/settings/ai'),
+                child: const Text('设置'),
+              ),
+            ],
           ),
         );
       },
@@ -308,40 +579,58 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
   }
 
   Widget _buildFilterRow() {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     return Row(
       children: [
         Expanded(
-          child: TextField(
+          child: ShadInput(
             enabled: !_generating && !_saving,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: '筛选（标题/摘要）',
-              border: OutlineInputBorder(),
+            placeholder: Text(
+              '筛选（标题/摘要）',
+              style: shadTheme.textTheme.muted.copyWith(
+                color: colorScheme.mutedForeground,
+              ),
             ),
+            leading: const Icon(Icons.search, size: 18),
             onChanged: (v) => setState(() => _query = v),
           ),
         ),
         const SizedBox(width: 8),
-        PopupMenuButton<AiEvidenceType?>(
-          tooltip: '类型筛选',
-          enabled: !_generating && !_saving,
-          onSelected: (v) => setState(() => _typeFilter = v),
-          itemBuilder: (context) => const [
-            PopupMenuItem(value: null, child: Text('全部类型')),
-            PopupMenuItem(value: AiEvidenceType.note, child: Text('笔记')),
-            PopupMenuItem(value: AiEvidenceType.task, child: Text('任务')),
-            PopupMenuItem(value: AiEvidenceType.pomodoro, child: Text('专注')),
-          ],
-          child: Chip(
-            label: Text(
-              _typeFilter == null
+        SizedBox(
+          width: 128,
+          child: ShadSelect<AiEvidenceType?>(
+            enabled: !_generating && !_saving,
+            initialValue: _typeFilter,
+            selectedOptionBuilder: (context, value) => Text(
+              value == null
                   ? '全部'
-                  : _typeFilter == AiEvidenceType.note
+                  : value == AiEvidenceType.note
                   ? '笔记'
-                  : _typeFilter == AiEvidenceType.task
+                  : value == AiEvidenceType.task
                   ? '任务'
                   : '专注',
+              style: shadTheme.textTheme.small.copyWith(
+                color: colorScheme.foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            options: const [
+              ShadOption<AiEvidenceType?>(value: null, child: Text('全部类型')),
+              ShadOption<AiEvidenceType?>(
+                value: AiEvidenceType.note,
+                child: Text('笔记'),
+              ),
+              ShadOption<AiEvidenceType?>(
+                value: AiEvidenceType.task,
+                child: Text('任务'),
+              ),
+              ShadOption<AiEvidenceType?>(
+                value: AiEvidenceType.pomodoro,
+                child: Text('专注'),
+              ),
+            ],
+            onChanged: (v) => setState(() => _typeFilter = v),
           ),
         ),
       ],
@@ -352,13 +641,84 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     _cancelToken?.cancel('user');
   }
 
-  Future<void> _generate() async {
-    final config = await ref.read(aiConfigProvider.future);
-    if (config == null || (config.apiKey?.trim().isEmpty ?? true)) {
-      _showSnack('请先完成 AI 配置');
+  void _resetResult() {
+    _answer = null;
+    _draftController.text = '';
+  }
+
+  Future<void> _openSendPreview(
+    BuildContext context, {
+    required domain.AiProviderConfig? config,
+    required _DayRange range,
+    required List<AiEvidenceItem> evidenceAll,
+  }) async {
+    final selected = evidenceAll
+        .where((e) => _selectedKeys.contains(e.key))
+        .toList(growable: false);
+    if (selected.isEmpty) {
+      _showSnack('请至少选择 1 条证据');
       return;
     }
 
+    final focus = _focusController.text.trim();
+    final dayText = _formatDateYmd(range.startInclusive);
+    final question = _buildQuestion(dayText: dayText, focus: focus);
+    final blocks = _buildEvidenceBlocks(selected);
+
+    final ready = config != null && (config.apiKey?.trim().isNotEmpty ?? false);
+    final destination = ready
+        ? '将发送到：${config.model} · ${_shortBaseUrl(config.baseUrl)}'
+        : '离线草稿：不会联网发送';
+
+    final previewText = [
+      '# 发送预览',
+      destination,
+      '',
+      '问题：',
+      question,
+      '',
+      '证据（${blocks.length}）：',
+      ...blocks,
+    ].join('\n');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => AiSendPreviewSheet(
+        destination: destination,
+        previewText: previewText,
+        sections: [
+          AiSendPreviewSection(title: '问题', body: question),
+          AiSendPreviewSection(title: '证据', body: blocks.join('\n\n')),
+        ],
+      ),
+    );
+  }
+
+  String _buildQuestion({required String dayText, required String focus}) {
+    return [
+      '请基于证据，生成昨日回顾草稿（$dayText）。',
+      '要求：文案克制、商务稳重；只使用证据内容，禁止编造；缺少信息要明确“证据不足”。',
+      '结构：',
+      '1) 一句话总结',
+      '2) 完成了什么（任务/专注汇总，3–6 条）',
+      '3) 关键产出（2–5 条）',
+      '4) 风险/阻塞（0–3 条）',
+      '5) 明日建议（3–5 条，动词开头）',
+      if (focus.isNotEmpty) '用户关注点：$focus',
+    ].join('\n');
+  }
+
+  List<String> _buildEvidenceBlocks(List<AiEvidenceItem> selected) {
+    return [
+      for (var i = 0; i < selected.length; i++)
+        '[${i + 1}] ${selected[i].type.name.toUpperCase()} ${selected[i].title}\n${selected[i].snippet}'
+            .trimRight(),
+    ];
+  }
+
+  Future<void> _generate() async {
     final range = _yesterdayRange(DateTime.now());
     final tasks = await ref.read(tasksStreamProvider.future);
     final notes = await ref.read(notesStreamProvider.future);
@@ -377,6 +737,11 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
       sessions: sessions,
       startInclusive: range.startInclusive,
       endExclusive: range.endExclusive,
+      includeTaskDescription: _sendIncludeTaskDescription,
+      includeTaskDueDate: _sendIncludeTaskDueDate,
+      includeTags: _sendIncludeTags,
+      includeNoteSnippet: _sendIncludeNoteSnippet,
+      includeSessionProgressNote: _sendIncludeSessionProgressNote,
     );
     final selected = evidenceAll
         .where((e) => _selectedKeys.contains(e.key))
@@ -390,6 +755,9 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
       return;
     }
 
+    final config = await ref.read(aiConfigProvider.future);
+    final ready = config != null && (config.apiKey?.trim().isNotEmpty ?? false);
+
     setState(() {
       _generating = true;
       _answer = null;
@@ -397,31 +765,33 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
       _draftController.text = '';
     });
 
-    final cancelToken = ai.AiCancelToken();
+    ai.AiCancelToken? cancelToken;
     try {
-      _cancelToken = cancelToken;
       final focus = _focusController.text.trim();
       final dayText = _formatDateYmd(range.startInclusive);
 
-      final question = [
-        '请基于证据，生成昨日回顾草稿（$dayText）。',
-        '要求：文案克制、商务稳重；只使用证据内容，禁止编造；缺少信息要明确“证据不足”。',
-        '结构：',
-        '1) 一句话总结',
-        '2) 完成了什么（任务/专注汇总，3–6 条）',
-        '3) 关键产出（2–5 条）',
-        '4) 风险/阻塞（0–3 条）',
-        '5) 明日建议（3–5 条，动词开头）',
-        if (focus.isNotEmpty) '用户关注点：$focus',
-      ].join('\n');
-
-      final blocks = <String>[];
-      for (var i = 0; i < selected.length; i++) {
-        final e = selected[i];
-        blocks.add(
-          '[${i + 1}] ${e.type.name.toUpperCase()} ${e.title}\n${e.snippet}',
+      if (!ready) {
+        _cancelToken = null;
+        final draft = _offlineDailyReviewDraft(
+          dayText: dayText,
+          selected: selected,
+          focus: focus.isEmpty ? null : focus,
         );
+        setState(() {
+          _answer = ai.AiEvidenceAnswer(
+            answer: draft,
+            citations: const <int>[],
+            insufficientEvidence: true,
+          );
+          _draftController.text = draft;
+        });
+        return;
       }
+
+      cancelToken = ai.AiCancelToken();
+      _cancelToken = cancelToken;
+      final question = _buildQuestion(dayText: dayText, focus: focus);
+      final blocks = _buildEvidenceBlocks(selected);
 
       final result = await ref
           .read(openAiClientProvider)
@@ -458,11 +828,41 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     } catch (e) {
       _showSnack('生成失败：$e');
     } finally {
-      if (identical(_cancelToken, cancelToken)) {
+      if (cancelToken != null && identical(_cancelToken, cancelToken)) {
         _cancelToken = null;
       }
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  String _offlineDailyReviewDraft({
+    required String dayText,
+    required List<AiEvidenceItem> selected,
+    required String? focus,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('# 昨日回顾（离线草稿）');
+    buffer.writeln();
+    buffer.writeln('- 日期：$dayText');
+    if (focus != null) buffer.writeln('- 关注点：$focus');
+    buffer.writeln();
+    buffer.writeln('## 一句话总结');
+    buffer.writeln('- （待补）');
+    buffer.writeln();
+    buffer.writeln('## 事实（证据摘录）');
+    for (final e in selected) {
+      buffer.writeln('- ${e.typeLabel} · ${e.title}');
+    }
+    buffer.writeln();
+    buffer.writeln('## 关键产出');
+    buffer.writeln('- （待补）');
+    buffer.writeln();
+    buffer.writeln('## 风险/阻塞');
+    buffer.writeln('- （待补）');
+    buffer.writeln();
+    buffer.writeln('## 明日建议');
+    buffer.writeln('- （动词开头，3–5 条）');
+    return buffer.toString().trimRight();
   }
 
   void _maybeAutoSelectTopEvidence({
@@ -488,75 +888,121 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
   }
 
   Widget _buildDraftCard(BuildContext context) {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     final answer = _answer!;
     final cited = answer.citations
         .where((i) => i >= 1 && i <= _lastSelectedEvidence.length)
         .map((i) => MapEntry(i, _lastSelectedEvidence[i - 1]))
         .toList(growable: false);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return ShadCard(
+      padding: DpInsets.card,
+      title: Text(
+        answer.insufficientEvidence ? '草稿（证据不足）' : '草稿（可编辑）',
+        style: shadTheme.textTheme.small.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colorScheme.foreground,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ShadInput(
+            controller: _draftController,
+            enabled: !_saving,
+            minLines: 8,
+            maxLines: 20,
+            placeholder: Text(
+              '可在此编辑后保存为笔记（只追加不覆盖）。',
+              style: shadTheme.textTheme.muted.copyWith(
+                color: colorScheme.mutedForeground,
+              ),
+            ),
+          ),
+          const SizedBox(height: DpSpacing.md),
+          if (!answer.insufficientEvidence) ...[
             Text(
-              answer.insufficientEvidence ? '草稿（证据不足）' : '草稿（可编辑）',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              '引用',
+              style: shadTheme.textTheme.small.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.foreground,
+              ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: _draftController,
-              enabled: !_saving,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: '可在此编辑后保存为笔记（只追加不覆盖）。',
-              ),
-              minLines: 8,
-              maxLines: 20,
-            ),
-            const SizedBox(height: 12),
-            if (!answer.insufficientEvidence) ...[
-              const Text(
-                '引用',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              if (cited.length < 2)
-                const Text('引用不足（应为 2–5 条）。建议补充证据后重试。')
-              else
-                for (final entry in cited)
-                  ListTile(
-                    leading: CircleAvatar(
-                      radius: 12,
-                      child: Text(
-                        '${entry.key}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                    title: Text(
-                      '${entry.value.typeLabel} · ${entry.value.title}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: entry.value.snippet.isEmpty
-                        ? null
-                        : Text(
-                            entry.value.snippet,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+            if (cited.length < 2)
+              ShadAlert.destructive(
+                icon: const Icon(Icons.info_outline),
+                title: const Text('引用不足'),
+                description: const Text('应为 2–5 条。建议补充证据后重试。'),
+              )
+            else
+              ShadCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < cited.length; i++) ...[
+                      InkWell(
+                        onTap: () => context.push(cited[i].value.route),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          child: Row(
+                            children: [
+                              ShadBadge.secondary(
+                                child: Text('${cited[i].key}'),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${cited[i].value.typeLabel} · ${cited[i].value.title}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: shadTheme.textTheme.small.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.foreground,
+                                      ),
+                                    ),
+                                    if (cited[i].value.snippet.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        cited[i].value.snippet,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: shadTheme.textTheme.muted
+                                            .copyWith(
+                                              color:
+                                                  colorScheme.mutedForeground,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                size: 18,
+                                color: colorScheme.mutedForeground,
+                              ),
+                            ],
                           ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(entry.value.route),
-                  ),
-            ],
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _saving ? null : _saveToNote,
-              child: Text(_saving ? '保存中…' : '保存为笔记（只追加不覆盖）'),
-            ),
+                        ),
+                      ),
+                      if (i != cited.length - 1)
+                        Divider(height: 0, color: colorScheme.border),
+                    ],
+                  ],
+                ),
+              ),
           ],
-        ),
+          const SizedBox(height: 12),
+          ShadButton(
+            onPressed: _saving ? null : _saveToNote,
+            child: Text(_saving ? '保存中…' : '保存为笔记（只追加不覆盖）'),
+          ),
+        ],
       ),
     );
   }
@@ -592,10 +1038,16 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
               .toList()
             ..sort();
 
+      String routeToken(AiEvidenceItem item) {
+        final route = item.route.trim();
+        if (route.isEmpty) return '';
+        return ' [[route:$route]]';
+      }
+
       final evidenceList = <String>[
         '证据（本次发送 ${selected.length} 条）：',
         for (var i = 0; i < selected.length; i++)
-          '- [${i + 1}] ${selected[i].typeLabel} · ${selected[i].title}',
+          '- [${i + 1}] ${selected[i].typeLabel} · ${selected[i].title}${routeToken(selected[i])}',
       ].join('\n');
 
       final citationsList = citations.isEmpty
@@ -603,7 +1055,7 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
           : [
               '引用：',
               for (final c in citations)
-                '- [$c] ${selected[c - 1].typeLabel} · ${selected[c - 1].title}',
+                '- [$c] ${selected[c - 1].typeLabel} · ${selected[c - 1].title}${routeToken(selected[c - 1])}',
             ].join('\n');
 
       final section = [
@@ -680,6 +1132,11 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
     required List<domain.PomodoroSession> sessions,
     required DateTime startInclusive,
     required DateTime endExclusive,
+    required bool includeTaskDescription,
+    required bool includeTaskDueDate,
+    required bool includeTags,
+    required bool includeNoteSnippet,
+    required bool includeSessionProgressNote,
   }) {
     final byTaskId = {for (final t in tasks) t.id: t};
     final items = <AiEvidenceItem>[];
@@ -691,7 +1148,7 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
           key: 'note:${note.id}',
           type: AiEvidenceType.note,
           title: note.title.value,
-          snippet: _snippet(note.body),
+          snippet: includeNoteSnippet ? _snippet(note.body) : '',
           route: '/notes/${note.id}',
           at: note.updatedAt,
           tags: note.tags,
@@ -711,9 +1168,10 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
           : '${task.dueAt!.month}/${task.dueAt!.day}';
       final parts = <String>[
         status,
-        if (due != null) '到期 $due',
-        if (task.tags.isNotEmpty) task.tags.take(3).join(' · '),
-        if (task.description?.trim().isNotEmpty == true)
+        if (includeTaskDueDate && due != null) '到期 $due',
+        if (includeTags && task.tags.isNotEmpty) task.tags.take(3).join(' · '),
+        if (includeTaskDescription &&
+            task.description?.trim().isNotEmpty == true)
           _oneLine(task.description!),
       ];
       items.add(
@@ -737,7 +1195,7 @@ class _AiDailyReviewPageState extends ConsumerState<AiDailyReviewPage> {
       final note = session.progressNote?.trim();
       final snippetParts = <String>[
         '时长 ${durationMinutes}min',
-        if (note != null && note.isNotEmpty) note,
+        if (includeSessionProgressNote && note != null && note.isNotEmpty) note,
       ];
 
       items.add(

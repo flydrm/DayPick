@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_create_memo"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="闪念"
+        android:shortcutLongLabel="快速闪念"
+        android:shortcutDisabledMessage="快捷入口不可用">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.xx.daypick"
+            android:targetClass="com.xx.daypick.MainActivity"
+            android:data="daypick:///create?type=memo" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="quick_create_task"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="任务"
+        android:shortcutLongLabel="快速创建任务"
+        android:shortcutDisabledMessage="快捷入口不可用">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.xx.daypick"
+            android:targetClass="com.xx.daypick.MainActivity"
+            android:data="daypick:///create?type=task" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="quick_focus"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="专注"
+        android:shortcutLongLabel="开始专注（选择任务）"
+        android:shortcutDisabledMessage="快捷入口不可用">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.xx.daypick"
+            android:targetClass="com.xx.daypick.MainActivity"
+            android:data="daypick:///focus" />
+    </shortcut>
+</shortcuts>

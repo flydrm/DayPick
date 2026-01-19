@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureAiConfigRepository implements domain.AiConfigRepository {
   SecureAiConfigRepository({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const _keyBaseUrl = 'ai.baseUrl';
   static const _keyModel = 'ai.model';
@@ -56,6 +56,15 @@ class SecureAiConfigRepository implements domain.AiConfigRepository {
   }
 
   @override
+  Future<void> clearApiKey() async {
+    await _storage.delete(key: _keyApiKey);
+    await _storage.write(
+      key: _keyUpdatedAt,
+      value: DateTime.now().toIso8601String(),
+    );
+  }
+
+  @override
   Future<void> clear() async {
     await _storage.delete(key: _keyBaseUrl);
     await _storage.delete(key: _keyModel);
@@ -63,4 +72,3 @@ class SecureAiConfigRepository implements domain.AiConfigRepository {
     await _storage.delete(key: _keyUpdatedAt);
   }
 }
-

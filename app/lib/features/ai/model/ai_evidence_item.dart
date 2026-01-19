@@ -20,9 +20,8 @@ class AiEvidenceItem {
   final List<String> tags;
 
   String get typeLabel => switch (type) {
-        AiEvidenceType.note => '笔记',
-        AiEvidenceType.task => '任务',
-        AiEvidenceType.pomodoro => '专注',
-      };
+    AiEvidenceType.note => '笔记',
+    AiEvidenceType.task => '任务',
+    AiEvidenceType.pomodoro => '专注',
+  };
 }
-

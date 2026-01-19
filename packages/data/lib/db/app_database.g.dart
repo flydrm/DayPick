@@ -80,6 +80,18 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _triageStatusMeta = const VerificationMeta(
+    'triageStatus',
+  );
+  @override
+  late final GeneratedColumn<int> triageStatus = GeneratedColumn<int>(
+    'triage_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(2),
+  );
   static const VerificationMeta _estimatedPomodorosMeta =
       const VerificationMeta('estimatedPomodoros');
   @override
@@ -119,6 +131,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
     priority,
     dueAtUtcMillis,
     tagsJson,
+    triageStatus,
     estimatedPomodoros,
     createdAtUtcMillis,
     updatedAtUtcMillis,
@@ -186,6 +199,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
       context.handle(
         _tagsJsonMeta,
         tagsJson.isAcceptableOrUnknown(data['tags_json']!, _tagsJsonMeta),
+      );
+    }
+    if (data.containsKey('triage_status')) {
+      context.handle(
+        _triageStatusMeta,
+        triageStatus.isAcceptableOrUnknown(
+          data['triage_status']!,
+          _triageStatusMeta,
+        ),
       );
     }
     if (data.containsKey('estimated_pomodoros')) {
@@ -256,6 +278,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
         DriftSqlType.string,
         data['${effectivePrefix}tags_json'],
       )!,
+      triageStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}triage_status'],
+      )!,
       estimatedPomodoros: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}estimated_pomodoros'],
@@ -285,6 +311,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
   final int priority;
   final int? dueAtUtcMillis;
   final String tagsJson;
+  final int triageStatus;
   final int? estimatedPomodoros;
   final int createdAtUtcMillis;
   final int updatedAtUtcMillis;
@@ -296,6 +323,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     required this.priority,
     this.dueAtUtcMillis,
     required this.tagsJson,
+    required this.triageStatus,
     this.estimatedPomodoros,
     required this.createdAtUtcMillis,
     required this.updatedAtUtcMillis,
@@ -314,6 +342,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       map['due_at_utc_millis'] = Variable<int>(dueAtUtcMillis);
     }
     map['tags_json'] = Variable<String>(tagsJson);
+    map['triage_status'] = Variable<int>(triageStatus);
     if (!nullToAbsent || estimatedPomodoros != null) {
       map['estimated_pomodoros'] = Variable<int>(estimatedPomodoros);
     }
@@ -335,6 +364,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ? const Value.absent()
           : Value(dueAtUtcMillis),
       tagsJson: Value(tagsJson),
+      triageStatus: Value(triageStatus),
       estimatedPomodoros: estimatedPomodoros == null && nullToAbsent
           ? const Value.absent()
           : Value(estimatedPomodoros),
@@ -356,6 +386,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       priority: serializer.fromJson<int>(json['priority']),
       dueAtUtcMillis: serializer.fromJson<int?>(json['dueAtUtcMillis']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
+      triageStatus: serializer.fromJson<int>(json['triageStatus']),
       estimatedPomodoros: serializer.fromJson<int?>(json['estimatedPomodoros']),
       createdAtUtcMillis: serializer.fromJson<int>(json['createdAtUtcMillis']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
@@ -372,6 +403,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       'priority': serializer.toJson<int>(priority),
       'dueAtUtcMillis': serializer.toJson<int?>(dueAtUtcMillis),
       'tagsJson': serializer.toJson<String>(tagsJson),
+      'triageStatus': serializer.toJson<int>(triageStatus),
       'estimatedPomodoros': serializer.toJson<int?>(estimatedPomodoros),
       'createdAtUtcMillis': serializer.toJson<int>(createdAtUtcMillis),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
@@ -386,6 +418,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     int? priority,
     Value<int?> dueAtUtcMillis = const Value.absent(),
     String? tagsJson,
+    int? triageStatus,
     Value<int?> estimatedPomodoros = const Value.absent(),
     int? createdAtUtcMillis,
     int? updatedAtUtcMillis,
@@ -399,6 +432,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
         ? dueAtUtcMillis.value
         : this.dueAtUtcMillis,
     tagsJson: tagsJson ?? this.tagsJson,
+    triageStatus: triageStatus ?? this.triageStatus,
     estimatedPomodoros: estimatedPomodoros.present
         ? estimatedPomodoros.value
         : this.estimatedPomodoros,
@@ -418,6 +452,9 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ? data.dueAtUtcMillis.value
           : this.dueAtUtcMillis,
       tagsJson: data.tagsJson.present ? data.tagsJson.value : this.tagsJson,
+      triageStatus: data.triageStatus.present
+          ? data.triageStatus.value
+          : this.triageStatus,
       estimatedPomodoros: data.estimatedPomodoros.present
           ? data.estimatedPomodoros.value
           : this.estimatedPomodoros,
@@ -440,6 +477,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ..write('priority: $priority, ')
           ..write('dueAtUtcMillis: $dueAtUtcMillis, ')
           ..write('tagsJson: $tagsJson, ')
+          ..write('triageStatus: $triageStatus, ')
           ..write('estimatedPomodoros: $estimatedPomodoros, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
@@ -456,6 +494,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     priority,
     dueAtUtcMillis,
     tagsJson,
+    triageStatus,
     estimatedPomodoros,
     createdAtUtcMillis,
     updatedAtUtcMillis,
@@ -471,6 +510,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           other.priority == this.priority &&
           other.dueAtUtcMillis == this.dueAtUtcMillis &&
           other.tagsJson == this.tagsJson &&
+          other.triageStatus == this.triageStatus &&
           other.estimatedPomodoros == this.estimatedPomodoros &&
           other.createdAtUtcMillis == this.createdAtUtcMillis &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
@@ -484,6 +524,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
   final Value<int> priority;
   final Value<int?> dueAtUtcMillis;
   final Value<String> tagsJson;
+  final Value<int> triageStatus;
   final Value<int?> estimatedPomodoros;
   final Value<int> createdAtUtcMillis;
   final Value<int> updatedAtUtcMillis;
@@ -496,6 +537,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     this.priority = const Value.absent(),
     this.dueAtUtcMillis = const Value.absent(),
     this.tagsJson = const Value.absent(),
+    this.triageStatus = const Value.absent(),
     this.estimatedPomodoros = const Value.absent(),
     this.createdAtUtcMillis = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
@@ -509,6 +551,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     required int priority,
     this.dueAtUtcMillis = const Value.absent(),
     this.tagsJson = const Value.absent(),
+    this.triageStatus = const Value.absent(),
     this.estimatedPomodoros = const Value.absent(),
     required int createdAtUtcMillis,
     required int updatedAtUtcMillis,
@@ -527,6 +570,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Expression<int>? priority,
     Expression<int>? dueAtUtcMillis,
     Expression<String>? tagsJson,
+    Expression<int>? triageStatus,
     Expression<int>? estimatedPomodoros,
     Expression<int>? createdAtUtcMillis,
     Expression<int>? updatedAtUtcMillis,
@@ -540,6 +584,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
       if (priority != null) 'priority': priority,
       if (dueAtUtcMillis != null) 'due_at_utc_millis': dueAtUtcMillis,
       if (tagsJson != null) 'tags_json': tagsJson,
+      if (triageStatus != null) 'triage_status': triageStatus,
       if (estimatedPomodoros != null) 'estimated_pomodoros': estimatedPomodoros,
       if (createdAtUtcMillis != null)
         'created_at_utc_millis': createdAtUtcMillis,
@@ -557,6 +602,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Value<int>? priority,
     Value<int?>? dueAtUtcMillis,
     Value<String>? tagsJson,
+    Value<int>? triageStatus,
     Value<int?>? estimatedPomodoros,
     Value<int>? createdAtUtcMillis,
     Value<int>? updatedAtUtcMillis,
@@ -570,6 +616,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
       priority: priority ?? this.priority,
       dueAtUtcMillis: dueAtUtcMillis ?? this.dueAtUtcMillis,
       tagsJson: tagsJson ?? this.tagsJson,
+      triageStatus: triageStatus ?? this.triageStatus,
       estimatedPomodoros: estimatedPomodoros ?? this.estimatedPomodoros,
       createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
@@ -601,6 +648,9 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     if (tagsJson.present) {
       map['tags_json'] = Variable<String>(tagsJson.value);
     }
+    if (triageStatus.present) {
+      map['triage_status'] = Variable<int>(triageStatus.value);
+    }
     if (estimatedPomodoros.present) {
       map['estimated_pomodoros'] = Variable<int>(estimatedPomodoros.value);
     }
@@ -626,6 +676,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
           ..write('priority: $priority, ')
           ..write('dueAtUtcMillis: $dueAtUtcMillis, ')
           ..write('tagsJson: $tagsJson, ')
+          ..write('triageStatus: $triageStatus, ')
           ..write('estimatedPomodoros: $estimatedPomodoros, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis, ')
@@ -1183,6 +1234,17 @@ class $ActivePomodorosTable extends ActivePomodoros
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _focusNoteMeta = const VerificationMeta(
+    'focusNote',
+  );
+  @override
+  late final GeneratedColumn<String> focusNote = GeneratedColumn<String>(
+    'focus_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _updatedAtUtcMillisMeta =
       const VerificationMeta('updatedAtUtcMillis');
   @override
@@ -1202,6 +1264,7 @@ class $ActivePomodorosTable extends ActivePomodoros
     startAtUtcMillis,
     endAtUtcMillis,
     remainingMs,
+    focusNote,
     updatedAtUtcMillis,
   ];
   @override
@@ -1270,6 +1333,12 @@ class $ActivePomodorosTable extends ActivePomodoros
         ),
       );
     }
+    if (data.containsKey('focus_note')) {
+      context.handle(
+        _focusNoteMeta,
+        focusNote.isAcceptableOrUnknown(data['focus_note']!, _focusNoteMeta),
+      );
+    }
     if (data.containsKey('updated_at_utc_millis')) {
       context.handle(
         _updatedAtUtcMillisMeta,
@@ -1318,6 +1387,10 @@ class $ActivePomodorosTable extends ActivePomodoros
         DriftSqlType.int,
         data['${effectivePrefix}remaining_ms'],
       ),
+      focusNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}focus_note'],
+      ),
       updatedAtUtcMillis: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}updated_at_utc_millis'],
@@ -1340,6 +1413,7 @@ class ActivePomodoroRow extends DataClass
   final int startAtUtcMillis;
   final int? endAtUtcMillis;
   final int? remainingMs;
+  final String? focusNote;
   final int updatedAtUtcMillis;
   const ActivePomodoroRow({
     required this.id,
@@ -1349,6 +1423,7 @@ class ActivePomodoroRow extends DataClass
     required this.startAtUtcMillis,
     this.endAtUtcMillis,
     this.remainingMs,
+    this.focusNote,
     required this.updatedAtUtcMillis,
   });
   @override
@@ -1364,6 +1439,9 @@ class ActivePomodoroRow extends DataClass
     }
     if (!nullToAbsent || remainingMs != null) {
       map['remaining_ms'] = Variable<int>(remainingMs);
+    }
+    if (!nullToAbsent || focusNote != null) {
+      map['focus_note'] = Variable<String>(focusNote);
     }
     map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
     return map;
@@ -1382,6 +1460,9 @@ class ActivePomodoroRow extends DataClass
       remainingMs: remainingMs == null && nullToAbsent
           ? const Value.absent()
           : Value(remainingMs),
+      focusNote: focusNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(focusNote),
       updatedAtUtcMillis: Value(updatedAtUtcMillis),
     );
   }
@@ -1399,6 +1480,7 @@ class ActivePomodoroRow extends DataClass
       startAtUtcMillis: serializer.fromJson<int>(json['startAtUtcMillis']),
       endAtUtcMillis: serializer.fromJson<int?>(json['endAtUtcMillis']),
       remainingMs: serializer.fromJson<int?>(json['remainingMs']),
+      focusNote: serializer.fromJson<String?>(json['focusNote']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
     );
   }
@@ -1413,6 +1495,7 @@ class ActivePomodoroRow extends DataClass
       'startAtUtcMillis': serializer.toJson<int>(startAtUtcMillis),
       'endAtUtcMillis': serializer.toJson<int?>(endAtUtcMillis),
       'remainingMs': serializer.toJson<int?>(remainingMs),
+      'focusNote': serializer.toJson<String?>(focusNote),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
     };
   }
@@ -1425,6 +1508,7 @@ class ActivePomodoroRow extends DataClass
     int? startAtUtcMillis,
     Value<int?> endAtUtcMillis = const Value.absent(),
     Value<int?> remainingMs = const Value.absent(),
+    Value<String?> focusNote = const Value.absent(),
     int? updatedAtUtcMillis,
   }) => ActivePomodoroRow(
     id: id ?? this.id,
@@ -1436,6 +1520,7 @@ class ActivePomodoroRow extends DataClass
         ? endAtUtcMillis.value
         : this.endAtUtcMillis,
     remainingMs: remainingMs.present ? remainingMs.value : this.remainingMs,
+    focusNote: focusNote.present ? focusNote.value : this.focusNote,
     updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
   );
   ActivePomodoroRow copyWithCompanion(ActivePomodorosCompanion data) {
@@ -1453,6 +1538,7 @@ class ActivePomodoroRow extends DataClass
       remainingMs: data.remainingMs.present
           ? data.remainingMs.value
           : this.remainingMs,
+      focusNote: data.focusNote.present ? data.focusNote.value : this.focusNote,
       updatedAtUtcMillis: data.updatedAtUtcMillis.present
           ? data.updatedAtUtcMillis.value
           : this.updatedAtUtcMillis,
@@ -1469,6 +1555,7 @@ class ActivePomodoroRow extends DataClass
           ..write('startAtUtcMillis: $startAtUtcMillis, ')
           ..write('endAtUtcMillis: $endAtUtcMillis, ')
           ..write('remainingMs: $remainingMs, ')
+          ..write('focusNote: $focusNote, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
           ..write(')'))
         .toString();
@@ -1483,6 +1570,7 @@ class ActivePomodoroRow extends DataClass
     startAtUtcMillis,
     endAtUtcMillis,
     remainingMs,
+    focusNote,
     updatedAtUtcMillis,
   );
   @override
@@ -1496,6 +1584,7 @@ class ActivePomodoroRow extends DataClass
           other.startAtUtcMillis == this.startAtUtcMillis &&
           other.endAtUtcMillis == this.endAtUtcMillis &&
           other.remainingMs == this.remainingMs &&
+          other.focusNote == this.focusNote &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
 }
 
@@ -1507,6 +1596,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
   final Value<int> startAtUtcMillis;
   final Value<int?> endAtUtcMillis;
   final Value<int?> remainingMs;
+  final Value<String?> focusNote;
   final Value<int> updatedAtUtcMillis;
   const ActivePomodorosCompanion({
     this.id = const Value.absent(),
@@ -1516,6 +1606,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
     this.startAtUtcMillis = const Value.absent(),
     this.endAtUtcMillis = const Value.absent(),
     this.remainingMs = const Value.absent(),
+    this.focusNote = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
   });
   ActivePomodorosCompanion.insert({
@@ -1526,6 +1617,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
     required int startAtUtcMillis,
     this.endAtUtcMillis = const Value.absent(),
     this.remainingMs = const Value.absent(),
+    this.focusNote = const Value.absent(),
     required int updatedAtUtcMillis,
   }) : taskId = Value(taskId),
        status = Value(status),
@@ -1539,6 +1631,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
     Expression<int>? startAtUtcMillis,
     Expression<int>? endAtUtcMillis,
     Expression<int>? remainingMs,
+    Expression<String>? focusNote,
     Expression<int>? updatedAtUtcMillis,
   }) {
     return RawValuesInsertable({
@@ -1549,6 +1642,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
       if (startAtUtcMillis != null) 'start_at_utc_millis': startAtUtcMillis,
       if (endAtUtcMillis != null) 'end_at_utc_millis': endAtUtcMillis,
       if (remainingMs != null) 'remaining_ms': remainingMs,
+      if (focusNote != null) 'focus_note': focusNote,
       if (updatedAtUtcMillis != null)
         'updated_at_utc_millis': updatedAtUtcMillis,
     });
@@ -1562,6 +1656,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
     Value<int>? startAtUtcMillis,
     Value<int?>? endAtUtcMillis,
     Value<int?>? remainingMs,
+    Value<String?>? focusNote,
     Value<int>? updatedAtUtcMillis,
   }) {
     return ActivePomodorosCompanion(
@@ -1572,6 +1667,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
       startAtUtcMillis: startAtUtcMillis ?? this.startAtUtcMillis,
       endAtUtcMillis: endAtUtcMillis ?? this.endAtUtcMillis,
       remainingMs: remainingMs ?? this.remainingMs,
+      focusNote: focusNote ?? this.focusNote,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
     );
   }
@@ -1600,6 +1696,9 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
     if (remainingMs.present) {
       map['remaining_ms'] = Variable<int>(remainingMs.value);
     }
+    if (focusNote.present) {
+      map['focus_note'] = Variable<String>(focusNote.value);
+    }
     if (updatedAtUtcMillis.present) {
       map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis.value);
     }
@@ -1616,6 +1715,7 @@ class ActivePomodorosCompanion extends UpdateCompanion<ActivePomodoroRow> {
           ..write('startAtUtcMillis: $startAtUtcMillis, ')
           ..write('endAtUtcMillis: $endAtUtcMillis, ')
           ..write('remainingMs: $remainingMs, ')
+          ..write('focusNote: $focusNote, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
           ..write(')'))
         .toString();
@@ -2161,6 +2261,28 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<int> kind = GeneratedColumn<int>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _triageStatusMeta = const VerificationMeta(
+    'triageStatus',
+  );
+  @override
+  late final GeneratedColumn<int> triageStatus = GeneratedColumn<int>(
+    'triage_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(2),
+  );
   static const VerificationMeta _createdAtUtcMillisMeta =
       const VerificationMeta('createdAtUtcMillis');
   @override
@@ -2188,6 +2310,8 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
     body,
     tagsJson,
     taskId,
+    kind,
+    triageStatus,
     createdAtUtcMillis,
     updatedAtUtcMillis,
   ];
@@ -2232,6 +2356,21 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
       context.handle(
         _taskIdMeta,
         taskId.isAcceptableOrUnknown(data['task_id']!, _taskIdMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    if (data.containsKey('triage_status')) {
+      context.handle(
+        _triageStatusMeta,
+        triageStatus.isAcceptableOrUnknown(
+          data['triage_status']!,
+          _triageStatusMeta,
+        ),
       );
     }
     if (data.containsKey('created_at_utc_millis')) {
@@ -2285,6 +2424,14 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
         DriftSqlType.string,
         data['${effectivePrefix}task_id'],
       ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}kind'],
+      )!,
+      triageStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}triage_status'],
+      )!,
       createdAtUtcMillis: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at_utc_millis'],
@@ -2308,6 +2455,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   final String body;
   final String tagsJson;
   final String? taskId;
+  final int kind;
+  final int triageStatus;
   final int createdAtUtcMillis;
   final int updatedAtUtcMillis;
   const NoteRow({
@@ -2316,6 +2465,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     required this.body,
     required this.tagsJson,
     this.taskId,
+    required this.kind,
+    required this.triageStatus,
     required this.createdAtUtcMillis,
     required this.updatedAtUtcMillis,
   });
@@ -2329,6 +2480,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     if (!nullToAbsent || taskId != null) {
       map['task_id'] = Variable<String>(taskId);
     }
+    map['kind'] = Variable<int>(kind);
+    map['triage_status'] = Variable<int>(triageStatus);
     map['created_at_utc_millis'] = Variable<int>(createdAtUtcMillis);
     map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
     return map;
@@ -2343,6 +2496,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       taskId: taskId == null && nullToAbsent
           ? const Value.absent()
           : Value(taskId),
+      kind: Value(kind),
+      triageStatus: Value(triageStatus),
       createdAtUtcMillis: Value(createdAtUtcMillis),
       updatedAtUtcMillis: Value(updatedAtUtcMillis),
     );
@@ -2359,6 +2514,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       body: serializer.fromJson<String>(json['body']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       taskId: serializer.fromJson<String?>(json['taskId']),
+      kind: serializer.fromJson<int>(json['kind']),
+      triageStatus: serializer.fromJson<int>(json['triageStatus']),
       createdAtUtcMillis: serializer.fromJson<int>(json['createdAtUtcMillis']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
     );
@@ -2372,6 +2529,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       'body': serializer.toJson<String>(body),
       'tagsJson': serializer.toJson<String>(tagsJson),
       'taskId': serializer.toJson<String?>(taskId),
+      'kind': serializer.toJson<int>(kind),
+      'triageStatus': serializer.toJson<int>(triageStatus),
       'createdAtUtcMillis': serializer.toJson<int>(createdAtUtcMillis),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
     };
@@ -2383,6 +2542,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     String? body,
     String? tagsJson,
     Value<String?> taskId = const Value.absent(),
+    int? kind,
+    int? triageStatus,
     int? createdAtUtcMillis,
     int? updatedAtUtcMillis,
   }) => NoteRow(
@@ -2391,6 +2552,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     body: body ?? this.body,
     tagsJson: tagsJson ?? this.tagsJson,
     taskId: taskId.present ? taskId.value : this.taskId,
+    kind: kind ?? this.kind,
+    triageStatus: triageStatus ?? this.triageStatus,
     createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
     updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
   );
@@ -2401,6 +2564,10 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       body: data.body.present ? data.body.value : this.body,
       tagsJson: data.tagsJson.present ? data.tagsJson.value : this.tagsJson,
       taskId: data.taskId.present ? data.taskId.value : this.taskId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      triageStatus: data.triageStatus.present
+          ? data.triageStatus.value
+          : this.triageStatus,
       createdAtUtcMillis: data.createdAtUtcMillis.present
           ? data.createdAtUtcMillis.value
           : this.createdAtUtcMillis,
@@ -2418,6 +2585,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
           ..write('body: $body, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('taskId: $taskId, ')
+          ..write('kind: $kind, ')
+          ..write('triageStatus: $triageStatus, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
           ..write(')'))
@@ -2431,6 +2600,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     body,
     tagsJson,
     taskId,
+    kind,
+    triageStatus,
     createdAtUtcMillis,
     updatedAtUtcMillis,
   );
@@ -2443,6 +2614,8 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
           other.body == this.body &&
           other.tagsJson == this.tagsJson &&
           other.taskId == this.taskId &&
+          other.kind == this.kind &&
+          other.triageStatus == this.triageStatus &&
           other.createdAtUtcMillis == this.createdAtUtcMillis &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
 }
@@ -2453,6 +2626,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   final Value<String> body;
   final Value<String> tagsJson;
   final Value<String?> taskId;
+  final Value<int> kind;
+  final Value<int> triageStatus;
   final Value<int> createdAtUtcMillis;
   final Value<int> updatedAtUtcMillis;
   final Value<int> rowid;
@@ -2462,6 +2637,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     this.body = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.taskId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.triageStatus = const Value.absent(),
     this.createdAtUtcMillis = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2472,6 +2649,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     this.body = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.taskId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.triageStatus = const Value.absent(),
     required int createdAtUtcMillis,
     required int updatedAtUtcMillis,
     this.rowid = const Value.absent(),
@@ -2485,6 +2664,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     Expression<String>? body,
     Expression<String>? tagsJson,
     Expression<String>? taskId,
+    Expression<int>? kind,
+    Expression<int>? triageStatus,
     Expression<int>? createdAtUtcMillis,
     Expression<int>? updatedAtUtcMillis,
     Expression<int>? rowid,
@@ -2495,6 +2676,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
       if (body != null) 'body': body,
       if (tagsJson != null) 'tags_json': tagsJson,
       if (taskId != null) 'task_id': taskId,
+      if (kind != null) 'kind': kind,
+      if (triageStatus != null) 'triage_status': triageStatus,
       if (createdAtUtcMillis != null)
         'created_at_utc_millis': createdAtUtcMillis,
       if (updatedAtUtcMillis != null)
@@ -2509,6 +2692,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     Value<String>? body,
     Value<String>? tagsJson,
     Value<String?>? taskId,
+    Value<int>? kind,
+    Value<int>? triageStatus,
     Value<int>? createdAtUtcMillis,
     Value<int>? updatedAtUtcMillis,
     Value<int>? rowid,
@@ -2519,6 +2704,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
       body: body ?? this.body,
       tagsJson: tagsJson ?? this.tagsJson,
       taskId: taskId ?? this.taskId,
+      kind: kind ?? this.kind,
+      triageStatus: triageStatus ?? this.triageStatus,
       createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
       rowid: rowid ?? this.rowid,
@@ -2543,6 +2730,12 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     if (taskId.present) {
       map['task_id'] = Variable<String>(taskId.value);
     }
+    if (kind.present) {
+      map['kind'] = Variable<int>(kind.value);
+    }
+    if (triageStatus.present) {
+      map['triage_status'] = Variable<int>(triageStatus.value);
+    }
     if (createdAtUtcMillis.present) {
       map['created_at_utc_millis'] = Variable<int>(createdAtUtcMillis.value);
     }
@@ -2563,6 +2756,8 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
           ..write('body: $body, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('taskId: $taskId, ')
+          ..write('kind: $kind, ')
+          ..write('triageStatus: $triageStatus, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis, ')
           ..write('rowid: $rowid')
@@ -2632,6 +2827,17 @@ class $PomodoroConfigsTable extends PomodoroConfigs
     type: DriftSqlType.int,
     requiredDuringInsert: false,
     defaultValue: const Constant(4),
+  );
+  static const VerificationMeta _dailyBudgetPomodorosMeta =
+      const VerificationMeta('dailyBudgetPomodoros');
+  @override
+  late final GeneratedColumn<int> dailyBudgetPomodoros = GeneratedColumn<int>(
+    'daily_budget_pomodoros',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(8),
   );
   static const VerificationMeta _autoStartBreakMeta = const VerificationMeta(
     'autoStartBreak',
@@ -2710,6 +2916,7 @@ class $PomodoroConfigsTable extends PomodoroConfigs
     shortBreakMinutes,
     longBreakMinutes,
     longBreakEvery,
+    dailyBudgetPomodoros,
     autoStartBreak,
     autoStartFocus,
     notificationSound,
@@ -2764,6 +2971,15 @@ class $PomodoroConfigsTable extends PomodoroConfigs
         longBreakEvery.isAcceptableOrUnknown(
           data['long_break_every']!,
           _longBreakEveryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('daily_budget_pomodoros')) {
+      context.handle(
+        _dailyBudgetPomodorosMeta,
+        dailyBudgetPomodoros.isAcceptableOrUnknown(
+          data['daily_budget_pomodoros']!,
+          _dailyBudgetPomodorosMeta,
         ),
       );
     }
@@ -2843,6 +3059,10 @@ class $PomodoroConfigsTable extends PomodoroConfigs
         DriftSqlType.int,
         data['${effectivePrefix}long_break_every'],
       )!,
+      dailyBudgetPomodoros: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_budget_pomodoros'],
+      )!,
       autoStartBreak: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}auto_start_break'],
@@ -2879,6 +3099,7 @@ class PomodoroConfigRow extends DataClass
   final int shortBreakMinutes;
   final int longBreakMinutes;
   final int longBreakEvery;
+  final int dailyBudgetPomodoros;
   final bool autoStartBreak;
   final bool autoStartFocus;
   final bool notificationSound;
@@ -2890,6 +3111,7 @@ class PomodoroConfigRow extends DataClass
     required this.shortBreakMinutes,
     required this.longBreakMinutes,
     required this.longBreakEvery,
+    required this.dailyBudgetPomodoros,
     required this.autoStartBreak,
     required this.autoStartFocus,
     required this.notificationSound,
@@ -2904,6 +3126,7 @@ class PomodoroConfigRow extends DataClass
     map['short_break_minutes'] = Variable<int>(shortBreakMinutes);
     map['long_break_minutes'] = Variable<int>(longBreakMinutes);
     map['long_break_every'] = Variable<int>(longBreakEvery);
+    map['daily_budget_pomodoros'] = Variable<int>(dailyBudgetPomodoros);
     map['auto_start_break'] = Variable<bool>(autoStartBreak);
     map['auto_start_focus'] = Variable<bool>(autoStartFocus);
     map['notification_sound'] = Variable<bool>(notificationSound);
@@ -2919,6 +3142,7 @@ class PomodoroConfigRow extends DataClass
       shortBreakMinutes: Value(shortBreakMinutes),
       longBreakMinutes: Value(longBreakMinutes),
       longBreakEvery: Value(longBreakEvery),
+      dailyBudgetPomodoros: Value(dailyBudgetPomodoros),
       autoStartBreak: Value(autoStartBreak),
       autoStartFocus: Value(autoStartFocus),
       notificationSound: Value(notificationSound),
@@ -2940,6 +3164,9 @@ class PomodoroConfigRow extends DataClass
       shortBreakMinutes: serializer.fromJson<int>(json['shortBreakMinutes']),
       longBreakMinutes: serializer.fromJson<int>(json['longBreakMinutes']),
       longBreakEvery: serializer.fromJson<int>(json['longBreakEvery']),
+      dailyBudgetPomodoros: serializer.fromJson<int>(
+        json['dailyBudgetPomodoros'],
+      ),
       autoStartBreak: serializer.fromJson<bool>(json['autoStartBreak']),
       autoStartFocus: serializer.fromJson<bool>(json['autoStartFocus']),
       notificationSound: serializer.fromJson<bool>(json['notificationSound']),
@@ -2958,6 +3185,7 @@ class PomodoroConfigRow extends DataClass
       'shortBreakMinutes': serializer.toJson<int>(shortBreakMinutes),
       'longBreakMinutes': serializer.toJson<int>(longBreakMinutes),
       'longBreakEvery': serializer.toJson<int>(longBreakEvery),
+      'dailyBudgetPomodoros': serializer.toJson<int>(dailyBudgetPomodoros),
       'autoStartBreak': serializer.toJson<bool>(autoStartBreak),
       'autoStartFocus': serializer.toJson<bool>(autoStartFocus),
       'notificationSound': serializer.toJson<bool>(notificationSound),
@@ -2972,6 +3200,7 @@ class PomodoroConfigRow extends DataClass
     int? shortBreakMinutes,
     int? longBreakMinutes,
     int? longBreakEvery,
+    int? dailyBudgetPomodoros,
     bool? autoStartBreak,
     bool? autoStartFocus,
     bool? notificationSound,
@@ -2983,6 +3212,7 @@ class PomodoroConfigRow extends DataClass
     shortBreakMinutes: shortBreakMinutes ?? this.shortBreakMinutes,
     longBreakMinutes: longBreakMinutes ?? this.longBreakMinutes,
     longBreakEvery: longBreakEvery ?? this.longBreakEvery,
+    dailyBudgetPomodoros: dailyBudgetPomodoros ?? this.dailyBudgetPomodoros,
     autoStartBreak: autoStartBreak ?? this.autoStartBreak,
     autoStartFocus: autoStartFocus ?? this.autoStartFocus,
     notificationSound: notificationSound ?? this.notificationSound,
@@ -3004,6 +3234,9 @@ class PomodoroConfigRow extends DataClass
       longBreakEvery: data.longBreakEvery.present
           ? data.longBreakEvery.value
           : this.longBreakEvery,
+      dailyBudgetPomodoros: data.dailyBudgetPomodoros.present
+          ? data.dailyBudgetPomodoros.value
+          : this.dailyBudgetPomodoros,
       autoStartBreak: data.autoStartBreak.present
           ? data.autoStartBreak.value
           : this.autoStartBreak,
@@ -3030,6 +3263,7 @@ class PomodoroConfigRow extends DataClass
           ..write('shortBreakMinutes: $shortBreakMinutes, ')
           ..write('longBreakMinutes: $longBreakMinutes, ')
           ..write('longBreakEvery: $longBreakEvery, ')
+          ..write('dailyBudgetPomodoros: $dailyBudgetPomodoros, ')
           ..write('autoStartBreak: $autoStartBreak, ')
           ..write('autoStartFocus: $autoStartFocus, ')
           ..write('notificationSound: $notificationSound, ')
@@ -3046,6 +3280,7 @@ class PomodoroConfigRow extends DataClass
     shortBreakMinutes,
     longBreakMinutes,
     longBreakEvery,
+    dailyBudgetPomodoros,
     autoStartBreak,
     autoStartFocus,
     notificationSound,
@@ -3061,6 +3296,7 @@ class PomodoroConfigRow extends DataClass
           other.shortBreakMinutes == this.shortBreakMinutes &&
           other.longBreakMinutes == this.longBreakMinutes &&
           other.longBreakEvery == this.longBreakEvery &&
+          other.dailyBudgetPomodoros == this.dailyBudgetPomodoros &&
           other.autoStartBreak == this.autoStartBreak &&
           other.autoStartFocus == this.autoStartFocus &&
           other.notificationSound == this.notificationSound &&
@@ -3074,6 +3310,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
   final Value<int> shortBreakMinutes;
   final Value<int> longBreakMinutes;
   final Value<int> longBreakEvery;
+  final Value<int> dailyBudgetPomodoros;
   final Value<bool> autoStartBreak;
   final Value<bool> autoStartFocus;
   final Value<bool> notificationSound;
@@ -3085,6 +3322,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
     this.shortBreakMinutes = const Value.absent(),
     this.longBreakMinutes = const Value.absent(),
     this.longBreakEvery = const Value.absent(),
+    this.dailyBudgetPomodoros = const Value.absent(),
     this.autoStartBreak = const Value.absent(),
     this.autoStartFocus = const Value.absent(),
     this.notificationSound = const Value.absent(),
@@ -3097,6 +3335,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
     this.shortBreakMinutes = const Value.absent(),
     this.longBreakMinutes = const Value.absent(),
     this.longBreakEvery = const Value.absent(),
+    this.dailyBudgetPomodoros = const Value.absent(),
     this.autoStartBreak = const Value.absent(),
     this.autoStartFocus = const Value.absent(),
     this.notificationSound = const Value.absent(),
@@ -3109,6 +3348,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
     Expression<int>? shortBreakMinutes,
     Expression<int>? longBreakMinutes,
     Expression<int>? longBreakEvery,
+    Expression<int>? dailyBudgetPomodoros,
     Expression<bool>? autoStartBreak,
     Expression<bool>? autoStartFocus,
     Expression<bool>? notificationSound,
@@ -3122,6 +3362,8 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
       if (shortBreakMinutes != null) 'short_break_minutes': shortBreakMinutes,
       if (longBreakMinutes != null) 'long_break_minutes': longBreakMinutes,
       if (longBreakEvery != null) 'long_break_every': longBreakEvery,
+      if (dailyBudgetPomodoros != null)
+        'daily_budget_pomodoros': dailyBudgetPomodoros,
       if (autoStartBreak != null) 'auto_start_break': autoStartBreak,
       if (autoStartFocus != null) 'auto_start_focus': autoStartFocus,
       if (notificationSound != null) 'notification_sound': notificationSound,
@@ -3138,6 +3380,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
     Value<int>? shortBreakMinutes,
     Value<int>? longBreakMinutes,
     Value<int>? longBreakEvery,
+    Value<int>? dailyBudgetPomodoros,
     Value<bool>? autoStartBreak,
     Value<bool>? autoStartFocus,
     Value<bool>? notificationSound,
@@ -3150,6 +3393,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
       shortBreakMinutes: shortBreakMinutes ?? this.shortBreakMinutes,
       longBreakMinutes: longBreakMinutes ?? this.longBreakMinutes,
       longBreakEvery: longBreakEvery ?? this.longBreakEvery,
+      dailyBudgetPomodoros: dailyBudgetPomodoros ?? this.dailyBudgetPomodoros,
       autoStartBreak: autoStartBreak ?? this.autoStartBreak,
       autoStartFocus: autoStartFocus ?? this.autoStartFocus,
       notificationSound: notificationSound ?? this.notificationSound,
@@ -3176,6 +3420,9 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
     }
     if (longBreakEvery.present) {
       map['long_break_every'] = Variable<int>(longBreakEvery.value);
+    }
+    if (dailyBudgetPomodoros.present) {
+      map['daily_budget_pomodoros'] = Variable<int>(dailyBudgetPomodoros.value);
     }
     if (autoStartBreak.present) {
       map['auto_start_break'] = Variable<bool>(autoStartBreak.value);
@@ -3205,6 +3452,7 @@ class PomodoroConfigsCompanion extends UpdateCompanion<PomodoroConfigRow> {
           ..write('shortBreakMinutes: $shortBreakMinutes, ')
           ..write('longBreakMinutes: $longBreakMinutes, ')
           ..write('longBreakEvery: $longBreakEvery, ')
+          ..write('dailyBudgetPomodoros: $dailyBudgetPomodoros, ')
           ..write('autoStartBreak: $autoStartBreak, ')
           ..write('autoStartFocus: $autoStartFocus, ')
           ..write('notificationSound: $notificationSound, ')
@@ -3264,6 +3512,135 @@ class $AppearanceConfigsTable extends AppearanceConfigs
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _defaultTabMeta = const VerificationMeta(
+    'defaultTab',
+  );
+  @override
+  late final GeneratedColumn<int> defaultTab = GeneratedColumn<int>(
+    'default_tab',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(2),
+  );
+  static const VerificationMeta _onboardingDoneMeta = const VerificationMeta(
+    'onboardingDone',
+  );
+  @override
+  late final GeneratedColumn<bool> onboardingDone = GeneratedColumn<bool>(
+    'onboarding_done',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("onboarding_done" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _statsEnabledMeta = const VerificationMeta(
+    'statsEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> statsEnabled = GeneratedColumn<bool>(
+    'stats_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("stats_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _todayModulesJsonMeta = const VerificationMeta(
+    'todayModulesJson',
+  );
+  @override
+  late final GeneratedColumn<String> todayModulesJson = GeneratedColumn<String>(
+    'today_modules_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(
+      '["nextStep","todayPlan","weave","budget","focus","shortcuts","yesterdayReview"]',
+    ),
+  );
+  static const VerificationMeta _timeboxingStartMinutesMeta =
+      const VerificationMeta('timeboxingStartMinutes');
+  @override
+  late final GeneratedColumn<int> timeboxingStartMinutes = GeneratedColumn<int>(
+    'timeboxing_start_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _timeboxingLayoutMeta = const VerificationMeta(
+    'timeboxingLayout',
+  );
+  @override
+  late final GeneratedColumn<int> timeboxingLayout = GeneratedColumn<int>(
+    'timeboxing_layout',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _timeboxingWorkdayStartMinutesMeta =
+      const VerificationMeta('timeboxingWorkdayStartMinutes');
+  @override
+  late final GeneratedColumn<int> timeboxingWorkdayStartMinutes =
+      GeneratedColumn<int>(
+        'timeboxing_workday_start_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(7 * 60),
+      );
+  static const VerificationMeta _timeboxingWorkdayEndMinutesMeta =
+      const VerificationMeta('timeboxingWorkdayEndMinutes');
+  @override
+  late final GeneratedColumn<int> timeboxingWorkdayEndMinutes =
+      GeneratedColumn<int>(
+        'timeboxing_workday_end_minutes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(21 * 60),
+      );
+  static const VerificationMeta _inboxTypeFilterMeta = const VerificationMeta(
+    'inboxTypeFilter',
+  );
+  @override
+  late final GeneratedColumn<int> inboxTypeFilter = GeneratedColumn<int>(
+    'inbox_type_filter',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _inboxTodayOnlyMeta = const VerificationMeta(
+    'inboxTodayOnly',
+  );
+  @override
+  late final GeneratedColumn<bool> inboxTodayOnly = GeneratedColumn<bool>(
+    'inbox_today_only',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("inbox_today_only" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _updatedAtUtcMillisMeta =
       const VerificationMeta('updatedAtUtcMillis');
   @override
@@ -3280,6 +3657,16 @@ class $AppearanceConfigsTable extends AppearanceConfigs
     themeMode,
     density,
     accent,
+    defaultTab,
+    onboardingDone,
+    statsEnabled,
+    todayModulesJson,
+    timeboxingStartMinutes,
+    timeboxingLayout,
+    timeboxingWorkdayStartMinutes,
+    timeboxingWorkdayEndMinutes,
+    inboxTypeFilter,
+    inboxTodayOnly,
     updatedAtUtcMillis,
   ];
   @override
@@ -3313,6 +3700,93 @@ class $AppearanceConfigsTable extends AppearanceConfigs
       context.handle(
         _accentMeta,
         accent.isAcceptableOrUnknown(data['accent']!, _accentMeta),
+      );
+    }
+    if (data.containsKey('default_tab')) {
+      context.handle(
+        _defaultTabMeta,
+        defaultTab.isAcceptableOrUnknown(data['default_tab']!, _defaultTabMeta),
+      );
+    }
+    if (data.containsKey('onboarding_done')) {
+      context.handle(
+        _onboardingDoneMeta,
+        onboardingDone.isAcceptableOrUnknown(
+          data['onboarding_done']!,
+          _onboardingDoneMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stats_enabled')) {
+      context.handle(
+        _statsEnabledMeta,
+        statsEnabled.isAcceptableOrUnknown(
+          data['stats_enabled']!,
+          _statsEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('today_modules_json')) {
+      context.handle(
+        _todayModulesJsonMeta,
+        todayModulesJson.isAcceptableOrUnknown(
+          data['today_modules_json']!,
+          _todayModulesJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('timeboxing_start_minutes')) {
+      context.handle(
+        _timeboxingStartMinutesMeta,
+        timeboxingStartMinutes.isAcceptableOrUnknown(
+          data['timeboxing_start_minutes']!,
+          _timeboxingStartMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('timeboxing_layout')) {
+      context.handle(
+        _timeboxingLayoutMeta,
+        timeboxingLayout.isAcceptableOrUnknown(
+          data['timeboxing_layout']!,
+          _timeboxingLayoutMeta,
+        ),
+      );
+    }
+    if (data.containsKey('timeboxing_workday_start_minutes')) {
+      context.handle(
+        _timeboxingWorkdayStartMinutesMeta,
+        timeboxingWorkdayStartMinutes.isAcceptableOrUnknown(
+          data['timeboxing_workday_start_minutes']!,
+          _timeboxingWorkdayStartMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('timeboxing_workday_end_minutes')) {
+      context.handle(
+        _timeboxingWorkdayEndMinutesMeta,
+        timeboxingWorkdayEndMinutes.isAcceptableOrUnknown(
+          data['timeboxing_workday_end_minutes']!,
+          _timeboxingWorkdayEndMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inbox_type_filter')) {
+      context.handle(
+        _inboxTypeFilterMeta,
+        inboxTypeFilter.isAcceptableOrUnknown(
+          data['inbox_type_filter']!,
+          _inboxTypeFilterMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inbox_today_only')) {
+      context.handle(
+        _inboxTodayOnlyMeta,
+        inboxTodayOnly.isAcceptableOrUnknown(
+          data['inbox_today_only']!,
+          _inboxTodayOnlyMeta,
+        ),
       );
     }
     if (data.containsKey('updated_at_utc_millis')) {
@@ -3351,6 +3825,46 @@ class $AppearanceConfigsTable extends AppearanceConfigs
         DriftSqlType.int,
         data['${effectivePrefix}accent'],
       )!,
+      defaultTab: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}default_tab'],
+      )!,
+      onboardingDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}onboarding_done'],
+      )!,
+      statsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}stats_enabled'],
+      )!,
+      todayModulesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}today_modules_json'],
+      )!,
+      timeboxingStartMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timeboxing_start_minutes'],
+      ),
+      timeboxingLayout: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timeboxing_layout'],
+      )!,
+      timeboxingWorkdayStartMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timeboxing_workday_start_minutes'],
+      )!,
+      timeboxingWorkdayEndMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timeboxing_workday_end_minutes'],
+      )!,
+      inboxTypeFilter: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}inbox_type_filter'],
+      )!,
+      inboxTodayOnly: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}inbox_today_only'],
+      )!,
       updatedAtUtcMillis: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}updated_at_utc_millis'],
@@ -3370,12 +3884,32 @@ class AppearanceConfigRow extends DataClass
   final int themeMode;
   final int density;
   final int accent;
+  final int defaultTab;
+  final bool onboardingDone;
+  final bool statsEnabled;
+  final String todayModulesJson;
+  final int? timeboxingStartMinutes;
+  final int timeboxingLayout;
+  final int timeboxingWorkdayStartMinutes;
+  final int timeboxingWorkdayEndMinutes;
+  final int inboxTypeFilter;
+  final bool inboxTodayOnly;
   final int updatedAtUtcMillis;
   const AppearanceConfigRow({
     required this.id,
     required this.themeMode,
     required this.density,
     required this.accent,
+    required this.defaultTab,
+    required this.onboardingDone,
+    required this.statsEnabled,
+    required this.todayModulesJson,
+    this.timeboxingStartMinutes,
+    required this.timeboxingLayout,
+    required this.timeboxingWorkdayStartMinutes,
+    required this.timeboxingWorkdayEndMinutes,
+    required this.inboxTypeFilter,
+    required this.inboxTodayOnly,
     required this.updatedAtUtcMillis,
   });
   @override
@@ -3385,6 +3919,22 @@ class AppearanceConfigRow extends DataClass
     map['theme_mode'] = Variable<int>(themeMode);
     map['density'] = Variable<int>(density);
     map['accent'] = Variable<int>(accent);
+    map['default_tab'] = Variable<int>(defaultTab);
+    map['onboarding_done'] = Variable<bool>(onboardingDone);
+    map['stats_enabled'] = Variable<bool>(statsEnabled);
+    map['today_modules_json'] = Variable<String>(todayModulesJson);
+    if (!nullToAbsent || timeboxingStartMinutes != null) {
+      map['timeboxing_start_minutes'] = Variable<int>(timeboxingStartMinutes);
+    }
+    map['timeboxing_layout'] = Variable<int>(timeboxingLayout);
+    map['timeboxing_workday_start_minutes'] = Variable<int>(
+      timeboxingWorkdayStartMinutes,
+    );
+    map['timeboxing_workday_end_minutes'] = Variable<int>(
+      timeboxingWorkdayEndMinutes,
+    );
+    map['inbox_type_filter'] = Variable<int>(inboxTypeFilter);
+    map['inbox_today_only'] = Variable<bool>(inboxTodayOnly);
     map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
     return map;
   }
@@ -3395,6 +3945,18 @@ class AppearanceConfigRow extends DataClass
       themeMode: Value(themeMode),
       density: Value(density),
       accent: Value(accent),
+      defaultTab: Value(defaultTab),
+      onboardingDone: Value(onboardingDone),
+      statsEnabled: Value(statsEnabled),
+      todayModulesJson: Value(todayModulesJson),
+      timeboxingStartMinutes: timeboxingStartMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeboxingStartMinutes),
+      timeboxingLayout: Value(timeboxingLayout),
+      timeboxingWorkdayStartMinutes: Value(timeboxingWorkdayStartMinutes),
+      timeboxingWorkdayEndMinutes: Value(timeboxingWorkdayEndMinutes),
+      inboxTypeFilter: Value(inboxTypeFilter),
+      inboxTodayOnly: Value(inboxTodayOnly),
       updatedAtUtcMillis: Value(updatedAtUtcMillis),
     );
   }
@@ -3409,6 +3971,22 @@ class AppearanceConfigRow extends DataClass
       themeMode: serializer.fromJson<int>(json['themeMode']),
       density: serializer.fromJson<int>(json['density']),
       accent: serializer.fromJson<int>(json['accent']),
+      defaultTab: serializer.fromJson<int>(json['defaultTab']),
+      onboardingDone: serializer.fromJson<bool>(json['onboardingDone']),
+      statsEnabled: serializer.fromJson<bool>(json['statsEnabled']),
+      todayModulesJson: serializer.fromJson<String>(json['todayModulesJson']),
+      timeboxingStartMinutes: serializer.fromJson<int?>(
+        json['timeboxingStartMinutes'],
+      ),
+      timeboxingLayout: serializer.fromJson<int>(json['timeboxingLayout']),
+      timeboxingWorkdayStartMinutes: serializer.fromJson<int>(
+        json['timeboxingWorkdayStartMinutes'],
+      ),
+      timeboxingWorkdayEndMinutes: serializer.fromJson<int>(
+        json['timeboxingWorkdayEndMinutes'],
+      ),
+      inboxTypeFilter: serializer.fromJson<int>(json['inboxTypeFilter']),
+      inboxTodayOnly: serializer.fromJson<bool>(json['inboxTodayOnly']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
     );
   }
@@ -3420,6 +3998,20 @@ class AppearanceConfigRow extends DataClass
       'themeMode': serializer.toJson<int>(themeMode),
       'density': serializer.toJson<int>(density),
       'accent': serializer.toJson<int>(accent),
+      'defaultTab': serializer.toJson<int>(defaultTab),
+      'onboardingDone': serializer.toJson<bool>(onboardingDone),
+      'statsEnabled': serializer.toJson<bool>(statsEnabled),
+      'todayModulesJson': serializer.toJson<String>(todayModulesJson),
+      'timeboxingStartMinutes': serializer.toJson<int?>(timeboxingStartMinutes),
+      'timeboxingLayout': serializer.toJson<int>(timeboxingLayout),
+      'timeboxingWorkdayStartMinutes': serializer.toJson<int>(
+        timeboxingWorkdayStartMinutes,
+      ),
+      'timeboxingWorkdayEndMinutes': serializer.toJson<int>(
+        timeboxingWorkdayEndMinutes,
+      ),
+      'inboxTypeFilter': serializer.toJson<int>(inboxTypeFilter),
+      'inboxTodayOnly': serializer.toJson<bool>(inboxTodayOnly),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
     };
   }
@@ -3429,12 +4021,36 @@ class AppearanceConfigRow extends DataClass
     int? themeMode,
     int? density,
     int? accent,
+    int? defaultTab,
+    bool? onboardingDone,
+    bool? statsEnabled,
+    String? todayModulesJson,
+    Value<int?> timeboxingStartMinutes = const Value.absent(),
+    int? timeboxingLayout,
+    int? timeboxingWorkdayStartMinutes,
+    int? timeboxingWorkdayEndMinutes,
+    int? inboxTypeFilter,
+    bool? inboxTodayOnly,
     int? updatedAtUtcMillis,
   }) => AppearanceConfigRow(
     id: id ?? this.id,
     themeMode: themeMode ?? this.themeMode,
     density: density ?? this.density,
     accent: accent ?? this.accent,
+    defaultTab: defaultTab ?? this.defaultTab,
+    onboardingDone: onboardingDone ?? this.onboardingDone,
+    statsEnabled: statsEnabled ?? this.statsEnabled,
+    todayModulesJson: todayModulesJson ?? this.todayModulesJson,
+    timeboxingStartMinutes: timeboxingStartMinutes.present
+        ? timeboxingStartMinutes.value
+        : this.timeboxingStartMinutes,
+    timeboxingLayout: timeboxingLayout ?? this.timeboxingLayout,
+    timeboxingWorkdayStartMinutes:
+        timeboxingWorkdayStartMinutes ?? this.timeboxingWorkdayStartMinutes,
+    timeboxingWorkdayEndMinutes:
+        timeboxingWorkdayEndMinutes ?? this.timeboxingWorkdayEndMinutes,
+    inboxTypeFilter: inboxTypeFilter ?? this.inboxTypeFilter,
+    inboxTodayOnly: inboxTodayOnly ?? this.inboxTodayOnly,
     updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
   );
   AppearanceConfigRow copyWithCompanion(AppearanceConfigsCompanion data) {
@@ -3443,6 +4059,36 @@ class AppearanceConfigRow extends DataClass
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
       density: data.density.present ? data.density.value : this.density,
       accent: data.accent.present ? data.accent.value : this.accent,
+      defaultTab: data.defaultTab.present
+          ? data.defaultTab.value
+          : this.defaultTab,
+      onboardingDone: data.onboardingDone.present
+          ? data.onboardingDone.value
+          : this.onboardingDone,
+      statsEnabled: data.statsEnabled.present
+          ? data.statsEnabled.value
+          : this.statsEnabled,
+      todayModulesJson: data.todayModulesJson.present
+          ? data.todayModulesJson.value
+          : this.todayModulesJson,
+      timeboxingStartMinutes: data.timeboxingStartMinutes.present
+          ? data.timeboxingStartMinutes.value
+          : this.timeboxingStartMinutes,
+      timeboxingLayout: data.timeboxingLayout.present
+          ? data.timeboxingLayout.value
+          : this.timeboxingLayout,
+      timeboxingWorkdayStartMinutes: data.timeboxingWorkdayStartMinutes.present
+          ? data.timeboxingWorkdayStartMinutes.value
+          : this.timeboxingWorkdayStartMinutes,
+      timeboxingWorkdayEndMinutes: data.timeboxingWorkdayEndMinutes.present
+          ? data.timeboxingWorkdayEndMinutes.value
+          : this.timeboxingWorkdayEndMinutes,
+      inboxTypeFilter: data.inboxTypeFilter.present
+          ? data.inboxTypeFilter.value
+          : this.inboxTypeFilter,
+      inboxTodayOnly: data.inboxTodayOnly.present
+          ? data.inboxTodayOnly.value
+          : this.inboxTodayOnly,
       updatedAtUtcMillis: data.updatedAtUtcMillis.present
           ? data.updatedAtUtcMillis.value
           : this.updatedAtUtcMillis,
@@ -3456,14 +4102,41 @@ class AppearanceConfigRow extends DataClass
           ..write('themeMode: $themeMode, ')
           ..write('density: $density, ')
           ..write('accent: $accent, ')
+          ..write('defaultTab: $defaultTab, ')
+          ..write('onboardingDone: $onboardingDone, ')
+          ..write('statsEnabled: $statsEnabled, ')
+          ..write('todayModulesJson: $todayModulesJson, ')
+          ..write('timeboxingStartMinutes: $timeboxingStartMinutes, ')
+          ..write('timeboxingLayout: $timeboxingLayout, ')
+          ..write(
+            'timeboxingWorkdayStartMinutes: $timeboxingWorkdayStartMinutes, ',
+          )
+          ..write('timeboxingWorkdayEndMinutes: $timeboxingWorkdayEndMinutes, ')
+          ..write('inboxTypeFilter: $inboxTypeFilter, ')
+          ..write('inboxTodayOnly: $inboxTodayOnly, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, themeMode, density, accent, updatedAtUtcMillis);
+  int get hashCode => Object.hash(
+    id,
+    themeMode,
+    density,
+    accent,
+    defaultTab,
+    onboardingDone,
+    statsEnabled,
+    todayModulesJson,
+    timeboxingStartMinutes,
+    timeboxingLayout,
+    timeboxingWorkdayStartMinutes,
+    timeboxingWorkdayEndMinutes,
+    inboxTypeFilter,
+    inboxTodayOnly,
+    updatedAtUtcMillis,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3472,6 +4145,18 @@ class AppearanceConfigRow extends DataClass
           other.themeMode == this.themeMode &&
           other.density == this.density &&
           other.accent == this.accent &&
+          other.defaultTab == this.defaultTab &&
+          other.onboardingDone == this.onboardingDone &&
+          other.statsEnabled == this.statsEnabled &&
+          other.todayModulesJson == this.todayModulesJson &&
+          other.timeboxingStartMinutes == this.timeboxingStartMinutes &&
+          other.timeboxingLayout == this.timeboxingLayout &&
+          other.timeboxingWorkdayStartMinutes ==
+              this.timeboxingWorkdayStartMinutes &&
+          other.timeboxingWorkdayEndMinutes ==
+              this.timeboxingWorkdayEndMinutes &&
+          other.inboxTypeFilter == this.inboxTypeFilter &&
+          other.inboxTodayOnly == this.inboxTodayOnly &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
 }
 
@@ -3480,12 +4165,32 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
   final Value<int> themeMode;
   final Value<int> density;
   final Value<int> accent;
+  final Value<int> defaultTab;
+  final Value<bool> onboardingDone;
+  final Value<bool> statsEnabled;
+  final Value<String> todayModulesJson;
+  final Value<int?> timeboxingStartMinutes;
+  final Value<int> timeboxingLayout;
+  final Value<int> timeboxingWorkdayStartMinutes;
+  final Value<int> timeboxingWorkdayEndMinutes;
+  final Value<int> inboxTypeFilter;
+  final Value<bool> inboxTodayOnly;
   final Value<int> updatedAtUtcMillis;
   const AppearanceConfigsCompanion({
     this.id = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.density = const Value.absent(),
     this.accent = const Value.absent(),
+    this.defaultTab = const Value.absent(),
+    this.onboardingDone = const Value.absent(),
+    this.statsEnabled = const Value.absent(),
+    this.todayModulesJson = const Value.absent(),
+    this.timeboxingStartMinutes = const Value.absent(),
+    this.timeboxingLayout = const Value.absent(),
+    this.timeboxingWorkdayStartMinutes = const Value.absent(),
+    this.timeboxingWorkdayEndMinutes = const Value.absent(),
+    this.inboxTypeFilter = const Value.absent(),
+    this.inboxTodayOnly = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
   });
   AppearanceConfigsCompanion.insert({
@@ -3493,6 +4198,16 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     this.themeMode = const Value.absent(),
     this.density = const Value.absent(),
     this.accent = const Value.absent(),
+    this.defaultTab = const Value.absent(),
+    this.onboardingDone = const Value.absent(),
+    this.statsEnabled = const Value.absent(),
+    this.todayModulesJson = const Value.absent(),
+    this.timeboxingStartMinutes = const Value.absent(),
+    this.timeboxingLayout = const Value.absent(),
+    this.timeboxingWorkdayStartMinutes = const Value.absent(),
+    this.timeboxingWorkdayEndMinutes = const Value.absent(),
+    this.inboxTypeFilter = const Value.absent(),
+    this.inboxTodayOnly = const Value.absent(),
     required int updatedAtUtcMillis,
   }) : updatedAtUtcMillis = Value(updatedAtUtcMillis);
   static Insertable<AppearanceConfigRow> custom({
@@ -3500,6 +4215,16 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     Expression<int>? themeMode,
     Expression<int>? density,
     Expression<int>? accent,
+    Expression<int>? defaultTab,
+    Expression<bool>? onboardingDone,
+    Expression<bool>? statsEnabled,
+    Expression<String>? todayModulesJson,
+    Expression<int>? timeboxingStartMinutes,
+    Expression<int>? timeboxingLayout,
+    Expression<int>? timeboxingWorkdayStartMinutes,
+    Expression<int>? timeboxingWorkdayEndMinutes,
+    Expression<int>? inboxTypeFilter,
+    Expression<bool>? inboxTodayOnly,
     Expression<int>? updatedAtUtcMillis,
   }) {
     return RawValuesInsertable({
@@ -3507,6 +4232,19 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
       if (themeMode != null) 'theme_mode': themeMode,
       if (density != null) 'density': density,
       if (accent != null) 'accent': accent,
+      if (defaultTab != null) 'default_tab': defaultTab,
+      if (onboardingDone != null) 'onboarding_done': onboardingDone,
+      if (statsEnabled != null) 'stats_enabled': statsEnabled,
+      if (todayModulesJson != null) 'today_modules_json': todayModulesJson,
+      if (timeboxingStartMinutes != null)
+        'timeboxing_start_minutes': timeboxingStartMinutes,
+      if (timeboxingLayout != null) 'timeboxing_layout': timeboxingLayout,
+      if (timeboxingWorkdayStartMinutes != null)
+        'timeboxing_workday_start_minutes': timeboxingWorkdayStartMinutes,
+      if (timeboxingWorkdayEndMinutes != null)
+        'timeboxing_workday_end_minutes': timeboxingWorkdayEndMinutes,
+      if (inboxTypeFilter != null) 'inbox_type_filter': inboxTypeFilter,
+      if (inboxTodayOnly != null) 'inbox_today_only': inboxTodayOnly,
       if (updatedAtUtcMillis != null)
         'updated_at_utc_millis': updatedAtUtcMillis,
     });
@@ -3517,6 +4255,16 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     Value<int>? themeMode,
     Value<int>? density,
     Value<int>? accent,
+    Value<int>? defaultTab,
+    Value<bool>? onboardingDone,
+    Value<bool>? statsEnabled,
+    Value<String>? todayModulesJson,
+    Value<int?>? timeboxingStartMinutes,
+    Value<int>? timeboxingLayout,
+    Value<int>? timeboxingWorkdayStartMinutes,
+    Value<int>? timeboxingWorkdayEndMinutes,
+    Value<int>? inboxTypeFilter,
+    Value<bool>? inboxTodayOnly,
     Value<int>? updatedAtUtcMillis,
   }) {
     return AppearanceConfigsCompanion(
@@ -3524,6 +4272,19 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
       themeMode: themeMode ?? this.themeMode,
       density: density ?? this.density,
       accent: accent ?? this.accent,
+      defaultTab: defaultTab ?? this.defaultTab,
+      onboardingDone: onboardingDone ?? this.onboardingDone,
+      statsEnabled: statsEnabled ?? this.statsEnabled,
+      todayModulesJson: todayModulesJson ?? this.todayModulesJson,
+      timeboxingStartMinutes:
+          timeboxingStartMinutes ?? this.timeboxingStartMinutes,
+      timeboxingLayout: timeboxingLayout ?? this.timeboxingLayout,
+      timeboxingWorkdayStartMinutes:
+          timeboxingWorkdayStartMinutes ?? this.timeboxingWorkdayStartMinutes,
+      timeboxingWorkdayEndMinutes:
+          timeboxingWorkdayEndMinutes ?? this.timeboxingWorkdayEndMinutes,
+      inboxTypeFilter: inboxTypeFilter ?? this.inboxTypeFilter,
+      inboxTodayOnly: inboxTodayOnly ?? this.inboxTodayOnly,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
     );
   }
@@ -3543,6 +4304,42 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     if (accent.present) {
       map['accent'] = Variable<int>(accent.value);
     }
+    if (defaultTab.present) {
+      map['default_tab'] = Variable<int>(defaultTab.value);
+    }
+    if (onboardingDone.present) {
+      map['onboarding_done'] = Variable<bool>(onboardingDone.value);
+    }
+    if (statsEnabled.present) {
+      map['stats_enabled'] = Variable<bool>(statsEnabled.value);
+    }
+    if (todayModulesJson.present) {
+      map['today_modules_json'] = Variable<String>(todayModulesJson.value);
+    }
+    if (timeboxingStartMinutes.present) {
+      map['timeboxing_start_minutes'] = Variable<int>(
+        timeboxingStartMinutes.value,
+      );
+    }
+    if (timeboxingLayout.present) {
+      map['timeboxing_layout'] = Variable<int>(timeboxingLayout.value);
+    }
+    if (timeboxingWorkdayStartMinutes.present) {
+      map['timeboxing_workday_start_minutes'] = Variable<int>(
+        timeboxingWorkdayStartMinutes.value,
+      );
+    }
+    if (timeboxingWorkdayEndMinutes.present) {
+      map['timeboxing_workday_end_minutes'] = Variable<int>(
+        timeboxingWorkdayEndMinutes.value,
+      );
+    }
+    if (inboxTypeFilter.present) {
+      map['inbox_type_filter'] = Variable<int>(inboxTypeFilter.value);
+    }
+    if (inboxTodayOnly.present) {
+      map['inbox_today_only'] = Variable<bool>(inboxTodayOnly.value);
+    }
     if (updatedAtUtcMillis.present) {
       map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis.value);
     }
@@ -3556,6 +4353,18 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
           ..write('themeMode: $themeMode, ')
           ..write('density: $density, ')
           ..write('accent: $accent, ')
+          ..write('defaultTab: $defaultTab, ')
+          ..write('onboardingDone: $onboardingDone, ')
+          ..write('statsEnabled: $statsEnabled, ')
+          ..write('todayModulesJson: $todayModulesJson, ')
+          ..write('timeboxingStartMinutes: $timeboxingStartMinutes, ')
+          ..write('timeboxingLayout: $timeboxingLayout, ')
+          ..write(
+            'timeboxingWorkdayStartMinutes: $timeboxingWorkdayStartMinutes, ',
+          )
+          ..write('timeboxingWorkdayEndMinutes: $timeboxingWorkdayEndMinutes, ')
+          ..write('inboxTypeFilter: $inboxTypeFilter, ')
+          ..write('inboxTodayOnly: $inboxTodayOnly, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
           ..write(')'))
         .toString();
@@ -3585,6 +4394,18 @@ class $TodayPlanItemsTable extends TodayPlanItems
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _segmentMeta = const VerificationMeta(
+    'segment',
+  );
+  @override
+  late final GeneratedColumn<int> segment = GeneratedColumn<int>(
+    'segment',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
   );
   static const VerificationMeta _orderIndexMeta = const VerificationMeta(
     'orderIndex',
@@ -3621,6 +4442,7 @@ class $TodayPlanItemsTable extends TodayPlanItems
   List<GeneratedColumn> get $columns => [
     dayKey,
     taskId,
+    segment,
     orderIndex,
     createdAtUtcMillis,
     updatedAtUtcMillis,
@@ -3652,6 +4474,12 @@ class $TodayPlanItemsTable extends TodayPlanItems
       );
     } else if (isInserting) {
       context.missing(_taskIdMeta);
+    }
+    if (data.containsKey('segment')) {
+      context.handle(
+        _segmentMeta,
+        segment.isAcceptableOrUnknown(data['segment']!, _segmentMeta),
+      );
     }
     if (data.containsKey('order_index')) {
       context.handle(
@@ -3700,6 +4528,10 @@ class $TodayPlanItemsTable extends TodayPlanItems
         DriftSqlType.string,
         data['${effectivePrefix}task_id'],
       )!,
+      segment: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}segment'],
+      )!,
       orderIndex: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}order_index'],
@@ -3726,12 +4558,16 @@ class TodayPlanItemRow extends DataClass
   /// Local day key, formatted as YYYY-MM-DD.
   final String dayKey;
   final String taskId;
+
+  /// 0 = today, 1 = evening.
+  final int segment;
   final int orderIndex;
   final int createdAtUtcMillis;
   final int updatedAtUtcMillis;
   const TodayPlanItemRow({
     required this.dayKey,
     required this.taskId,
+    required this.segment,
     required this.orderIndex,
     required this.createdAtUtcMillis,
     required this.updatedAtUtcMillis,
@@ -3741,6 +4577,7 @@ class TodayPlanItemRow extends DataClass
     final map = <String, Expression>{};
     map['day_key'] = Variable<String>(dayKey);
     map['task_id'] = Variable<String>(taskId);
+    map['segment'] = Variable<int>(segment);
     map['order_index'] = Variable<int>(orderIndex);
     map['created_at_utc_millis'] = Variable<int>(createdAtUtcMillis);
     map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
@@ -3751,6 +4588,7 @@ class TodayPlanItemRow extends DataClass
     return TodayPlanItemsCompanion(
       dayKey: Value(dayKey),
       taskId: Value(taskId),
+      segment: Value(segment),
       orderIndex: Value(orderIndex),
       createdAtUtcMillis: Value(createdAtUtcMillis),
       updatedAtUtcMillis: Value(updatedAtUtcMillis),
@@ -3765,6 +4603,7 @@ class TodayPlanItemRow extends DataClass
     return TodayPlanItemRow(
       dayKey: serializer.fromJson<String>(json['dayKey']),
       taskId: serializer.fromJson<String>(json['taskId']),
+      segment: serializer.fromJson<int>(json['segment']),
       orderIndex: serializer.fromJson<int>(json['orderIndex']),
       createdAtUtcMillis: serializer.fromJson<int>(json['createdAtUtcMillis']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
@@ -3776,6 +4615,7 @@ class TodayPlanItemRow extends DataClass
     return <String, dynamic>{
       'dayKey': serializer.toJson<String>(dayKey),
       'taskId': serializer.toJson<String>(taskId),
+      'segment': serializer.toJson<int>(segment),
       'orderIndex': serializer.toJson<int>(orderIndex),
       'createdAtUtcMillis': serializer.toJson<int>(createdAtUtcMillis),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
@@ -3785,12 +4625,14 @@ class TodayPlanItemRow extends DataClass
   TodayPlanItemRow copyWith({
     String? dayKey,
     String? taskId,
+    int? segment,
     int? orderIndex,
     int? createdAtUtcMillis,
     int? updatedAtUtcMillis,
   }) => TodayPlanItemRow(
     dayKey: dayKey ?? this.dayKey,
     taskId: taskId ?? this.taskId,
+    segment: segment ?? this.segment,
     orderIndex: orderIndex ?? this.orderIndex,
     createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
     updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
@@ -3799,6 +4641,7 @@ class TodayPlanItemRow extends DataClass
     return TodayPlanItemRow(
       dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
       taskId: data.taskId.present ? data.taskId.value : this.taskId,
+      segment: data.segment.present ? data.segment.value : this.segment,
       orderIndex: data.orderIndex.present
           ? data.orderIndex.value
           : this.orderIndex,
@@ -3816,6 +4659,7 @@ class TodayPlanItemRow extends DataClass
     return (StringBuffer('TodayPlanItemRow(')
           ..write('dayKey: $dayKey, ')
           ..write('taskId: $taskId, ')
+          ..write('segment: $segment, ')
           ..write('orderIndex: $orderIndex, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
@@ -3827,6 +4671,7 @@ class TodayPlanItemRow extends DataClass
   int get hashCode => Object.hash(
     dayKey,
     taskId,
+    segment,
     orderIndex,
     createdAtUtcMillis,
     updatedAtUtcMillis,
@@ -3837,6 +4682,7 @@ class TodayPlanItemRow extends DataClass
       (other is TodayPlanItemRow &&
           other.dayKey == this.dayKey &&
           other.taskId == this.taskId &&
+          other.segment == this.segment &&
           other.orderIndex == this.orderIndex &&
           other.createdAtUtcMillis == this.createdAtUtcMillis &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
@@ -3845,6 +4691,7 @@ class TodayPlanItemRow extends DataClass
 class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
   final Value<String> dayKey;
   final Value<String> taskId;
+  final Value<int> segment;
   final Value<int> orderIndex;
   final Value<int> createdAtUtcMillis;
   final Value<int> updatedAtUtcMillis;
@@ -3852,6 +4699,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
   const TodayPlanItemsCompanion({
     this.dayKey = const Value.absent(),
     this.taskId = const Value.absent(),
+    this.segment = const Value.absent(),
     this.orderIndex = const Value.absent(),
     this.createdAtUtcMillis = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
@@ -3860,6 +4708,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
   TodayPlanItemsCompanion.insert({
     required String dayKey,
     required String taskId,
+    this.segment = const Value.absent(),
     required int orderIndex,
     required int createdAtUtcMillis,
     required int updatedAtUtcMillis,
@@ -3872,6 +4721,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
   static Insertable<TodayPlanItemRow> custom({
     Expression<String>? dayKey,
     Expression<String>? taskId,
+    Expression<int>? segment,
     Expression<int>? orderIndex,
     Expression<int>? createdAtUtcMillis,
     Expression<int>? updatedAtUtcMillis,
@@ -3880,6 +4730,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
     return RawValuesInsertable({
       if (dayKey != null) 'day_key': dayKey,
       if (taskId != null) 'task_id': taskId,
+      if (segment != null) 'segment': segment,
       if (orderIndex != null) 'order_index': orderIndex,
       if (createdAtUtcMillis != null)
         'created_at_utc_millis': createdAtUtcMillis,
@@ -3892,6 +4743,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
   TodayPlanItemsCompanion copyWith({
     Value<String>? dayKey,
     Value<String>? taskId,
+    Value<int>? segment,
     Value<int>? orderIndex,
     Value<int>? createdAtUtcMillis,
     Value<int>? updatedAtUtcMillis,
@@ -3900,6 +4752,7 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
     return TodayPlanItemsCompanion(
       dayKey: dayKey ?? this.dayKey,
       taskId: taskId ?? this.taskId,
+      segment: segment ?? this.segment,
       orderIndex: orderIndex ?? this.orderIndex,
       createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
@@ -3915,6 +4768,9 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
     }
     if (taskId.present) {
       map['task_id'] = Variable<String>(taskId.value);
+    }
+    if (segment.present) {
+      map['segment'] = Variable<int>(segment.value);
     }
     if (orderIndex.present) {
       map['order_index'] = Variable<int>(orderIndex.value);
@@ -3936,7 +4792,485 @@ class TodayPlanItemsCompanion extends UpdateCompanion<TodayPlanItemRow> {
     return (StringBuffer('TodayPlanItemsCompanion(')
           ..write('dayKey: $dayKey, ')
           ..write('taskId: $taskId, ')
+          ..write('segment: $segment, ')
           ..write('orderIndex: $orderIndex, ')
+          ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
+          ..write('updatedAtUtcMillis: $updatedAtUtcMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeaveLinksTable extends WeaveLinks
+    with TableInfo<$WeaveLinksTable, WeaveLinkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeaveLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
+    'sourceType',
+  );
+  @override
+  late final GeneratedColumn<int> sourceType = GeneratedColumn<int>(
+    'source_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetNoteIdMeta = const VerificationMeta(
+    'targetNoteId',
+  );
+  @override
+  late final GeneratedColumn<String> targetNoteId = GeneratedColumn<String>(
+    'target_note_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<int> mode = GeneratedColumn<int>(
+    'mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtUtcMillisMeta =
+      const VerificationMeta('createdAtUtcMillis');
+  @override
+  late final GeneratedColumn<int> createdAtUtcMillis = GeneratedColumn<int>(
+    'created_at_utc_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtUtcMillisMeta =
+      const VerificationMeta('updatedAtUtcMillis');
+  @override
+  late final GeneratedColumn<int> updatedAtUtcMillis = GeneratedColumn<int>(
+    'updated_at_utc_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sourceType,
+    sourceId,
+    targetNoteId,
+    mode,
+    createdAtUtcMillis,
+    updatedAtUtcMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weave_links';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WeaveLinkRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('source_type')) {
+      context.handle(
+        _sourceTypeMeta,
+        sourceType.isAcceptableOrUnknown(data['source_type']!, _sourceTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceTypeMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('target_note_id')) {
+      context.handle(
+        _targetNoteIdMeta,
+        targetNoteId.isAcceptableOrUnknown(
+          data['target_note_id']!,
+          _targetNoteIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetNoteIdMeta);
+    }
+    if (data.containsKey('mode')) {
+      context.handle(
+        _modeMeta,
+        mode.isAcceptableOrUnknown(data['mode']!, _modeMeta),
+      );
+    }
+    if (data.containsKey('created_at_utc_millis')) {
+      context.handle(
+        _createdAtUtcMillisMeta,
+        createdAtUtcMillis.isAcceptableOrUnknown(
+          data['created_at_utc_millis']!,
+          _createdAtUtcMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUtcMillisMeta);
+    }
+    if (data.containsKey('updated_at_utc_millis')) {
+      context.handle(
+        _updatedAtUtcMillisMeta,
+        updatedAtUtcMillis.isAcceptableOrUnknown(
+          data['updated_at_utc_millis']!,
+          _updatedAtUtcMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtUtcMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WeaveLinkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeaveLinkRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sourceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_type'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      targetNoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_note_id'],
+      )!,
+      mode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mode'],
+      )!,
+      createdAtUtcMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_utc_millis'],
+      )!,
+      updatedAtUtcMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_utc_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $WeaveLinksTable createAlias(String alias) {
+    return $WeaveLinksTable(attachedDatabase, alias);
+  }
+}
+
+class WeaveLinkRow extends DataClass implements Insertable<WeaveLinkRow> {
+  final String id;
+  final int sourceType;
+  final String sourceId;
+  final String targetNoteId;
+  final int mode;
+  final int createdAtUtcMillis;
+  final int updatedAtUtcMillis;
+  const WeaveLinkRow({
+    required this.id,
+    required this.sourceType,
+    required this.sourceId,
+    required this.targetNoteId,
+    required this.mode,
+    required this.createdAtUtcMillis,
+    required this.updatedAtUtcMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['source_type'] = Variable<int>(sourceType);
+    map['source_id'] = Variable<String>(sourceId);
+    map['target_note_id'] = Variable<String>(targetNoteId);
+    map['mode'] = Variable<int>(mode);
+    map['created_at_utc_millis'] = Variable<int>(createdAtUtcMillis);
+    map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
+    return map;
+  }
+
+  WeaveLinksCompanion toCompanion(bool nullToAbsent) {
+    return WeaveLinksCompanion(
+      id: Value(id),
+      sourceType: Value(sourceType),
+      sourceId: Value(sourceId),
+      targetNoteId: Value(targetNoteId),
+      mode: Value(mode),
+      createdAtUtcMillis: Value(createdAtUtcMillis),
+      updatedAtUtcMillis: Value(updatedAtUtcMillis),
+    );
+  }
+
+  factory WeaveLinkRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeaveLinkRow(
+      id: serializer.fromJson<String>(json['id']),
+      sourceType: serializer.fromJson<int>(json['sourceType']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      targetNoteId: serializer.fromJson<String>(json['targetNoteId']),
+      mode: serializer.fromJson<int>(json['mode']),
+      createdAtUtcMillis: serializer.fromJson<int>(json['createdAtUtcMillis']),
+      updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sourceType': serializer.toJson<int>(sourceType),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'targetNoteId': serializer.toJson<String>(targetNoteId),
+      'mode': serializer.toJson<int>(mode),
+      'createdAtUtcMillis': serializer.toJson<int>(createdAtUtcMillis),
+      'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
+    };
+  }
+
+  WeaveLinkRow copyWith({
+    String? id,
+    int? sourceType,
+    String? sourceId,
+    String? targetNoteId,
+    int? mode,
+    int? createdAtUtcMillis,
+    int? updatedAtUtcMillis,
+  }) => WeaveLinkRow(
+    id: id ?? this.id,
+    sourceType: sourceType ?? this.sourceType,
+    sourceId: sourceId ?? this.sourceId,
+    targetNoteId: targetNoteId ?? this.targetNoteId,
+    mode: mode ?? this.mode,
+    createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
+    updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
+  );
+  WeaveLinkRow copyWithCompanion(WeaveLinksCompanion data) {
+    return WeaveLinkRow(
+      id: data.id.present ? data.id.value : this.id,
+      sourceType: data.sourceType.present
+          ? data.sourceType.value
+          : this.sourceType,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      targetNoteId: data.targetNoteId.present
+          ? data.targetNoteId.value
+          : this.targetNoteId,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      createdAtUtcMillis: data.createdAtUtcMillis.present
+          ? data.createdAtUtcMillis.value
+          : this.createdAtUtcMillis,
+      updatedAtUtcMillis: data.updatedAtUtcMillis.present
+          ? data.updatedAtUtcMillis.value
+          : this.updatedAtUtcMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaveLinkRow(')
+          ..write('id: $id, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('targetNoteId: $targetNoteId, ')
+          ..write('mode: $mode, ')
+          ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
+          ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sourceType,
+    sourceId,
+    targetNoteId,
+    mode,
+    createdAtUtcMillis,
+    updatedAtUtcMillis,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeaveLinkRow &&
+          other.id == this.id &&
+          other.sourceType == this.sourceType &&
+          other.sourceId == this.sourceId &&
+          other.targetNoteId == this.targetNoteId &&
+          other.mode == this.mode &&
+          other.createdAtUtcMillis == this.createdAtUtcMillis &&
+          other.updatedAtUtcMillis == this.updatedAtUtcMillis);
+}
+
+class WeaveLinksCompanion extends UpdateCompanion<WeaveLinkRow> {
+  final Value<String> id;
+  final Value<int> sourceType;
+  final Value<String> sourceId;
+  final Value<String> targetNoteId;
+  final Value<int> mode;
+  final Value<int> createdAtUtcMillis;
+  final Value<int> updatedAtUtcMillis;
+  final Value<int> rowid;
+  const WeaveLinksCompanion({
+    this.id = const Value.absent(),
+    this.sourceType = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.targetNoteId = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.createdAtUtcMillis = const Value.absent(),
+    this.updatedAtUtcMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WeaveLinksCompanion.insert({
+    required String id,
+    required int sourceType,
+    required String sourceId,
+    required String targetNoteId,
+    this.mode = const Value.absent(),
+    required int createdAtUtcMillis,
+    required int updatedAtUtcMillis,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sourceType = Value(sourceType),
+       sourceId = Value(sourceId),
+       targetNoteId = Value(targetNoteId),
+       createdAtUtcMillis = Value(createdAtUtcMillis),
+       updatedAtUtcMillis = Value(updatedAtUtcMillis);
+  static Insertable<WeaveLinkRow> custom({
+    Expression<String>? id,
+    Expression<int>? sourceType,
+    Expression<String>? sourceId,
+    Expression<String>? targetNoteId,
+    Expression<int>? mode,
+    Expression<int>? createdAtUtcMillis,
+    Expression<int>? updatedAtUtcMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sourceType != null) 'source_type': sourceType,
+      if (sourceId != null) 'source_id': sourceId,
+      if (targetNoteId != null) 'target_note_id': targetNoteId,
+      if (mode != null) 'mode': mode,
+      if (createdAtUtcMillis != null)
+        'created_at_utc_millis': createdAtUtcMillis,
+      if (updatedAtUtcMillis != null)
+        'updated_at_utc_millis': updatedAtUtcMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WeaveLinksCompanion copyWith({
+    Value<String>? id,
+    Value<int>? sourceType,
+    Value<String>? sourceId,
+    Value<String>? targetNoteId,
+    Value<int>? mode,
+    Value<int>? createdAtUtcMillis,
+    Value<int>? updatedAtUtcMillis,
+    Value<int>? rowid,
+  }) {
+    return WeaveLinksCompanion(
+      id: id ?? this.id,
+      sourceType: sourceType ?? this.sourceType,
+      sourceId: sourceId ?? this.sourceId,
+      targetNoteId: targetNoteId ?? this.targetNoteId,
+      mode: mode ?? this.mode,
+      createdAtUtcMillis: createdAtUtcMillis ?? this.createdAtUtcMillis,
+      updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sourceType.present) {
+      map['source_type'] = Variable<int>(sourceType.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (targetNoteId.present) {
+      map['target_note_id'] = Variable<String>(targetNoteId.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<int>(mode.value);
+    }
+    if (createdAtUtcMillis.present) {
+      map['created_at_utc_millis'] = Variable<int>(createdAtUtcMillis.value);
+    }
+    if (updatedAtUtcMillis.present) {
+      map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeaveLinksCompanion(')
+          ..write('id: $id, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('targetNoteId: $targetNoteId, ')
+          ..write('mode: $mode, ')
           ..write('createdAtUtcMillis: $createdAtUtcMillis, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis, ')
           ..write('rowid: $rowid')
@@ -3963,6 +5297,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AppearanceConfigsTable appearanceConfigs =
       $AppearanceConfigsTable(this);
   late final $TodayPlanItemsTable todayPlanItems = $TodayPlanItemsTable(this);
+  late final $WeaveLinksTable weaveLinks = $WeaveLinksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3976,6 +5311,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pomodoroConfigs,
     appearanceConfigs,
     todayPlanItems,
+    weaveLinks,
   ];
 }
 
@@ -3988,6 +5324,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       required int priority,
       Value<int?> dueAtUtcMillis,
       Value<String> tagsJson,
+      Value<int> triageStatus,
       Value<int?> estimatedPomodoros,
       required int createdAtUtcMillis,
       required int updatedAtUtcMillis,
@@ -4002,6 +5339,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> priority,
       Value<int?> dueAtUtcMillis,
       Value<String> tagsJson,
+      Value<int> triageStatus,
       Value<int?> estimatedPomodoros,
       Value<int> createdAtUtcMillis,
       Value<int> updatedAtUtcMillis,
@@ -4048,6 +5386,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get tagsJson => $composableBuilder(
     column: $table.tagsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4111,6 +5454,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get estimatedPomodoros => $composableBuilder(
     column: $table.estimatedPomodoros,
     builder: (column) => ColumnOrderings(column),
@@ -4160,6 +5508,11 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<String> get tagsJson =>
       $composableBuilder(column: $table.tagsJson, builder: (column) => column);
+
+  GeneratedColumn<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get estimatedPomodoros => $composableBuilder(
     column: $table.estimatedPomodoros,
@@ -4212,6 +5565,7 @@ class $$TasksTableTableManager
                 Value<int> priority = const Value.absent(),
                 Value<int?> dueAtUtcMillis = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
+                Value<int> triageStatus = const Value.absent(),
                 Value<int?> estimatedPomodoros = const Value.absent(),
                 Value<int> createdAtUtcMillis = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
@@ -4224,6 +5578,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 dueAtUtcMillis: dueAtUtcMillis,
                 tagsJson: tagsJson,
+                triageStatus: triageStatus,
                 estimatedPomodoros: estimatedPomodoros,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -4238,6 +5593,7 @@ class $$TasksTableTableManager
                 required int priority,
                 Value<int?> dueAtUtcMillis = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
+                Value<int> triageStatus = const Value.absent(),
                 Value<int?> estimatedPomodoros = const Value.absent(),
                 required int createdAtUtcMillis,
                 required int updatedAtUtcMillis,
@@ -4250,6 +5606,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 dueAtUtcMillis: dueAtUtcMillis,
                 tagsJson: tagsJson,
+                triageStatus: triageStatus,
                 estimatedPomodoros: estimatedPomodoros,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -4536,6 +5893,7 @@ typedef $$ActivePomodorosTableCreateCompanionBuilder =
       required int startAtUtcMillis,
       Value<int?> endAtUtcMillis,
       Value<int?> remainingMs,
+      Value<String?> focusNote,
       required int updatedAtUtcMillis,
     });
 typedef $$ActivePomodorosTableUpdateCompanionBuilder =
@@ -4547,6 +5905,7 @@ typedef $$ActivePomodorosTableUpdateCompanionBuilder =
       Value<int> startAtUtcMillis,
       Value<int?> endAtUtcMillis,
       Value<int?> remainingMs,
+      Value<String?> focusNote,
       Value<int> updatedAtUtcMillis,
     });
 
@@ -4591,6 +5950,11 @@ class $$ActivePomodorosTableFilterComposer
 
   ColumnFilters<int> get remainingMs => $composableBuilder(
     column: $table.remainingMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get focusNote => $composableBuilder(
+    column: $table.focusNote,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4644,6 +6008,11 @@ class $$ActivePomodorosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get focusNote => $composableBuilder(
+    column: $table.focusNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updatedAtUtcMillis => $composableBuilder(
     column: $table.updatedAtUtcMillis,
     builder: (column) => ColumnOrderings(column),
@@ -4685,6 +6054,9 @@ class $$ActivePomodorosTableAnnotationComposer
     column: $table.remainingMs,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get focusNote =>
+      $composableBuilder(column: $table.focusNote, builder: (column) => column);
 
   GeneratedColumn<int> get updatedAtUtcMillis => $composableBuilder(
     column: $table.updatedAtUtcMillis,
@@ -4736,6 +6108,7 @@ class $$ActivePomodorosTableTableManager
                 Value<int> startAtUtcMillis = const Value.absent(),
                 Value<int?> endAtUtcMillis = const Value.absent(),
                 Value<int?> remainingMs = const Value.absent(),
+                Value<String?> focusNote = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
               }) => ActivePomodorosCompanion(
                 id: id,
@@ -4745,6 +6118,7 @@ class $$ActivePomodorosTableTableManager
                 startAtUtcMillis: startAtUtcMillis,
                 endAtUtcMillis: endAtUtcMillis,
                 remainingMs: remainingMs,
+                focusNote: focusNote,
                 updatedAtUtcMillis: updatedAtUtcMillis,
               ),
           createCompanionCallback:
@@ -4756,6 +6130,7 @@ class $$ActivePomodorosTableTableManager
                 required int startAtUtcMillis,
                 Value<int?> endAtUtcMillis = const Value.absent(),
                 Value<int?> remainingMs = const Value.absent(),
+                Value<String?> focusNote = const Value.absent(),
                 required int updatedAtUtcMillis,
               }) => ActivePomodorosCompanion.insert(
                 id: id,
@@ -4765,6 +6140,7 @@ class $$ActivePomodorosTableTableManager
                 startAtUtcMillis: startAtUtcMillis,
                 endAtUtcMillis: endAtUtcMillis,
                 remainingMs: remainingMs,
+                focusNote: focusNote,
                 updatedAtUtcMillis: updatedAtUtcMillis,
               ),
           withReferenceMapper: (p0) => p0
@@ -5055,6 +6431,8 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<String> body,
       Value<String> tagsJson,
       Value<String?> taskId,
+      Value<int> kind,
+      Value<int> triageStatus,
       required int createdAtUtcMillis,
       required int updatedAtUtcMillis,
       Value<int> rowid,
@@ -5066,6 +6444,8 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<String> body,
       Value<String> tagsJson,
       Value<String?> taskId,
+      Value<int> kind,
+      Value<int> triageStatus,
       Value<int> createdAtUtcMillis,
       Value<int> updatedAtUtcMillis,
       Value<int> rowid,
@@ -5101,6 +6481,16 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<String> get taskId => $composableBuilder(
     column: $table.taskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5149,6 +6539,16 @@ class $$NotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get createdAtUtcMillis => $composableBuilder(
     column: $table.createdAtUtcMillis,
     builder: (column) => ColumnOrderings(column),
@@ -5183,6 +6583,14 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<String> get taskId =>
       $composableBuilder(column: $table.taskId, builder: (column) => column);
+
+  GeneratedColumn<int> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get triageStatus => $composableBuilder(
+    column: $table.triageStatus,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get createdAtUtcMillis => $composableBuilder(
     column: $table.createdAtUtcMillis,
@@ -5228,6 +6636,8 @@ class $$NotesTableTableManager
                 Value<String> body = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> taskId = const Value.absent(),
+                Value<int> kind = const Value.absent(),
+                Value<int> triageStatus = const Value.absent(),
                 Value<int> createdAtUtcMillis = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5237,6 +6647,8 @@ class $$NotesTableTableManager
                 body: body,
                 tagsJson: tagsJson,
                 taskId: taskId,
+                kind: kind,
+                triageStatus: triageStatus,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
                 rowid: rowid,
@@ -5248,6 +6660,8 @@ class $$NotesTableTableManager
                 Value<String> body = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> taskId = const Value.absent(),
+                Value<int> kind = const Value.absent(),
+                Value<int> triageStatus = const Value.absent(),
                 required int createdAtUtcMillis,
                 required int updatedAtUtcMillis,
                 Value<int> rowid = const Value.absent(),
@@ -5257,6 +6671,8 @@ class $$NotesTableTableManager
                 body: body,
                 tagsJson: tagsJson,
                 taskId: taskId,
+                kind: kind,
+                triageStatus: triageStatus,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
                 rowid: rowid,
@@ -5290,6 +6706,7 @@ typedef $$PomodoroConfigsTableCreateCompanionBuilder =
       Value<int> shortBreakMinutes,
       Value<int> longBreakMinutes,
       Value<int> longBreakEvery,
+      Value<int> dailyBudgetPomodoros,
       Value<bool> autoStartBreak,
       Value<bool> autoStartFocus,
       Value<bool> notificationSound,
@@ -5303,6 +6720,7 @@ typedef $$PomodoroConfigsTableUpdateCompanionBuilder =
       Value<int> shortBreakMinutes,
       Value<int> longBreakMinutes,
       Value<int> longBreakEvery,
+      Value<int> dailyBudgetPomodoros,
       Value<bool> autoStartBreak,
       Value<bool> autoStartFocus,
       Value<bool> notificationSound,
@@ -5341,6 +6759,11 @@ class $$PomodoroConfigsTableFilterComposer
 
   ColumnFilters<int> get longBreakEvery => $composableBuilder(
     column: $table.longBreakEvery,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyBudgetPomodoros => $composableBuilder(
+    column: $table.dailyBudgetPomodoros,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5404,6 +6827,11 @@ class $$PomodoroConfigsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get dailyBudgetPomodoros => $composableBuilder(
+    column: $table.dailyBudgetPomodoros,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get autoStartBreak => $composableBuilder(
     column: $table.autoStartBreak,
     builder: (column) => ColumnOrderings(column),
@@ -5459,6 +6887,11 @@ class $$PomodoroConfigsTableAnnotationComposer
 
   GeneratedColumn<int> get longBreakEvery => $composableBuilder(
     column: $table.longBreakEvery,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dailyBudgetPomodoros => $composableBuilder(
+    column: $table.dailyBudgetPomodoros,
     builder: (column) => column,
   );
 
@@ -5530,6 +6963,7 @@ class $$PomodoroConfigsTableTableManager
                 Value<int> shortBreakMinutes = const Value.absent(),
                 Value<int> longBreakMinutes = const Value.absent(),
                 Value<int> longBreakEvery = const Value.absent(),
+                Value<int> dailyBudgetPomodoros = const Value.absent(),
                 Value<bool> autoStartBreak = const Value.absent(),
                 Value<bool> autoStartFocus = const Value.absent(),
                 Value<bool> notificationSound = const Value.absent(),
@@ -5541,6 +6975,7 @@ class $$PomodoroConfigsTableTableManager
                 shortBreakMinutes: shortBreakMinutes,
                 longBreakMinutes: longBreakMinutes,
                 longBreakEvery: longBreakEvery,
+                dailyBudgetPomodoros: dailyBudgetPomodoros,
                 autoStartBreak: autoStartBreak,
                 autoStartFocus: autoStartFocus,
                 notificationSound: notificationSound,
@@ -5554,6 +6989,7 @@ class $$PomodoroConfigsTableTableManager
                 Value<int> shortBreakMinutes = const Value.absent(),
                 Value<int> longBreakMinutes = const Value.absent(),
                 Value<int> longBreakEvery = const Value.absent(),
+                Value<int> dailyBudgetPomodoros = const Value.absent(),
                 Value<bool> autoStartBreak = const Value.absent(),
                 Value<bool> autoStartFocus = const Value.absent(),
                 Value<bool> notificationSound = const Value.absent(),
@@ -5565,6 +7001,7 @@ class $$PomodoroConfigsTableTableManager
                 shortBreakMinutes: shortBreakMinutes,
                 longBreakMinutes: longBreakMinutes,
                 longBreakEvery: longBreakEvery,
+                dailyBudgetPomodoros: dailyBudgetPomodoros,
                 autoStartBreak: autoStartBreak,
                 autoStartFocus: autoStartFocus,
                 notificationSound: notificationSound,
@@ -5602,6 +7039,16 @@ typedef $$AppearanceConfigsTableCreateCompanionBuilder =
       Value<int> themeMode,
       Value<int> density,
       Value<int> accent,
+      Value<int> defaultTab,
+      Value<bool> onboardingDone,
+      Value<bool> statsEnabled,
+      Value<String> todayModulesJson,
+      Value<int?> timeboxingStartMinutes,
+      Value<int> timeboxingLayout,
+      Value<int> timeboxingWorkdayStartMinutes,
+      Value<int> timeboxingWorkdayEndMinutes,
+      Value<int> inboxTypeFilter,
+      Value<bool> inboxTodayOnly,
       required int updatedAtUtcMillis,
     });
 typedef $$AppearanceConfigsTableUpdateCompanionBuilder =
@@ -5610,6 +7057,16 @@ typedef $$AppearanceConfigsTableUpdateCompanionBuilder =
       Value<int> themeMode,
       Value<int> density,
       Value<int> accent,
+      Value<int> defaultTab,
+      Value<bool> onboardingDone,
+      Value<bool> statsEnabled,
+      Value<String> todayModulesJson,
+      Value<int?> timeboxingStartMinutes,
+      Value<int> timeboxingLayout,
+      Value<int> timeboxingWorkdayStartMinutes,
+      Value<int> timeboxingWorkdayEndMinutes,
+      Value<int> inboxTypeFilter,
+      Value<bool> inboxTodayOnly,
       Value<int> updatedAtUtcMillis,
     });
 
@@ -5639,6 +7096,56 @@ class $$AppearanceConfigsTableFilterComposer
 
   ColumnFilters<int> get accent => $composableBuilder(
     column: $table.accent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get defaultTab => $composableBuilder(
+    column: $table.defaultTab,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get onboardingDone => $composableBuilder(
+    column: $table.onboardingDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get statsEnabled => $composableBuilder(
+    column: $table.statsEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get todayModulesJson => $composableBuilder(
+    column: $table.todayModulesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeboxingStartMinutes => $composableBuilder(
+    column: $table.timeboxingStartMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeboxingLayout => $composableBuilder(
+    column: $table.timeboxingLayout,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeboxingWorkdayStartMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayStartMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timeboxingWorkdayEndMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayEndMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get inboxTypeFilter => $composableBuilder(
+    column: $table.inboxTypeFilter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get inboxTodayOnly => $composableBuilder(
+    column: $table.inboxTodayOnly,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5677,6 +7184,56 @@ class $$AppearanceConfigsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get defaultTab => $composableBuilder(
+    column: $table.defaultTab,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get onboardingDone => $composableBuilder(
+    column: $table.onboardingDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get statsEnabled => $composableBuilder(
+    column: $table.statsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get todayModulesJson => $composableBuilder(
+    column: $table.todayModulesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeboxingStartMinutes => $composableBuilder(
+    column: $table.timeboxingStartMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeboxingLayout => $composableBuilder(
+    column: $table.timeboxingLayout,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeboxingWorkdayStartMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayStartMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timeboxingWorkdayEndMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayEndMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get inboxTypeFilter => $composableBuilder(
+    column: $table.inboxTypeFilter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get inboxTodayOnly => $composableBuilder(
+    column: $table.inboxTodayOnly,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updatedAtUtcMillis => $composableBuilder(
     column: $table.updatedAtUtcMillis,
     builder: (column) => ColumnOrderings(column),
@@ -5703,6 +7260,56 @@ class $$AppearanceConfigsTableAnnotationComposer
 
   GeneratedColumn<int> get accent =>
       $composableBuilder(column: $table.accent, builder: (column) => column);
+
+  GeneratedColumn<int> get defaultTab => $composableBuilder(
+    column: $table.defaultTab,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get onboardingDone => $composableBuilder(
+    column: $table.onboardingDone,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get statsEnabled => $composableBuilder(
+    column: $table.statsEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get todayModulesJson => $composableBuilder(
+    column: $table.todayModulesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeboxingStartMinutes => $composableBuilder(
+    column: $table.timeboxingStartMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeboxingLayout => $composableBuilder(
+    column: $table.timeboxingLayout,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeboxingWorkdayStartMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayStartMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get timeboxingWorkdayEndMinutes => $composableBuilder(
+    column: $table.timeboxingWorkdayEndMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get inboxTypeFilter => $composableBuilder(
+    column: $table.inboxTypeFilter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get inboxTodayOnly => $composableBuilder(
+    column: $table.inboxTodayOnly,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get updatedAtUtcMillis => $composableBuilder(
     column: $table.updatedAtUtcMillis,
@@ -5754,12 +7361,32 @@ class $$AppearanceConfigsTableTableManager
                 Value<int> themeMode = const Value.absent(),
                 Value<int> density = const Value.absent(),
                 Value<int> accent = const Value.absent(),
+                Value<int> defaultTab = const Value.absent(),
+                Value<bool> onboardingDone = const Value.absent(),
+                Value<bool> statsEnabled = const Value.absent(),
+                Value<String> todayModulesJson = const Value.absent(),
+                Value<int?> timeboxingStartMinutes = const Value.absent(),
+                Value<int> timeboxingLayout = const Value.absent(),
+                Value<int> timeboxingWorkdayStartMinutes = const Value.absent(),
+                Value<int> timeboxingWorkdayEndMinutes = const Value.absent(),
+                Value<int> inboxTypeFilter = const Value.absent(),
+                Value<bool> inboxTodayOnly = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
               }) => AppearanceConfigsCompanion(
                 id: id,
                 themeMode: themeMode,
                 density: density,
                 accent: accent,
+                defaultTab: defaultTab,
+                onboardingDone: onboardingDone,
+                statsEnabled: statsEnabled,
+                todayModulesJson: todayModulesJson,
+                timeboxingStartMinutes: timeboxingStartMinutes,
+                timeboxingLayout: timeboxingLayout,
+                timeboxingWorkdayStartMinutes: timeboxingWorkdayStartMinutes,
+                timeboxingWorkdayEndMinutes: timeboxingWorkdayEndMinutes,
+                inboxTypeFilter: inboxTypeFilter,
+                inboxTodayOnly: inboxTodayOnly,
                 updatedAtUtcMillis: updatedAtUtcMillis,
               ),
           createCompanionCallback:
@@ -5768,12 +7395,32 @@ class $$AppearanceConfigsTableTableManager
                 Value<int> themeMode = const Value.absent(),
                 Value<int> density = const Value.absent(),
                 Value<int> accent = const Value.absent(),
+                Value<int> defaultTab = const Value.absent(),
+                Value<bool> onboardingDone = const Value.absent(),
+                Value<bool> statsEnabled = const Value.absent(),
+                Value<String> todayModulesJson = const Value.absent(),
+                Value<int?> timeboxingStartMinutes = const Value.absent(),
+                Value<int> timeboxingLayout = const Value.absent(),
+                Value<int> timeboxingWorkdayStartMinutes = const Value.absent(),
+                Value<int> timeboxingWorkdayEndMinutes = const Value.absent(),
+                Value<int> inboxTypeFilter = const Value.absent(),
+                Value<bool> inboxTodayOnly = const Value.absent(),
                 required int updatedAtUtcMillis,
               }) => AppearanceConfigsCompanion.insert(
                 id: id,
                 themeMode: themeMode,
                 density: density,
                 accent: accent,
+                defaultTab: defaultTab,
+                onboardingDone: onboardingDone,
+                statsEnabled: statsEnabled,
+                todayModulesJson: todayModulesJson,
+                timeboxingStartMinutes: timeboxingStartMinutes,
+                timeboxingLayout: timeboxingLayout,
+                timeboxingWorkdayStartMinutes: timeboxingWorkdayStartMinutes,
+                timeboxingWorkdayEndMinutes: timeboxingWorkdayEndMinutes,
+                inboxTypeFilter: inboxTypeFilter,
+                inboxTodayOnly: inboxTodayOnly,
                 updatedAtUtcMillis: updatedAtUtcMillis,
               ),
           withReferenceMapper: (p0) => p0
@@ -5809,6 +7456,7 @@ typedef $$TodayPlanItemsTableCreateCompanionBuilder =
     TodayPlanItemsCompanion Function({
       required String dayKey,
       required String taskId,
+      Value<int> segment,
       required int orderIndex,
       required int createdAtUtcMillis,
       required int updatedAtUtcMillis,
@@ -5818,6 +7466,7 @@ typedef $$TodayPlanItemsTableUpdateCompanionBuilder =
     TodayPlanItemsCompanion Function({
       Value<String> dayKey,
       Value<String> taskId,
+      Value<int> segment,
       Value<int> orderIndex,
       Value<int> createdAtUtcMillis,
       Value<int> updatedAtUtcMillis,
@@ -5840,6 +7489,11 @@ class $$TodayPlanItemsTableFilterComposer
 
   ColumnFilters<String> get taskId => $composableBuilder(
     column: $table.taskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get segment => $composableBuilder(
+    column: $table.segment,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5878,6 +7532,11 @@ class $$TodayPlanItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get segment => $composableBuilder(
+    column: $table.segment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get orderIndex => $composableBuilder(
     column: $table.orderIndex,
     builder: (column) => ColumnOrderings(column),
@@ -5908,6 +7567,9 @@ class $$TodayPlanItemsTableAnnotationComposer
 
   GeneratedColumn<String> get taskId =>
       $composableBuilder(column: $table.taskId, builder: (column) => column);
+
+  GeneratedColumn<int> get segment =>
+      $composableBuilder(column: $table.segment, builder: (column) => column);
 
   GeneratedColumn<int> get orderIndex => $composableBuilder(
     column: $table.orderIndex,
@@ -5964,6 +7626,7 @@ class $$TodayPlanItemsTableTableManager
               ({
                 Value<String> dayKey = const Value.absent(),
                 Value<String> taskId = const Value.absent(),
+                Value<int> segment = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
                 Value<int> createdAtUtcMillis = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
@@ -5971,6 +7634,7 @@ class $$TodayPlanItemsTableTableManager
               }) => TodayPlanItemsCompanion(
                 dayKey: dayKey,
                 taskId: taskId,
+                segment: segment,
                 orderIndex: orderIndex,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -5980,6 +7644,7 @@ class $$TodayPlanItemsTableTableManager
               ({
                 required String dayKey,
                 required String taskId,
+                Value<int> segment = const Value.absent(),
                 required int orderIndex,
                 required int createdAtUtcMillis,
                 required int updatedAtUtcMillis,
@@ -5987,6 +7652,7 @@ class $$TodayPlanItemsTableTableManager
               }) => TodayPlanItemsCompanion.insert(
                 dayKey: dayKey,
                 taskId: taskId,
+                segment: segment,
                 orderIndex: orderIndex,
                 createdAtUtcMillis: createdAtUtcMillis,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -6017,6 +7683,252 @@ typedef $$TodayPlanItemsTableProcessedTableManager =
       TodayPlanItemRow,
       PrefetchHooks Function()
     >;
+typedef $$WeaveLinksTableCreateCompanionBuilder =
+    WeaveLinksCompanion Function({
+      required String id,
+      required int sourceType,
+      required String sourceId,
+      required String targetNoteId,
+      Value<int> mode,
+      required int createdAtUtcMillis,
+      required int updatedAtUtcMillis,
+      Value<int> rowid,
+    });
+typedef $$WeaveLinksTableUpdateCompanionBuilder =
+    WeaveLinksCompanion Function({
+      Value<String> id,
+      Value<int> sourceType,
+      Value<String> sourceId,
+      Value<String> targetNoteId,
+      Value<int> mode,
+      Value<int> createdAtUtcMillis,
+      Value<int> updatedAtUtcMillis,
+      Value<int> rowid,
+    });
+
+class $$WeaveLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $WeaveLinksTable> {
+  $$WeaveLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetNoteId => $composableBuilder(
+    column: $table.targetNoteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUtcMillis => $composableBuilder(
+    column: $table.createdAtUtcMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WeaveLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeaveLinksTable> {
+  $$WeaveLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetNoteId => $composableBuilder(
+    column: $table.targetNoteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUtcMillis => $composableBuilder(
+    column: $table.createdAtUtcMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WeaveLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeaveLinksTable> {
+  $$WeaveLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get targetNoteId => $composableBuilder(
+    column: $table.targetNoteId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtUtcMillis => $composableBuilder(
+    column: $table.createdAtUtcMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$WeaveLinksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WeaveLinksTable,
+          WeaveLinkRow,
+          $$WeaveLinksTableFilterComposer,
+          $$WeaveLinksTableOrderingComposer,
+          $$WeaveLinksTableAnnotationComposer,
+          $$WeaveLinksTableCreateCompanionBuilder,
+          $$WeaveLinksTableUpdateCompanionBuilder,
+          (
+            WeaveLinkRow,
+            BaseReferences<_$AppDatabase, $WeaveLinksTable, WeaveLinkRow>,
+          ),
+          WeaveLinkRow,
+          PrefetchHooks Function()
+        > {
+  $$WeaveLinksTableTableManager(_$AppDatabase db, $WeaveLinksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeaveLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WeaveLinksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WeaveLinksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> sourceType = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<String> targetNoteId = const Value.absent(),
+                Value<int> mode = const Value.absent(),
+                Value<int> createdAtUtcMillis = const Value.absent(),
+                Value<int> updatedAtUtcMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WeaveLinksCompanion(
+                id: id,
+                sourceType: sourceType,
+                sourceId: sourceId,
+                targetNoteId: targetNoteId,
+                mode: mode,
+                createdAtUtcMillis: createdAtUtcMillis,
+                updatedAtUtcMillis: updatedAtUtcMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int sourceType,
+                required String sourceId,
+                required String targetNoteId,
+                Value<int> mode = const Value.absent(),
+                required int createdAtUtcMillis,
+                required int updatedAtUtcMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => WeaveLinksCompanion.insert(
+                id: id,
+                sourceType: sourceType,
+                sourceId: sourceId,
+                targetNoteId: targetNoteId,
+                mode: mode,
+                createdAtUtcMillis: createdAtUtcMillis,
+                updatedAtUtcMillis: updatedAtUtcMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WeaveLinksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WeaveLinksTable,
+      WeaveLinkRow,
+      $$WeaveLinksTableFilterComposer,
+      $$WeaveLinksTableOrderingComposer,
+      $$WeaveLinksTableAnnotationComposer,
+      $$WeaveLinksTableCreateCompanionBuilder,
+      $$WeaveLinksTableUpdateCompanionBuilder,
+      (
+        WeaveLinkRow,
+        BaseReferences<_$AppDatabase, $WeaveLinksTable, WeaveLinkRow>,
+      ),
+      WeaveLinkRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6037,4 +7949,6 @@ class $AppDatabaseManager {
       $$AppearanceConfigsTableTableManager(_db, _db.appearanceConfigs);
   $$TodayPlanItemsTableTableManager get todayPlanItems =>
       $$TodayPlanItemsTableTableManager(_db, _db.todayPlanItems);
+  $$WeaveLinksTableTableManager get weaveLinks =>
+      $$WeaveLinksTableTableManager(_db, _db.weaveLinks);
 }

@@ -9,6 +9,7 @@ class Tasks extends Table {
   IntColumn get priority => integer()();
   IntColumn get dueAtUtcMillis => integer().nullable()();
   TextColumn get tagsJson => text().withDefault(const Constant('[]'))();
+  IntColumn get triageStatus => integer().withDefault(const Constant(2))();
   IntColumn get estimatedPomodoros => integer().nullable()();
   IntColumn get createdAtUtcMillis => integer()();
   IntColumn get updatedAtUtcMillis => integer()();

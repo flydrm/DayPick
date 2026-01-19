@@ -1,5 +1,9 @@
 import 'package:domain/domain.dart' as domain;
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+import '../../../ui/tokens/dp_radius.dart';
+import '../../../ui/tokens/dp_spacing.dart';
 
 class NoteListItem extends StatelessWidget {
   const NoteListItem({super.key, required this.note, required this.onTap});
@@ -9,23 +13,66 @@ class NoteListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     final snippet = _firstLine(note.body);
     final subtitleParts = <String>[];
     if (snippet != null) subtitleParts.add(snippet);
     if (note.tags.isNotEmpty) subtitleParts.add(note.tags.take(3).join(' · '));
-    final subtitle =
-        subtitleParts.isEmpty ? null : subtitleParts.join('  ·  ');
+    final subtitle = subtitleParts.isEmpty ? null : subtitleParts.join('  ·  ');
 
-    return ListTile(
-      title: Text(note.title.value, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: subtitle == null
-          ? null
-          : Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Text(
-        _formatDate(note.updatedAt),
-        style: Theme.of(context).textTheme.bodySmall,
+    return Semantics(
+      button: true,
+      label: note.title.value,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(DpRadius.md),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DpSpacing.md,
+            vertical: DpSpacing.sm,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      note.title.value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: shadTheme.textTheme.small.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.foreground,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: DpSpacing.xs),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: DpSpacing.sm),
+              Text(
+                _formatDate(note.updatedAt),
+                style: shadTheme.textTheme.muted.copyWith(
+                  color: colorScheme.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      onTap: onTap,
     );
   }
 
@@ -37,4 +84,3 @@ class NoteListItem extends StatelessWidget {
 
   String _formatDate(DateTime dt) => '${dt.month}/${dt.day}';
 }
-

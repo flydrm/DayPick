@@ -10,8 +10,12 @@ class DriftTaskChecklistRepository implements domain.TaskChecklistRepository {
 
   @override
   Stream<List<domain.TaskChecklistItem>> watchByTaskId(String taskId) {
-    final query = (_db.select(_db.taskCheckItems)..where((t) => t.taskId.equals(taskId)))
-      ..orderBy([(t) => OrderingTerm(expression: t.orderIndex, mode: OrderingMode.asc)]);
+    final query =
+        (_db.select(_db.taskCheckItems)..where((t) => t.taskId.equals(taskId)))
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.orderIndex, mode: OrderingMode.asc),
+          ]);
     return query.watch().map((rows) => rows.map(_toDomain).toList());
   }
 
@@ -24,7 +28,9 @@ class DriftTaskChecklistRepository implements domain.TaskChecklistRepository {
 
   @override
   Future<void> deleteItem(String itemId) async {
-    await (_db.delete(_db.taskCheckItems)..where((t) => t.id.equals(itemId))).go();
+    await (_db.delete(
+      _db.taskCheckItems,
+    )..where((t) => t.id.equals(itemId))).go();
   }
 
   TaskCheckItemsCompanion _toCompanion(domain.TaskChecklistItem item) {
@@ -46,8 +52,14 @@ class DriftTaskChecklistRepository implements domain.TaskChecklistRepository {
       title: domain.ChecklistItemTitle(row.title),
       isDone: row.isDone,
       orderIndex: row.orderIndex,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAtUtcMillis, isUtc: true).toLocal(),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAtUtcMillis, isUtc: true).toLocal(),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        row.createdAtUtcMillis,
+        isUtc: true,
+      ).toLocal(),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        row.updatedAtUtcMillis,
+        isUtc: true,
+      ).toLocal(),
     );
   }
 }

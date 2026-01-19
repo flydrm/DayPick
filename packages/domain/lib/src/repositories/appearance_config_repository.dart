@@ -6,4 +6,3 @@ abstract interface class AppearanceConfigRepository {
   Future<void> save(AppearanceConfig config);
   Future<void> clear();
 }
-

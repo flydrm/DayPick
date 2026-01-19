@@ -10,9 +10,9 @@ class CreateChecklistItemUseCase {
     required TaskChecklistRepository repository,
     required ChecklistItemIdGenerator generateId,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _generateId = generateId,
-        _now = now;
+  }) : _repository = repository,
+       _generateId = generateId,
+       _now = now;
 
   final TaskChecklistRepository _repository;
   final ChecklistItemIdGenerator _generateId;

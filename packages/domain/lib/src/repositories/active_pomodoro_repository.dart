@@ -6,4 +6,3 @@ abstract interface class ActivePomodoroRepository {
   Future<void> upsert(ActivePomodoro state);
   Future<void> clear();
 }
-

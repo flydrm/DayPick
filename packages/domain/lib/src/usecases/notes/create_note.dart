@@ -1,4 +1,5 @@
 import '../../entities/note.dart';
+import '../../entities/triage_status.dart';
 import '../../repositories/note_repository.dart';
 import '../../value_objects/note_title.dart';
 
@@ -10,9 +11,9 @@ class CreateNoteUseCase {
     required NoteRepository repository,
     required NoteIdGenerator generateId,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _generateId = generateId,
-        _now = now;
+  }) : _repository = repository,
+       _generateId = generateId,
+       _now = now;
 
   final NoteRepository _repository;
   final NoteIdGenerator _generateId;
@@ -23,6 +24,8 @@ class CreateNoteUseCase {
     String? body,
     List<String> tags = const [],
     String? taskId,
+    NoteKind kind = NoteKind.longform,
+    TriageStatus triageStatus = TriageStatus.scheduledLater,
   }) async {
     final now = _now();
     final note = Note(
@@ -33,6 +36,8 @@ class CreateNoteUseCase {
       taskId: taskId?.trim().isEmpty == true ? null : taskId?.trim(),
       createdAt: now,
       updatedAt: now,
+      kind: kind,
+      triageStatus: triageStatus,
     );
     await _repository.upsertNote(note);
     return note;
@@ -40,4 +45,3 @@ class CreateNoteUseCase {
 
   String _normalizeBody(String? value) => value?.trimRight() ?? '';
 }
-

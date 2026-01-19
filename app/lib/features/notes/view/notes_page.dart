@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../ui/kit/dp_empty_state.dart';
+import '../../../ui/kit/dp_inline_notice.dart';
+import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
+import '../../../ui/tokens/dp_insets.dart';
+import '../../../ui/tokens/dp_spacing.dart';
 import '../providers/note_providers.dart';
-import 'note_edit_sheet.dart';
 import 'note_list_item.dart';
 
 class NotesPage extends ConsumerWidget {
@@ -15,99 +20,119 @@ class NotesPage extends ConsumerWidget {
     final notesAsync = ref.watch(filteredNotesProvider);
     final tags = ref.watch(availableNoteTagsProvider);
     final selectedTag = ref.watch(selectedNoteTagProvider);
+    void clearTagFilter() =>
+        ref.read(selectedNoteTagProvider.notifier).state = null;
+    void setTagFilter(String tag) =>
+        ref.read(selectedNoteTagProvider.notifier).state = tag;
     return AppPageScaffold(
       title: '笔记',
-      floatingActionButton: FloatingActionButton(
-        tooltip: '新增笔记',
-        onPressed: () => _openCreateSheet(context),
-        child: const Icon(Icons.add),
-      ),
+      createRoute: '/create?type=draft',
+      actions: [
+        Tooltip(
+          message: '闪念',
+          child: ShadIconButton.ghost(
+            icon: const Icon(Icons.bolt_outlined, size: 20),
+            onPressed: () => context.push('/memos'),
+          ),
+        ),
+      ],
       body: notesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('加载失败：$error')),
+        loading: () => const Center(child: DpSpinner()),
+        error: (error, stack) => Padding(
+          padding: DpInsets.page,
+          child: DpInlineNotice(
+            variant: DpInlineNoticeVariant.destructive,
+            title: '加载失败',
+            description: '$error',
+            icon: const Icon(Icons.error_outline),
+          ),
+        ),
         data: (notes) {
+          final canClearFilter = selectedTag != null;
+          if (notes.isEmpty) {
+            return Padding(
+              padding: DpInsets.page,
+              child: DpEmptyState(
+                icon: Icons.notes_outlined,
+                title: canClearFilter ? '暂无匹配笔记' : '还没有笔记',
+                description: canClearFilter
+                    ? '试试清除筛选，或切到「闪念」查看待处理内容。'
+                    : '点右上角「＋」新建长文；或点右上角「闪念」查看待处理内容。',
+                actionLabel: canClearFilter ? '清除筛选' : '写一条',
+                onAction: canClearFilter
+                    ? clearTagFilter
+                    : () => context.push('/create?type=draft'),
+              ),
+            );
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (tags.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    DpSpacing.lg,
+                    DpSpacing.lg,
+                    DpSpacing.lg,
+                    DpSpacing.sm,
+                  ),
                   child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: DpSpacing.sm,
+                    runSpacing: DpSpacing.sm,
                     children: [
-                      ChoiceChip(
-                        label: const Text('全部'),
-                        selected: selectedTag == null,
-                        onSelected: (_) =>
-                            ref.read(selectedNoteTagProvider.notifier).state = null,
-                      ),
+                      (selectedTag == null)
+                          ? ShadButton.secondary(
+                              size: ShadButtonSize.sm,
+                              onPressed: clearTagFilter,
+                              child: const Text('全部'),
+                            )
+                          : ShadButton.outline(
+                              size: ShadButtonSize.sm,
+                              onPressed: clearTagFilter,
+                              child: const Text('全部'),
+                            ),
                       for (final tag in tags)
-                        ChoiceChip(
-                          label: Text(tag),
-                          selected: selectedTag == tag,
-                          onSelected: (_) {
-                            final next = selectedTag == tag ? null : tag;
-                            ref.read(selectedNoteTagProvider.notifier).state = next;
-                          },
-                        ),
+                        (selectedTag == tag)
+                            ? ShadButton.secondary(
+                                size: ShadButtonSize.sm,
+                                onPressed: clearTagFilter,
+                                child: Text(tag),
+                              )
+                            : ShadButton.outline(
+                                size: ShadButtonSize.sm,
+                                onPressed: () => setTagFilter(tag),
+                                child: Text(tag),
+                              ),
                     ],
                   ),
                 ),
               Expanded(
-                child: notes.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              selectedTag == null
-                                  ? '还没有笔记。'
-                                  : '暂无「$selectedTag」相关笔记。',
-                            ),
-                            const SizedBox(height: 8),
-                            if (selectedTag == null)
-                              FilledButton(
-                                onPressed: () => _openCreateSheet(context),
-                                child: const Text('写一条'),
-                              )
-                            else
-                              FilledButton(
-                                onPressed: () => ref
-                                    .read(selectedNoteTagProvider.notifier)
-                                    .state = null,
-                                child: const Text('清除筛选'),
-                              ),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: notes.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(height: 0),
-                        itemBuilder: (context, index) {
-                          final note = notes[index];
-                          return NoteListItem(
-                            note: note,
-                            onTap: () => context.push('/notes/${note.id}'),
-                          );
-                        },
-                      ),
+                child: ListView.separated(
+                  padding: EdgeInsets.fromLTRB(
+                    DpSpacing.lg,
+                    tags.isEmpty ? DpSpacing.lg : 0,
+                    DpSpacing.lg,
+                    DpSpacing.lg,
+                  ),
+                  itemCount: notes.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 0,
+                    color: ShadTheme.of(context).colorScheme.border,
+                  ),
+                  itemBuilder: (context, index) {
+                    final note = notes[index];
+                    return NoteListItem(
+                      note: note,
+                      onTap: () => context.push('/notes/${note.id}'),
+                    );
+                  },
+                ),
               ),
             ],
           );
         },
       ),
-    );
-  }
-
-  Future<void> _openCreateSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => const NoteEditSheet(),
     );
   }
 }

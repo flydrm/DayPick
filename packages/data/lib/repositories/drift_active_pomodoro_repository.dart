@@ -14,7 +14,9 @@ class DriftActivePomodoroRepository implements domain.ActivePomodoroRepository {
   Stream<domain.ActivePomodoro?> watch() {
     final query = _db.select(_db.activePomodoros)
       ..where((t) => t.id.equals(_singletonId));
-    return query.watchSingleOrNull().map((row) => row == null ? null : _toDomain(row));
+    return query.watchSingleOrNull().map(
+      (row) => row == null ? null : _toDomain(row),
+    );
   }
 
   @override
@@ -27,16 +29,22 @@ class DriftActivePomodoroRepository implements domain.ActivePomodoroRepository {
 
   @override
   Future<void> upsert(domain.ActivePomodoro state) async {
-    await _db.into(_db.activePomodoros).insertOnConflictUpdate(
+    await _db
+        .into(_db.activePomodoros)
+        .insertOnConflictUpdate(
           ActivePomodorosCompanion.insert(
             id: const Value(_singletonId),
             taskId: state.taskId,
             phase: Value(state.phase.index),
             status: state.status.index,
             startAtUtcMillis: state.startAt.toUtc().millisecondsSinceEpoch,
-            endAtUtcMillis:
-                state.endAt == null ? const Value.absent() : Value(state.endAt!.toUtc().millisecondsSinceEpoch),
-            remainingMs: state.remainingMs == null ? const Value.absent() : Value(state.remainingMs),
+            endAtUtcMillis: state.endAt == null
+                ? const Value.absent()
+                : Value(state.endAt!.toUtc().millisecondsSinceEpoch),
+            remainingMs: state.remainingMs == null
+                ? const Value.absent()
+                : Value(state.remainingMs),
+            focusNote: Value(state.focusNote),
             updatedAtUtcMillis: state.updatedAt.toUtc().millisecondsSinceEpoch,
           ),
         );
@@ -44,7 +52,9 @@ class DriftActivePomodoroRepository implements domain.ActivePomodoroRepository {
 
   @override
   Future<void> clear() async {
-    await (_db.delete(_db.activePomodoros)..where((t) => t.id.equals(_singletonId))).go();
+    await (_db.delete(
+      _db.activePomodoros,
+    )..where((t) => t.id.equals(_singletonId))).go();
   }
 
   domain.ActivePomodoro _toDomain(ActivePomodoroRow row) {
@@ -52,12 +62,22 @@ class DriftActivePomodoroRepository implements domain.ActivePomodoroRepository {
       taskId: row.taskId,
       phase: _phaseFromRow(row.phase),
       status: domain.ActivePomodoroStatus.values[row.status],
-      startAt: DateTime.fromMillisecondsSinceEpoch(row.startAtUtcMillis, isUtc: true).toLocal(),
+      startAt: DateTime.fromMillisecondsSinceEpoch(
+        row.startAtUtcMillis,
+        isUtc: true,
+      ).toLocal(),
       endAt: row.endAtUtcMillis == null
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(row.endAtUtcMillis!, isUtc: true).toLocal(),
+          : DateTime.fromMillisecondsSinceEpoch(
+              row.endAtUtcMillis!,
+              isUtc: true,
+            ).toLocal(),
       remainingMs: row.remainingMs,
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(row.updatedAtUtcMillis, isUtc: true).toLocal(),
+      focusNote: row.focusNote,
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        row.updatedAtUtcMillis,
+        isUtc: true,
+      ).toLocal(),
     );
   }
 

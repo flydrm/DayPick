@@ -1,13 +1,17 @@
 import 'dart:async';
 
 import 'package:ai/ai.dart' as ai;
+import 'package:domain/domain.dart' as domain;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
 import '../../ai/providers/ai_providers.dart';
+import '../../ai/view/ai_send_preview_sheet.dart';
 import '../providers/note_providers.dart';
 
 class NoteAiSummarySheet extends ConsumerStatefulWidget {
@@ -40,7 +44,7 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
     return noteAsync.when(
       loading: () => const AppPageScaffold(
         title: '总结要点',
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: DpSpinner()),
       ),
       error: (error, stack) => AppPageScaffold(
         title: '总结要点',
@@ -54,10 +58,11 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
           );
         }
 
-        final ready = configAsync.maybeWhen(
-          data: (c) => c != null && (c.apiKey?.trim().isNotEmpty ?? false),
-          orElse: () => false,
-        );
+        final config = configAsync.valueOrNull;
+        final ready =
+            config != null && (config.apiKey?.trim().isNotEmpty ?? false);
+        final shadTheme = ShadTheme.of(context);
+        final colorScheme = shadTheme.colorScheme;
 
         return AppPageScaffold(
           title: '总结要点',
@@ -66,58 +71,111 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
             children: [
               _buildConfigCard(context, configAsync),
               const SizedBox(height: 12),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: const Text('发送范围'),
-                  subtitle: Text(
-                    note.body.trim().isEmpty ? '标题（正文为空）' : '标题 + 正文',
-                  ),
+              ShadCard(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.description_outlined,
+                      color: colorScheme.mutedForeground,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            '发送范围',
+                            style: shadTheme.textTheme.small.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.foreground,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            note.body.trim().isEmpty ? '标题（正文为空）' : '标题 + 正文',
+                            style: shadTheme.textTheme.muted.copyWith(
+                              color: colorScheme.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
-              FilledButton(
-                onPressed: (!ready || _applying)
-                    ? null
-                    : (_generating
-                          ? _cancelGenerate
-                          : () => _generate(note.id)),
-                child: Text(_generating ? '生成中…（点此停止）' : '生成总结草稿'),
+              Row(
+                children: [
+                  Expanded(
+                    child: ShadButton(
+                      onPressed: _applying
+                          ? null
+                          : (_generating
+                                ? _cancelGenerate
+                                : () => _generate(note.id)),
+                      leading: _generating
+                          ? const DpSpinner(size: 16, strokeWidth: 2)
+                          : const Icon(Icons.auto_awesome_outlined, size: 18),
+                      child: Text(
+                        _generating
+                            ? '生成中…（点此停止）'
+                            : (ready ? '生成总结草稿' : '生成离线草稿'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: '预览本次发送',
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                      onPressed: (_generating || _applying)
+                          ? null
+                          : () => _openSendPreview(
+                              context,
+                              config: config,
+                              note: note,
+                            ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        '草稿（可编辑）',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _draftController,
-                        enabled: !_applying,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: '先生成，再按需修改后采用到笔记',
-                        ),
-                        minLines: 6,
-                        maxLines: 16,
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: !_applying
-                            ? () => _applyToNote(note.id)
-                            : null,
-                        child: Text(_applying ? '采用中…' : '采用到当前笔记（可撤销）'),
-                      ),
-                    ],
+              ShadCard(
+                padding: const EdgeInsets.all(16),
+                title: Text(
+                  '草稿（可编辑）',
+                  style: shadTheme.textTheme.small.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.foreground,
                   ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ShadInput(
+                      controller: _draftController,
+                      enabled: !_applying,
+                      minLines: 6,
+                      maxLines: 16,
+                      placeholder: Text(
+                        '先生成，再按需修改后采用到笔记',
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
+                      leading: const Icon(Icons.edit_note_outlined, size: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    ShadButton(
+                      onPressed: _applying ? null : () => _applyToNote(note.id),
+                      leading: _applying
+                          ? const DpSpinner(size: 16, strokeWidth: 2)
+                          : const Icon(Icons.check_outlined, size: 18),
+                      child: Text(_applying ? '采用中…' : '采用到当前笔记（可撤销）'),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -129,48 +187,129 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
 
   Widget _buildConfigCard(
     BuildContext context,
-    AsyncValue<dynamic> configAsync,
+    AsyncValue<domain.AiProviderConfig?> configAsync,
   ) {
+    final shadTheme = ShadTheme.of(context);
+    final colorScheme = shadTheme.colorScheme;
     return configAsync.when(
-      loading: () => const LinearProgressIndicator(),
-      error: (error, stack) => Card(
-        child: ListTile(
-          leading: const Icon(Icons.error_outline),
-          title: const Text('AI 配置读取失败'),
-          subtitle: Text('$error'),
-          trailing: TextButton(
-            onPressed: () => context.push('/settings/ai'),
-            child: const Text('去设置'),
-          ),
+      loading: () => const ShadProgress(minHeight: 8),
+      error: (error, stack) => ShadCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.destructive),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'AI 配置读取失败',
+                    style: shadTheme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.foreground,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$error',
+                    style: shadTheme.textTheme.muted.copyWith(
+                      color: colorScheme.mutedForeground,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ShadButton.secondary(
+                    size: ShadButtonSize.sm,
+                    onPressed: () => context.push('/settings/ai'),
+                    child: const Text('去设置'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
       data: (config) {
         final ready =
             config != null && (config.apiKey?.trim().isNotEmpty ?? false);
         if (!ready) {
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: const Text('AI 未配置'),
-              subtitle: const Text('先在设置里配置 baseUrl / model / apiKey'),
-              trailing: TextButton(
-                onPressed: () => context.push('/settings/ai'),
-                child: const Text('设置'),
-              ),
+          return ShadCard(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber_outlined,
+                  color: colorScheme.mutedForeground,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'AI 未配置：仍可离线生成草稿',
+                        style: shadTheme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.foreground,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '离线草稿不请求网络；配置后可获得更好结果。',
+                        style: shadTheme.textTheme.muted.copyWith(
+                          color: colorScheme.mutedForeground,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ShadButton.secondary(
+                        size: ShadButtonSize.sm,
+                        onPressed: () => context.push('/settings/ai'),
+                        child: const Text('设置'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         }
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.check_circle_outline),
-            title: const Text('AI 已就绪'),
-            subtitle: Text(
-              '${config.model} · ${_shortBaseUrl(config.baseUrl)}',
-            ),
-            trailing: TextButton(
-              onPressed: () => context.push('/settings/ai'),
-              child: const Text('设置'),
-            ),
+        return ShadCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.check_circle_outline, color: colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'AI 已就绪',
+                      style: shadTheme.textTheme.small.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${config.model} · ${_shortBaseUrl(config.baseUrl)}',
+                      style: shadTheme.textTheme.muted.copyWith(
+                        color: colorScheme.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ShadButton.secondary(
+                      size: ShadButtonSize.sm,
+                      onPressed: () => context.push('/settings/ai'),
+                      child: const Text('设置'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -181,6 +320,45 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
     _cancelToken?.cancel('user');
   }
 
+  Future<void> _openSendPreview(
+    BuildContext context, {
+    required domain.AiProviderConfig? config,
+    required domain.Note note,
+  }) async {
+    final body = note.body.trimRight();
+    final content = [
+      '标题：${note.title.value}',
+      if (body.trim().isNotEmpty) '',
+      if (body.trim().isNotEmpty) body,
+    ].join('\n');
+
+    final ready = config != null && (config.apiKey?.trim().isNotEmpty ?? false);
+    final destination = ready
+        ? '将发送到：${config.model} · ${_shortBaseUrl(config.baseUrl)}'
+        : '离线草稿：不会联网发送';
+
+    final previewText = [
+      '# 发送预览',
+      destination,
+      '',
+      '动作：总结要点',
+      '',
+      '发送内容：',
+      content,
+    ].join('\n');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => AiSendPreviewSheet(
+        destination: destination,
+        previewText: previewText,
+        sections: [AiSendPreviewSection(title: '发送内容', body: content)],
+      ),
+    );
+  }
+
   Future<void> _generate(String noteId) async {
     final note = await ref.read(noteByIdProvider(noteId).future);
     if (note == null) {
@@ -189,13 +367,18 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
     }
 
     final config = await ref.read(aiConfigProvider.future);
-    if (config == null || (config.apiKey?.trim().isEmpty ?? true)) {
-      _showSnack('请先完成 AI 配置');
-      return;
-    }
+    final ready = config != null && (config.apiKey?.trim().isNotEmpty ?? false);
 
     if (note.body.trim().isEmpty) {
       _showSnack('笔记正文为空，无法总结');
+      return;
+    }
+
+    if (!ready) {
+      final draft = _offlineSummaryDraft(note);
+      if (!mounted) return;
+      setState(() => _draftController.text = draft);
+      _showSnack('已生成离线草稿（可编辑）');
       return;
     }
 
@@ -203,10 +386,11 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
     setState(() => _generating = true);
     try {
       _cancelToken = cancelToken;
+      final onlineConfig = config;
       final summary = await ref
           .read(openAiClientProvider)
           .summarizeNote(
-            config: config,
+            config: onlineConfig,
             title: note.title.value,
             body: note.body,
             cancelToken: cancelToken,
@@ -223,6 +407,39 @@ class _NoteAiSummarySheetState extends ConsumerState<NoteAiSummarySheet> {
       }
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  String _offlineSummaryDraft(domain.Note note) {
+    final body = note.body.trimRight();
+    final normalized = body.replaceAll('\r\n', '\n');
+    final bulletLines = normalized
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.startsWith('- ') || l.startsWith('* '))
+        .map((l) => l.replaceFirst(RegExp(r'^[-*]\s+'), '').trim())
+        .where((l) => l.isNotEmpty)
+        .take(6)
+        .toList(growable: false);
+
+    final keyPoints = bulletLines.isEmpty ? const ['（待补）'] : bulletLines;
+    final snippetLines = normalized
+        .split('\n')
+        .take(12)
+        .map((l) => l.trimRight())
+        .toList();
+    final snippet = snippetLines.isEmpty ? '（正文为空）' : snippetLines.join('\n');
+
+    return [
+      '# 总结要点（离线草稿）',
+      '',
+      '- 标题：${note.title.value}',
+      '',
+      '## 要点',
+      for (final p in keyPoints) '- $p',
+      '',
+      '## 原文摘录（前 12 行）',
+      snippet,
+    ].join('\n').trimRight();
   }
 
   Future<void> _applyToNote(String noteId) async {

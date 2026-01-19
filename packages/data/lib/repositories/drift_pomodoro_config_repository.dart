@@ -27,13 +27,16 @@ class DriftPomodoroConfigRepository implements domain.PomodoroConfigRepository {
 
   @override
   Future<void> save(domain.PomodoroConfig config) async {
-    await _db.into(_db.pomodoroConfigs).insertOnConflictUpdate(
+    await _db
+        .into(_db.pomodoroConfigs)
+        .insertOnConflictUpdate(
           PomodoroConfigsCompanion.insert(
             id: const Value(_singletonId),
             workDurationMinutes: Value(config.workDurationMinutes),
             shortBreakMinutes: Value(config.shortBreakMinutes),
             longBreakMinutes: Value(config.longBreakMinutes),
             longBreakEvery: Value(config.longBreakEvery),
+            dailyBudgetPomodoros: Value(config.dailyBudgetPomodoros),
             autoStartBreak: Value(config.autoStartBreak),
             autoStartFocus: Value(config.autoStartFocus),
             notificationSound: Value(config.notificationSound),
@@ -45,7 +48,9 @@ class DriftPomodoroConfigRepository implements domain.PomodoroConfigRepository {
 
   @override
   Future<void> clear() async {
-    await (_db.delete(_db.pomodoroConfigs)..where((t) => t.id.equals(_singletonId))).go();
+    await (_db.delete(
+      _db.pomodoroConfigs,
+    )..where((t) => t.id.equals(_singletonId))).go();
   }
 
   domain.PomodoroConfig _toDomainOrDefault(PomodoroConfigRow? row) {
@@ -55,6 +60,7 @@ class DriftPomodoroConfigRepository implements domain.PomodoroConfigRepository {
       shortBreakMinutes: row.shortBreakMinutes,
       longBreakMinutes: row.longBreakMinutes,
       longBreakEvery: row.longBreakEvery,
+      dailyBudgetPomodoros: row.dailyBudgetPomodoros,
       autoStartBreak: row.autoStartBreak,
       autoStartFocus: row.autoStartFocus,
       notificationSound: row.notificationSound,

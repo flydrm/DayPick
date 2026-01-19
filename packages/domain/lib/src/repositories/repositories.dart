@@ -8,3 +8,4 @@ export 'note_repository.dart';
 export 'ai_config_repository.dart';
 export 'appearance_config_repository.dart';
 export 'today_plan_repository.dart';
+export 'weave_link_repository.dart';

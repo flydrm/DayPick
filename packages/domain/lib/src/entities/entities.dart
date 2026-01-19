@@ -4,5 +4,8 @@ export 'active_pomodoro.dart';
 export 'pomodoro_config.dart';
 export 'pomodoro_session.dart';
 export 'note.dart';
+export 'triage_status.dart';
+export 'weave_link.dart';
 export 'ai_provider_config.dart';
 export 'appearance_config.dart';
+export 'today_plan_section.dart';

@@ -4,6 +4,7 @@ class PomodoroConfig {
     this.shortBreakMinutes = 5,
     this.longBreakMinutes = 15,
     this.longBreakEvery = 4,
+    this.dailyBudgetPomodoros = 8,
     this.autoStartBreak = false,
     this.autoStartFocus = false,
     this.notificationSound = false,
@@ -14,6 +15,7 @@ class PomodoroConfig {
   final int shortBreakMinutes;
   final int longBreakMinutes;
   final int longBreakEvery;
+  final int dailyBudgetPomodoros;
   final bool autoStartBreak;
   final bool autoStartFocus;
   final bool notificationSound;

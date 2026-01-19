@@ -8,8 +8,8 @@ class StartPomodoroUseCase {
   StartPomodoroUseCase({
     required ActivePomodoroRepository repository,
     _Now now = DateTime.now,
-  })  : _repository = repository,
-        _now = now;
+  }) : _repository = repository,
+       _now = now;
 
   final ActivePomodoroRepository _repository;
   final _Now _now;

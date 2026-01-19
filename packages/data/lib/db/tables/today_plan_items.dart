@@ -7,6 +7,9 @@ class TodayPlanItems extends Table {
 
   TextColumn get taskId => text()();
 
+  /// 0 = today, 1 = evening.
+  IntColumn get segment => integer().withDefault(const Constant(0))();
+
   IntColumn get orderIndex => integer()();
 
   IntColumn get createdAtUtcMillis => integer()();
@@ -15,4 +18,3 @@ class TodayPlanItems extends Table {
   @override
   Set<Column<Object>> get primaryKey => {dayKey, taskId};
 }
-

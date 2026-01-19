@@ -6,4 +6,3 @@ class BackupException implements Exception {
   @override
   String toString() => message;
 }
-

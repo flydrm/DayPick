@@ -16,13 +16,13 @@ class DataBackupService {
     required AppDatabase db,
     DataExportService? exportService,
     Cipher? cipher,
-  })  : _db = db,
-        _export = exportService ?? DataExportService(db),
-        _cipher = cipher ?? AesGcm.with256bits();
+  }) : _db = db,
+       _export = exportService ?? DataExportService(db),
+       _cipher = cipher ?? AesGcm.with256bits();
 
   static const int backupFormatVersion = 1;
   static const String fileExtension = 'ppbk';
-  static const Set<int> supportedExportSchemaVersions = {1, 2, 3};
+  static const Set<int> supportedExportSchemaVersions = {1, 2, 3, 4, 5, 6, 7};
 
   final AppDatabase _db;
   final DataExportService _export;
@@ -59,7 +59,10 @@ class DataBackupService {
     required String pin,
   }) async {
     _validatePin(pin);
-    final zipBytes = await _decryptZip(encryptedBytes: encryptedBytes, pin: pin);
+    final zipBytes = await _decryptZip(
+      encryptedBytes: encryptedBytes,
+      pin: pin,
+    );
     final archive = ZipDecoder().decodeBytes(zipBytes);
 
     final dataFile = archive.findFile('data/data.json');
@@ -92,6 +95,7 @@ class DataBackupService {
       exportedAtUtcMillis: exportedAt,
       taskCount: countOf('tasks'),
       noteCount: countOf('notes'),
+      weaveLinkCount: countOf('weave_links'),
       sessionCount: countOf('pomodoro_sessions'),
       checklistCount: countOf('task_check_items'),
     );
@@ -102,7 +106,10 @@ class DataBackupService {
     required String pin,
   }) async {
     _validatePin(pin);
-    final zipBytes = await _decryptZip(encryptedBytes: encryptedBytes, pin: pin);
+    final zipBytes = await _decryptZip(
+      encryptedBytes: encryptedBytes,
+      pin: pin,
+    );
     final archive = ZipDecoder().decodeBytes(zipBytes);
     final dataFile = archive.findFile('data/data.json');
     if (dataFile == null) throw const BackupException('备份文件缺少 data/data.json');
@@ -112,7 +119,8 @@ class DataBackupService {
     if (root is! Map) throw const BackupException('data.json 格式不正确');
 
     final schemaVersion = root['schemaVersion'];
-    if (schemaVersion is! int) throw const BackupException('data.json 缺少 schemaVersion');
+    if (schemaVersion is! int)
+      throw const BackupException('data.json 缺少 schemaVersion');
     if (!supportedExportSchemaVersions.contains(schemaVersion)) {
       throw BackupException('不支持的 schemaVersion：$schemaVersion');
     }
@@ -123,13 +131,17 @@ class DataBackupService {
     List<Map<String, Object?>> listOf(String key) {
       final v = items[key];
       if (v is! List) return const [];
-      return v.whereType<Map>().map((m) => m.map((k, v) => MapEntry(k.toString(), v))).toList();
+      return v
+          .whereType<Map>()
+          .map((m) => m.map((k, v) => MapEntry(k.toString(), v)))
+          .toList();
     }
 
     final tasks = listOf('tasks');
     final todayPlanItems = listOf('today_plan_items');
     final taskCheckItems = listOf('task_check_items');
     final notes = listOf('notes');
+    final weaveLinks = listOf('weave_links');
     final sessions = listOf('pomodoro_sessions');
 
     Map<String, Object?>? mapOf(String key) {
@@ -150,8 +162,12 @@ class DataBackupService {
     final longBreakMinutes = pomodoroConfig == null
         ? 15
         : (_optInt(pomodoroConfig, 'long_break_minutes') ?? 15);
-    final longBreakEvery =
-        pomodoroConfig == null ? 4 : (_optInt(pomodoroConfig, 'long_break_every') ?? 4);
+    final longBreakEvery = pomodoroConfig == null
+        ? 4
+        : (_optInt(pomodoroConfig, 'long_break_every') ?? 4);
+    final dailyBudgetPomodoros = pomodoroConfig == null
+        ? 8
+        : (_optInt(pomodoroConfig, 'daily_budget_pomodoros') ?? 8);
     final autoStartBreak = pomodoroConfig == null
         ? false
         : (_optBool(pomodoroConfig, 'auto_start_break') ?? false);
@@ -165,12 +181,61 @@ class DataBackupService {
         ? false
         : (_optBool(pomodoroConfig, 'notification_vibration') ?? false);
 
-    final themeMode =
-        appearanceConfig == null ? 0 : (_optInt(appearanceConfig, 'theme_mode') ?? 0);
-    final density =
-        appearanceConfig == null ? 0 : (_optInt(appearanceConfig, 'density') ?? 0);
-    final accent =
-        appearanceConfig == null ? 0 : (_optInt(appearanceConfig, 'accent') ?? 0);
+    final themeMode = appearanceConfig == null
+        ? 0
+        : (_optInt(appearanceConfig, 'theme_mode') ?? 0);
+    final density = appearanceConfig == null
+        ? 0
+        : (_optInt(appearanceConfig, 'density') ?? 0);
+    final accent = appearanceConfig == null
+        ? 0
+        : (_optInt(appearanceConfig, 'accent') ?? 0);
+    final defaultTab = appearanceConfig == null
+        ? 2
+        : (_optInt(appearanceConfig, 'default_tab') ?? 2);
+    final onboardingDone = appearanceConfig == null
+        ? false
+        : (_optBool(appearanceConfig, 'onboarding_done') ?? false);
+    final statsEnabled = appearanceConfig == null
+        ? false
+        : (_optBool(appearanceConfig, 'stats_enabled') ?? false);
+    final timeboxingStartMinutes = appearanceConfig == null
+        ? null
+        : _optInt(appearanceConfig, 'timeboxing_start_minutes');
+    final timeboxingLayout = appearanceConfig == null
+        ? 0
+        : (_optInt(appearanceConfig, 'timeboxing_layout') ?? 0);
+    final timeboxingWorkdayStartMinutes = appearanceConfig == null
+        ? 7 * 60
+        : (_optInt(appearanceConfig, 'timeboxing_workday_start_minutes') ??
+              7 * 60);
+    final timeboxingWorkdayEndMinutes = appearanceConfig == null
+        ? 21 * 60
+        : (_optInt(appearanceConfig, 'timeboxing_workday_end_minutes') ??
+              21 * 60);
+    final inboxTypeFilter = appearanceConfig == null
+        ? 0
+        : (_optInt(appearanceConfig, 'inbox_type_filter') ?? 0);
+    final inboxTodayOnly = appearanceConfig == null
+        ? false
+        : (_optBool(appearanceConfig, 'inbox_today_only') ?? false);
+    final todayModulesJson = appearanceConfig == null
+        ? '["nextStep","todayPlan","weave","budget","focus","shortcuts","yesterdayReview"]'
+        : jsonEncode(
+            (appearanceConfig.containsKey('today_modules')
+                    ? _optStringList(appearanceConfig, 'today_modules')
+                    : const [
+                        'nextStep',
+                        'todayPlan',
+                        'weave',
+                        'budget',
+                        'focus',
+                        'shortcuts',
+                        'yesterdayReview',
+                      ])
+                .where((m) => m != 'quickAdd')
+                .toList(growable: false),
+          );
 
     int clampInt(int value, int min, int max) {
       if (value < min) return min;
@@ -182,13 +247,43 @@ class DataBackupService {
     final safeShortBreakMinutes = clampInt(shortBreakMinutes, 3, 30);
     final safeLongBreakMinutes = clampInt(longBreakMinutes, 5, 60);
     final safeLongBreakEvery = clampInt(longBreakEvery, 2, 10);
+    final safeDailyBudgetPomodoros = clampInt(dailyBudgetPomodoros, 0, 24);
     final safeThemeMode = clampInt(themeMode, 0, 2);
     final safeDensity = clampInt(density, 0, 1);
     final safeAccent = clampInt(accent, 0, 2);
+    final safeDefaultTab = clampInt(defaultTab, 0, 4);
+    final safeInboxTypeFilter = clampInt(inboxTypeFilter, 0, 3);
+    final safeTimeboxingStartMinutes = timeboxingStartMinutes == null
+        ? null
+        : clampInt(timeboxingStartMinutes, 0, 24 * 60 - 1);
+    final safeTimeboxingLayout = clampInt(timeboxingLayout, 0, 1);
+    final safeTimeboxingWorkdayStartMinutes = clampInt(
+      timeboxingWorkdayStartMinutes,
+      0,
+      24 * 60 - 1,
+    );
+    var safeTimeboxingWorkdayEndMinutes = clampInt(
+      timeboxingWorkdayEndMinutes,
+      0,
+      24 * 60 - 1,
+    );
+    if (safeTimeboxingWorkdayEndMinutes <= safeTimeboxingWorkdayStartMinutes) {
+      safeTimeboxingWorkdayEndMinutes = clampInt(
+        safeTimeboxingWorkdayStartMinutes + 8 * 60,
+        0,
+        24 * 60 - 1,
+      );
+      if (safeTimeboxingWorkdayEndMinutes <=
+          safeTimeboxingWorkdayStartMinutes) {
+        safeTimeboxingWorkdayEndMinutes =
+            (safeTimeboxingWorkdayStartMinutes + 60).clamp(0, 24 * 60 - 1);
+      }
+    }
 
     await _db.transaction(() async {
       await (_db.delete(_db.taskCheckItems)).go();
       await (_db.delete(_db.pomodoroSessions)).go();
+      await (_db.delete(_db.weaveLinks)).go();
       await (_db.delete(_db.notes)).go();
       await (_db.delete(_db.todayPlanItems)).go();
       await (_db.delete(_db.tasks)).go();
@@ -197,124 +292,126 @@ class DataBackupService {
       await (_db.delete(_db.appearanceConfigs)).go();
 
       await _db.batch((batch) {
-        batch.insertAll(
-          _db.tasks,
-          [
-            for (final t in tasks)
-              TasksCompanion.insert(
-                id: _reqString(t, 'id'),
-                title: _reqString(t, 'title'),
-                description: Value(_optString(t, 'description')),
-                status: _reqInt(t, 'status'),
-                priority: _reqInt(t, 'priority'),
-                dueAtUtcMillis: Value(_optInt(t, 'due_at_utc_ms')),
-                tagsJson: Value(jsonEncode(_optStringList(t, 'tags'))),
-                estimatedPomodoros: Value(_optInt(t, 'estimated_pomodoros')),
-                createdAtUtcMillis: _reqInt(t, 'created_at_utc_ms'),
-                updatedAtUtcMillis: _reqInt(t, 'updated_at_utc_ms'),
-              ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+        batch.insertAll(_db.tasks, [
+          for (final t in tasks)
+            TasksCompanion.insert(
+              id: _reqString(t, 'id'),
+              title: _reqString(t, 'title'),
+              description: Value(_optString(t, 'description')),
+              status: _reqInt(t, 'status'),
+              priority: _reqInt(t, 'priority'),
+              dueAtUtcMillis: Value(_optInt(t, 'due_at_utc_ms')),
+              tagsJson: Value(jsonEncode(_optStringList(t, 'tags'))),
+              triageStatus: Value(_optInt(t, 'triage_status') ?? 2),
+              estimatedPomodoros: Value(_optInt(t, 'estimated_pomodoros')),
+              createdAtUtcMillis: _reqInt(t, 'created_at_utc_ms'),
+              updatedAtUtcMillis: _reqInt(t, 'updated_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
 
-        batch.insertAll(
-          _db.taskCheckItems,
-          [
-            for (final c in taskCheckItems)
-              TaskCheckItemsCompanion.insert(
-                id: _reqString(c, 'id'),
-                taskId: _reqString(c, 'task_id'),
-                title: _reqString(c, 'title'),
-                isDone: Value(_optBool(c, 'is_done') ?? false),
-                orderIndex: _reqInt(c, 'order_index'),
-                createdAtUtcMillis: _reqInt(c, 'created_at_utc_ms'),
-                updatedAtUtcMillis: _reqInt(c, 'updated_at_utc_ms'),
-              ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+        batch.insertAll(_db.taskCheckItems, [
+          for (final c in taskCheckItems)
+            TaskCheckItemsCompanion.insert(
+              id: _reqString(c, 'id'),
+              taskId: _reqString(c, 'task_id'),
+              title: _reqString(c, 'title'),
+              isDone: Value(_optBool(c, 'is_done') ?? false),
+              orderIndex: _reqInt(c, 'order_index'),
+              createdAtUtcMillis: _reqInt(c, 'created_at_utc_ms'),
+              updatedAtUtcMillis: _reqInt(c, 'updated_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
 
-        batch.insertAll(
-          _db.todayPlanItems,
-          [
-            for (final row in todayPlanItems)
-              TodayPlanItemsCompanion.insert(
-                dayKey: _reqString(row, 'day_key'),
-                taskId: _reqString(row, 'task_id'),
-                orderIndex: _reqInt(row, 'order_index'),
-                createdAtUtcMillis: _reqInt(row, 'created_at_utc_ms'),
-                updatedAtUtcMillis: _reqInt(row, 'updated_at_utc_ms'),
-              ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+        batch.insertAll(_db.todayPlanItems, [
+          for (final row in todayPlanItems)
+            TodayPlanItemsCompanion.insert(
+              dayKey: _reqString(row, 'day_key'),
+              taskId: _reqString(row, 'task_id'),
+              segment: Value(clampInt(_optInt(row, 'segment') ?? 0, 0, 1)),
+              orderIndex: _reqInt(row, 'order_index'),
+              createdAtUtcMillis: _reqInt(row, 'created_at_utc_ms'),
+              updatedAtUtcMillis: _reqInt(row, 'updated_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
 
-        batch.insertAll(
-          _db.notes,
-          [
-            for (final n in notes)
-              NotesCompanion.insert(
-                id: _reqString(n, 'id'),
-                title: _reqString(n, 'title'),
-                body: Value(_optString(n, 'body') ?? ''),
-                tagsJson: Value(jsonEncode(_optStringList(n, 'tags'))),
-                taskId: Value(_optString(n, 'task_id')),
-                createdAtUtcMillis: _reqInt(n, 'created_at_utc_ms'),
-                updatedAtUtcMillis: _reqInt(n, 'updated_at_utc_ms'),
-              ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+        batch.insertAll(_db.notes, [
+          for (final n in notes)
+            NotesCompanion.insert(
+              id: _reqString(n, 'id'),
+              title: _reqString(n, 'title'),
+              body: Value(_optString(n, 'body') ?? ''),
+              tagsJson: Value(jsonEncode(_optStringList(n, 'tags'))),
+              taskId: Value(_optString(n, 'task_id')),
+              kind: Value(_optInt(n, 'kind') ?? 0),
+              triageStatus: Value(_optInt(n, 'triage_status') ?? 2),
+              createdAtUtcMillis: _reqInt(n, 'created_at_utc_ms'),
+              updatedAtUtcMillis: _reqInt(n, 'updated_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
 
-        batch.insertAll(
-          _db.pomodoroSessions,
-          [
-            for (final s in sessions)
-              PomodoroSessionsCompanion.insert(
-                id: _reqString(s, 'id'),
-                taskId: _reqString(s, 'task_id'),
-                startAtUtcMillis: _reqInt(s, 'start_at_utc_ms'),
-                endAtUtcMillis: _reqInt(s, 'end_at_utc_ms'),
-                isDraft: Value(_optBool(s, 'is_draft') ?? false),
-                progressNote: Value(_optString(s, 'progress_note')),
-                createdAtUtcMillis: _reqInt(s, 'created_at_utc_ms'),
-              ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+        batch.insertAll(_db.weaveLinks, [
+          for (final w in weaveLinks)
+            WeaveLinksCompanion.insert(
+              id: _reqString(w, 'id'),
+              sourceType: _reqInt(w, 'source_type'),
+              sourceId: _reqString(w, 'source_id'),
+              targetNoteId: _reqString(w, 'target_note_id'),
+              mode: Value(_optInt(w, 'mode') ?? 0),
+              createdAtUtcMillis: _reqInt(w, 'created_at_utc_ms'),
+              updatedAtUtcMillis: _reqInt(w, 'updated_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
+
+        batch.insertAll(_db.pomodoroSessions, [
+          for (final s in sessions)
+            PomodoroSessionsCompanion.insert(
+              id: _reqString(s, 'id'),
+              taskId: _reqString(s, 'task_id'),
+              startAtUtcMillis: _reqInt(s, 'start_at_utc_ms'),
+              endAtUtcMillis: _reqInt(s, 'end_at_utc_ms'),
+              isDraft: Value(_optBool(s, 'is_draft') ?? false),
+              progressNote: Value(_optString(s, 'progress_note')),
+              createdAtUtcMillis: _reqInt(s, 'created_at_utc_ms'),
+            ),
+        ], mode: InsertMode.insertOrReplace);
 
         final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-        batch.insertAll(
-          _db.pomodoroConfigs,
-          [
-            PomodoroConfigsCompanion.insert(
-              id: const Value(1),
-              workDurationMinutes: Value(safeWorkDurationMinutes),
-              shortBreakMinutes: Value(safeShortBreakMinutes),
-              longBreakMinutes: Value(safeLongBreakMinutes),
-              longBreakEvery: Value(safeLongBreakEvery),
-              autoStartBreak: Value(autoStartBreak),
-              autoStartFocus: Value(autoStartFocus),
-              notificationSound: Value(notificationSound),
-              notificationVibration: Value(notificationVibration),
-              updatedAtUtcMillis: now,
+        batch.insertAll(_db.pomodoroConfigs, [
+          PomodoroConfigsCompanion.insert(
+            id: const Value(1),
+            workDurationMinutes: Value(safeWorkDurationMinutes),
+            shortBreakMinutes: Value(safeShortBreakMinutes),
+            longBreakMinutes: Value(safeLongBreakMinutes),
+            longBreakEvery: Value(safeLongBreakEvery),
+            dailyBudgetPomodoros: Value(safeDailyBudgetPomodoros),
+            autoStartBreak: Value(autoStartBreak),
+            autoStartFocus: Value(autoStartFocus),
+            notificationSound: Value(notificationSound),
+            notificationVibration: Value(notificationVibration),
+            updatedAtUtcMillis: now,
+          ),
+        ], mode: InsertMode.insertOrReplace);
+        batch.insertAll(_db.appearanceConfigs, [
+          AppearanceConfigsCompanion.insert(
+            id: const Value(1),
+            themeMode: Value(safeThemeMode),
+            density: Value(safeDensity),
+            accent: Value(safeAccent),
+            defaultTab: Value(safeDefaultTab),
+            onboardingDone: Value(onboardingDone),
+            statsEnabled: Value(statsEnabled),
+            todayModulesJson: Value(todayModulesJson),
+            timeboxingStartMinutes: Value(safeTimeboxingStartMinutes),
+            timeboxingLayout: Value(safeTimeboxingLayout),
+            timeboxingWorkdayStartMinutes: Value(
+              safeTimeboxingWorkdayStartMinutes,
             ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
-        batch.insertAll(
-          _db.appearanceConfigs,
-          [
-            AppearanceConfigsCompanion.insert(
-              id: const Value(1),
-              themeMode: Value(safeThemeMode),
-              density: Value(safeDensity),
-              accent: Value(safeAccent),
-              updatedAtUtcMillis: now,
-            ),
-          ],
-          mode: InsertMode.insertOrReplace,
-        );
+            timeboxingWorkdayEndMinutes: Value(safeTimeboxingWorkdayEndMinutes),
+            inboxTypeFilter: Value(safeInboxTypeFilter),
+            inboxTodayOnly: Value(inboxTodayOnly),
+            updatedAtUtcMillis: now,
+          ),
+        ], mode: InsertMode.insertOrReplace);
       });
     });
 
@@ -322,6 +419,7 @@ class DataBackupService {
       taskCount: tasks.length,
       checklistCount: taskCheckItems.length,
       noteCount: notes.length,
+      weaveLinkCount: weaveLinks.length,
       sessionCount: sessions.length,
     );
   }
@@ -386,12 +484,19 @@ class DataBackupService {
     final magic = utf8.decode(encryptedBytes.sublist(0, 4));
     if (magic != 'PPBK') throw const BackupException('不是 DayPick 备份文件');
 
-    final headerLen = ByteData.sublistView(encryptedBytes, 4, 8).getUint32(0, Endian.big);
+    final headerLen = ByteData.sublistView(
+      encryptedBytes,
+      4,
+      8,
+    ).getUint32(0, Endian.big);
     final headerStart = 8;
     final headerEnd = headerStart + headerLen;
-    if (headerEnd > encryptedBytes.length) throw const BackupException('备份文件头损坏');
+    if (headerEnd > encryptedBytes.length)
+      throw const BackupException('备份文件头损坏');
 
-    final headerText = utf8.decode(encryptedBytes.sublist(headerStart, headerEnd));
+    final headerText = utf8.decode(
+      encryptedBytes.sublist(headerStart, headerEnd),
+    );
     final header = jsonDecode(headerText);
     if (header is! Map) throw const BackupException('备份文件头格式不正确');
 
@@ -421,11 +526,7 @@ class DataBackupService {
     final key = await _deriveKey(pin: pin, salt: salt);
     try {
       final plain = await _cipher.decrypt(
-        SecretBox(
-          cipherText,
-          nonce: nonce,
-          mac: Mac(macBytes),
-        ),
+        SecretBox(cipherText, nonce: nonce, mac: Mac(macBytes)),
         secretKey: key,
       );
       return Uint8List.fromList(plain);
@@ -434,7 +535,10 @@ class DataBackupService {
     }
   }
 
-  Future<SecretKey> _deriveKey({required String pin, required List<int> salt}) async {
+  Future<SecretKey> _deriveKey({
+    required String pin,
+    required List<int> salt,
+  }) async {
     final pbkdf2 = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
       iterations: 100000,
