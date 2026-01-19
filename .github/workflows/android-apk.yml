@@ -51,6 +51,14 @@ jobs:
           path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
+      - name: Move nightly tag to latest commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f nightly "${{ github.sha }}"
+          git push -f origin refs/tags/nightly
+
       - name: Prepare release asset
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: cp build/app/outputs/flutter-apk/app-release.apk build/daypick-nightly.apk
