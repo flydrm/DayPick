@@ -2,19 +2,27 @@
 
 ## Project Structure & Module Organization
 
-- `app/`: Flutter application (Material 3). Entry in `app/lib/main.dart`, routing in `app/lib/routing/`, feature modules in `app/lib/features/`, shared UI in `app/lib/ui/`.
+- `app/`: Flutter application (Shadcn UI Flutter + `dp_*` UI kit). Entry in `app/lib/main.dart`, routing in `app/lib/routing/`, feature modules in `app/lib/features/`, shared UI in `app/lib/ui/`.
 - `packages/`: Reusable layers
   - `packages/domain/`: entities, use cases, repository interfaces
   - `packages/data/`: Drift database + repository implementations + backup/export/notifications
   - `packages/ai/`: OpenAI-compatible client + schemas/parsing
+- `prds/`: Versioned product docs (PRD snapshots, implementation summaries). This folder is intended to be committed.
 - `.github/workflows/`: CI (Android APK build).
-- Local-only (gitignored): `docs/`, `.tooling/`, `.tmp_*/`.
+- Local-only (gitignored): `docs/`, `.tooling/`, `.tmp_*/`, `_bmad/`, `_bmad-output/`.
 
 ## Build, Test, and Development Commands
 
 Prereqs: Flutter `3.38.6` (Dart `3.10.7`), Android SDK, Java `17`.
 
-From `app/`:
+Recommended (repo root, uses vendored Flutter + cached Pub to avoid re-downloading):
+
+- `./tool/flutterw pub get --offline`
+- `./tool/test` (runs `flutter test` for `app/`)
+- `./tool/check` (runs analyze + tests for `app/` and `packages/data/`)
+- Do not delete `.tooling/` or `.tmp_pub_cache` (they keep Flutter SDK / Pub cache warm).
+
+From `app/` (standard Flutter commands):
 
 - `flutter pub get`: install dependencies.
 - `flutter run`: run on an Android device/emulator.
@@ -24,7 +32,7 @@ From `app/`:
 
 Codegen (when changing Drift schema/migrations):
 
-- `cd packages/data && dart run build_runner build --delete-conflicting-outputs`
+- `cd packages/data && ../../tool/dartw run build_runner build --delete-conflicting-outputs`
 
 ## Coding Style & Naming Conventions
 
@@ -44,4 +52,4 @@ Codegen (when changing Drift schema/migrations):
 - Commit messages follow Conventional Commits (examples from history): `feat: ...`, `fix(android): ...`, `chore: ...`, `docs: ...`, `ci: ...`.
 - PRs include: a clear description, linked issue (if any), and screenshots/GIFs for UI changes.
 - Before opening a PR: run `flutter test` + `flutter analyze` from `app/`.
-- Never commit secrets (API keys, keystores) or local artifacts (`docs/`, `.tmp_*`).
+- Never commit secrets (API keys, keystores) or local artifacts (`docs/`, `.tooling/`, `.tmp_*`, `_bmad-output/`).
