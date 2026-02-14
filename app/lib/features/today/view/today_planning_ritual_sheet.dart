@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/capture/capture_submit_result.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../ui/kit/dp_inline_notice.dart';
 import '../../../ui/kit/dp_section_card.dart';
@@ -161,7 +162,9 @@ class TodayPlanningRitualSheet extends ConsumerWidget {
                                 Expanded(
                                   child: ShadButton.outline(
                                     onPressed: () async {
-                                      await showModalBottomSheet<void>(
+                                      await showModalBottomSheet<
+                                        CaptureSubmitResult
+                                      >(
                                         context: context,
                                         isScrollControlled: true,
                                         useSafeArea: true,

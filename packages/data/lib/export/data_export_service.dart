@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
+
+import 'package:drift/drift.dart';
 
 import '../db/app_database.dart';
 import 'data_export_models.dart';
@@ -7,7 +8,7 @@ import 'data_export_models.dart';
 class DataExportService {
   DataExportService(this._db);
 
-  static const int exportSchemaVersion = 7;
+  static const int exportSchemaVersion = 8;
 
   final AppDatabase _db;
 
@@ -20,6 +21,13 @@ class DataExportService {
     final notes = await _db.select(_db.notes).get();
     final weaveLinks = await _db.select(_db.weaveLinks).get();
     final sessions = await _db.select(_db.pomodoroSessions).get();
+    final kpiDailyRollups =
+        await (_db.select(_db.kpiDailyRollups)..orderBy([
+              (t) => OrderingTerm(expression: t.dayKey, mode: OrderingMode.asc),
+              (t) =>
+                  OrderingTerm(expression: t.segment, mode: OrderingMode.asc),
+            ]))
+            .get();
     final pomodoroConfigRow = await (_db.select(
       _db.pomodoroConfigs,
     )..where((t) => t.id.equals(1))).getSingleOrNull();
@@ -140,6 +148,41 @@ class DataExportService {
             'created_at_utc_ms': s.createdAtUtcMillis,
           },
       ],
+      kpiDailyRollups: [
+        for (final r in kpiDailyRollups)
+          {
+            'day_key': r.dayKey,
+            'segment': r.segment,
+            'segment_strategy': r.segmentStrategy,
+            'sample_threshold': r.sampleThreshold,
+            'computed_at_utc_ms': r.computedAtUtcMs,
+            'clarity_ok_count': r.clarityOkCount,
+            'clarity_total_count': r.clarityTotalCount,
+            'clarity_insufficient': r.clarityInsufficient,
+            'clarity_insufficient_reason': r.clarityInsufficientReason,
+            'clarity_failure_bucket_counts_json':
+                r.clarityFailureBucketCountsJson,
+            'ttfa_sample_count': r.ttfaSampleCount,
+            'ttfa_p50_ms': r.ttfaP50Ms,
+            'ttfa_p90_ms': r.ttfaP90Ms,
+            'ttfa_insufficient': r.ttfaInsufficient,
+            'ttfa_insufficient_reason': r.ttfaInsufficientReason,
+            'mainline_completed_count': r.mainlineCompletedCount,
+            'mainline_insufficient': r.mainlineInsufficient,
+            'mainline_insufficient_reason': r.mainlineInsufficientReason,
+            'journal_opened_count': r.journalOpenedCount,
+            'journal_completed_count': r.journalCompletedCount,
+            'journal_insufficient': r.journalInsufficient,
+            'journal_insufficient_reason': r.journalInsufficientReason,
+            'active_day_count': r.activeDayCount,
+            'r7_retained': r.r7Retained,
+            'r7_insufficient': r.r7Insufficient,
+            'r7_insufficient_reason': r.r7InsufficientReason,
+            'inbox_pending_count': r.inboxPendingCount,
+            'inbox_created_count': r.inboxCreatedCount,
+            'inbox_processed_count': r.inboxProcessedCount,
+          },
+      ],
     );
   }
 
@@ -155,6 +198,7 @@ class DataExportService {
         'notes': snap.notes,
         'weave_links': snap.weaveLinks,
         'pomodoro_sessions': snap.pomodoroSessions,
+        'kpi_daily_rollups': snap.kpiDailyRollups,
         'pomodoro_config': snap.pomodoroConfig,
         'appearance_config': snap.appearanceConfig,
       },

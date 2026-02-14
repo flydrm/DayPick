@@ -69,6 +69,13 @@ class SettingsPage extends ConsumerWidget {
                   subtitle: appearanceSubtitle,
                   onTap: () => context.push('/settings/appearance'),
                 ),
+                Divider(height: 0, color: colorScheme.border),
+                _SettingsRow(
+                  icon: Icons.toggle_on_outlined,
+                  title: '功能开关',
+                  subtitle: 'override / kill-switch / snapshot',
+                  onTap: () => context.push('/settings/flags'),
+                ),
               ],
             ),
           ),

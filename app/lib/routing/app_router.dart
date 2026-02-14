@@ -21,13 +21,15 @@ import '../features/stats/view/stats_page.dart';
 import '../features/settings/view/ai_settings_page.dart';
 import '../features/settings/view/appearance_settings_page.dart';
 import '../features/settings/view/data_settings_page.dart';
+import '../features/settings/view/feature_flags_settings_page.dart';
 import '../features/settings/view/pomodoro_settings_page.dart';
 import '../features/settings/view/privacy_page.dart';
 import '../features/settings/view/settings_page.dart';
 import '../features/tasks/view/tasks_page.dart';
 import '../features/tasks/view/task_detail_page.dart';
-import '../features/today/view/today_page.dart';
 import '../features/today/view/today_timeboxing_canvas_page.dart';
+import '../features/today/view/today_entry_point.dart';
+import '../features/today/view/today_plan_page.dart';
 import 'home_shell.dart';
 import '../core/providers/app_providers.dart';
 import '../ui/sheets/quick_create_sheet.dart';
@@ -73,7 +75,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
-            HomeShell(navigationShell: navigationShell),
+            HomeShell(navigationShell: navigationShell, state: state),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -130,8 +132,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/today',
-                builder: (context, state) => const TodayPage(),
+                builder: (context, state) => TodayEntryPoint(
+                  rawHighlight: state.uri.queryParameters['highlight'],
+                ),
                 routes: [
+                  GoRoute(
+                    path: 'plan',
+                    builder: (context, state) => TodayPlanPage(
+                      rawDayKey: state.uri.queryParameters['day'],
+                    ),
+                  ),
                   GoRoute(
                     path: 'timeboxing',
                     builder: (context, state) =>
@@ -219,7 +229,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/stats',
-        builder: (context, state) => const StatsPage(),
+        builder: (context, state) {
+          final rawTab = state.uri.queryParameters['tab']?.trim().toLowerCase();
+          final initialTab = switch (rawTab) {
+            'kpi' || 'metrics' => StatsInitialTab.kpi,
+            _ => StatsInitialTab.pomodoro,
+          };
+          return StatsPage(initialTab: initialTab);
+        },
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
@@ -245,6 +262,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/settings/appearance',
         builder: (context, state) => const AppearanceSettingsPage(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/settings/flags',
+        builder: (context, state) => const FeatureFlagsSettingsPage(),
       ),
     ],
   );

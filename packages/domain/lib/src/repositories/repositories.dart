@@ -9,3 +9,7 @@ export 'ai_config_repository.dart';
 export 'appearance_config_repository.dart';
 export 'today_plan_repository.dart';
 export 'weave_link_repository.dart';
+export 'feature_flag_repository.dart';
+export 'local_events_repository.dart';
+export 'kpi_repository.dart';
+export 'calendar_constraints_repository.dart';

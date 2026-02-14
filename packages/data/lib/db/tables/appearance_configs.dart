@@ -21,6 +21,10 @@ class AppearanceConfigs extends Table {
       integer().withDefault(const Constant(7 * 60))();
   IntColumn get timeboxingWorkdayEndMinutes =>
       integer().withDefault(const Constant(21 * 60))();
+  BoolColumn get calendarConstraintsDismissed =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get calendarShowEventTitles =>
+      boolean().withDefault(const Constant(false))();
   IntColumn get inboxTypeFilter => integer().withDefault(const Constant(0))();
   BoolColumn get inboxTodayOnly =>
       boolean().withDefault(const Constant(false))();

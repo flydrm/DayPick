@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:domain/domain.dart' as domain;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../core/capture/capture_submit_result.dart';
 import '../../core/providers/app_providers.dart';
 import 'date_picker_sheet.dart';
+import '../kit/dp_inline_notice.dart';
 import '../tokens/dp_insets.dart';
+import '../tokens/dp_accessibility.dart';
 import '../tokens/dp_spacing.dart';
 
 enum QuickCreateType { task, memo, draft }
+
+bool get _isFlutterTest => Platform.environment['FLUTTER_TEST'] == 'true';
 
 class QuickCreateSheet extends ConsumerStatefulWidget {
   const QuickCreateSheet({
@@ -30,6 +38,13 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
   late QuickCreateType _type;
   bool _creating = false;
 
+  QuickCreateType? _submitErrorType;
+  String? _submitErrorTitle;
+  String? _submitErrorDescription;
+  CaptureSubmitResult? _pendingTaskSubmitResult;
+
+  String? _taskTitleValidationError;
+
   final _taskTitleController = TextEditingController();
   final _taskTagsController = TextEditingController();
   late bool _taskAddToToday;
@@ -44,12 +59,14 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
   final _draftTitleController = TextEditingController();
   final _draftBodyController = TextEditingController();
   final _draftTagsController = TextEditingController();
+  final FocusNode _sheetPrimaryFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _type = widget.initialType;
     _taskAddToToday = widget.initialTaskAddToToday;
+    _taskTitleController.addListener(_onTaskTitleChanged);
 
     final initialText = widget.initialText?.trimRight();
     if (initialText != null && initialText.trim().isNotEmpty) {
@@ -61,6 +78,7 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
 
   @override
   void dispose() {
+    _taskTitleController.removeListener(_onTaskTitleChanged);
     _taskTitleController.dispose();
     _taskTagsController.dispose();
     _memoBodyController.dispose();
@@ -68,108 +86,277 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
     _draftTitleController.dispose();
     _draftBodyController.dispose();
     _draftTagsController.dispose();
+    _sheetPrimaryFocusNode.dispose();
     super.dispose();
+  }
+
+  void _clearSubmitError() {
+    _submitErrorType = null;
+    _submitErrorTitle = null;
+    _submitErrorDescription = null;
+  }
+
+  void _onTaskTitleChanged() {
+    if (_taskTitleValidationError == null) return;
+    if (_taskTitleController.text.trim().isEmpty) return;
+    if (!mounted) return;
+    setState(() => _taskTitleValidationError = null);
+  }
+
+  void _setSubmitError({
+    required QuickCreateType type,
+    required String title,
+    required String description,
+    Object? cause,
+    StackTrace? stackTrace,
+  }) {
+    if (cause != null && kDebugMode && !_isFlutterTest) {
+      debugPrint('QuickCreate submit failed: $cause');
+      if (stackTrace != null) debugPrintStack(stackTrace: stackTrace);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _submitErrorType = type;
+      _submitErrorTitle = title;
+      _submitErrorDescription = description;
+    });
+  }
+
+  Future<void> _retrySubmit(BuildContext context) async {
+    return switch (_type) {
+      QuickCreateType.task => _submitTask(context),
+      QuickCreateType.memo => _submitMemo(context),
+      QuickCreateType.draft => _submitDraft(context),
+    };
+  }
+
+  Future<void> _addTaskToToday(String taskId) async {
+    final now = DateTime.now();
+    final day = DateTime(now.year, now.month, now.day);
+    await ref
+        .read(todayPlanRepositoryProvider)
+        .addTask(day: day, taskId: taskId);
+  }
+
+  void _resetTaskForm() {
+    _taskTitleController.clear();
+    _taskTagsController.clear();
+    _taskAddToToday = widget.initialTaskAddToToday;
+    _taskShowOptional = false;
+    _taskPriority = domain.TaskPriority.medium;
+    _taskDueAt = null;
+    _taskEstimatedPomodoros = 0;
+  }
+
+  void _resetMemoForm() {
+    _memoBodyController.clear();
+    _memoTagsController.clear();
+  }
+
+  void _resetDraftForm() {
+    _draftTitleController.clear();
+    _draftBodyController.clear();
+    _draftTagsController.clear();
+  }
+
+  void _onTabChanged(QuickCreateType nextType) {
+    if (_type == nextType) return;
+    setState(() => _type = nextType);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _sheetPrimaryFocusNode.requestFocus();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final shadTheme = ShadTheme.of(context);
     final colorScheme = shadTheme.colorScheme;
+    final showSubmitError =
+        _submitErrorTitle != null &&
+        _submitErrorDescription != null &&
+        _submitErrorType == _type;
 
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: DpSpacing.lg,
-          right: DpSpacing.lg,
-          top: DpSpacing.md,
-          bottom: DpSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Quick Create',
-                    style: shadTheme.textTheme.h3.copyWith(
-                      color: colorScheme.foreground,
-                      fontWeight: FontWeight.w700,
+      child: Semantics(
+        liveRegion: showSubmitError,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: DpSpacing.lg,
+            right: DpSpacing.lg,
+            top: DpSpacing.md,
+            bottom: DpSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Quick Create',
+                      style: shadTheme.textTheme.h3.copyWith(
+                        color: colorScheme.foreground,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
+                  Semantics(
+                    key: const ValueKey('quick_create_close'),
+                    label: '关闭快速创建',
+                    hint: '关闭后返回上一层',
+                    button: true,
+                    child: Tooltip(
+                      message: '关闭',
+                      child: ConstrainedBox(
+                        constraints: DpAccessibility.minTouchTargetConstraints,
+                        child: ShadIconButton.ghost(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DpSpacing.md),
+              if (showSubmitError) ...[
+                DpInlineNotice(
+                  key: const ValueKey('quick_create_error'),
+                  variant: DpInlineNoticeVariant.destructive,
+                  title: _submitErrorTitle!,
+                  description: _submitErrorDescription!,
+                  icon: const Icon(Icons.error_outline),
                 ),
-                Tooltip(
-                  message: '关闭',
-                  child: ShadIconButton.ghost(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.of(context).pop(),
+                const SizedBox(height: DpSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: ShadButton.outline(
+                    key: const ValueKey('quick_create_retry'),
+                    onPressed: _creating ? null : () => _retrySubmit(context),
+                    child: const Text('重试'),
                   ),
                 ),
+                const SizedBox(height: DpSpacing.md),
               ],
-            ),
-            const SizedBox(height: DpSpacing.md),
-            ShadTabs<QuickCreateType>(
-              value: _type,
-              onChanged: (v) => setState(() => _type = v),
-              scrollable: false,
-              tabs: [
-                ShadTab(
-                  value: QuickCreateType.task,
-                  content: _TaskForm(
-                    titleController: _taskTitleController,
-                    tagsController: _taskTagsController,
-                    addToToday: _taskAddToToday,
-                    onAddToTodayChanged: (v) =>
-                        setState(() => _taskAddToToday = v),
-                    showOptional: _taskShowOptional,
-                    onToggleOptional: () =>
-                        setState(() => _taskShowOptional = !_taskShowOptional),
-                    priority: _taskPriority,
-                    onPriorityChanged: (v) => setState(() => _taskPriority = v),
-                    dueAt: _taskDueAt,
-                    onDueAtChanged: (v) => setState(() => _taskDueAt = v),
-                    estimatedPomodoros: _taskEstimatedPomodoros,
-                    onEstimatedPomodorosChanged: (v) =>
-                        setState(() => _taskEstimatedPomodoros = v),
-                    creating: _creating,
-                    onSubmit: () => _submitTask(context),
+              ShadTabs<QuickCreateType>(
+                value: _type,
+                onChanged: _onTabChanged,
+                scrollable: false,
+                tabs: [
+                  ShadTab(
+                    value: QuickCreateType.task,
+                    content: _TaskForm(
+                      titleController: _taskTitleController,
+                      tagsController: _taskTagsController,
+                      addToToday: _taskAddToToday,
+                      onAddToTodayChanged: (v) =>
+                          setState(() => _taskAddToToday = v),
+                      showOptional: _taskShowOptional,
+                      onToggleOptional: () => setState(
+                        () => _taskShowOptional = !_taskShowOptional,
+                      ),
+                      priority: _taskPriority,
+                      onPriorityChanged: (v) =>
+                          setState(() => _taskPriority = v),
+                      dueAt: _taskDueAt,
+                      onDueAtChanged: (v) => setState(() => _taskDueAt = v),
+                      estimatedPomodoros: _taskEstimatedPomodoros,
+                      onEstimatedPomodorosChanged: (v) =>
+                          setState(() => _taskEstimatedPomodoros = v),
+                      creating: _creating,
+                      onSubmit: () => _submitTask(context),
+                      titleErrorText: _taskTitleValidationError,
+                      autofocus: _type == QuickCreateType.task,
+                      primaryFocusNode: _type == QuickCreateType.task
+                          ? _sheetPrimaryFocusNode
+                          : null,
+                    ),
+                    child: const Text('任务'),
                   ),
-                  child: const Text('任务'),
-                ),
-                ShadTab(
-                  value: QuickCreateType.memo,
-                  content: _MemoForm(
-                    bodyController: _memoBodyController,
-                    tagsController: _memoTagsController,
-                    creating: _creating,
-                    onSubmit: () => _submitMemo(context),
+                  ShadTab(
+                    value: QuickCreateType.memo,
+                    content: _MemoForm(
+                      bodyController: _memoBodyController,
+                      tagsController: _memoTagsController,
+                      creating: _creating,
+                      onSubmit: () => _submitMemo(context),
+                      autofocus: _type == QuickCreateType.memo,
+                      primaryFocusNode: _type == QuickCreateType.memo
+                          ? _sheetPrimaryFocusNode
+                          : null,
+                    ),
+                    child: const Text('闪念'),
                   ),
-                  child: const Text('闪念'),
-                ),
-                ShadTab(
-                  value: QuickCreateType.draft,
-                  content: _DraftForm(
-                    titleController: _draftTitleController,
-                    bodyController: _draftBodyController,
-                    tagsController: _draftTagsController,
-                    creating: _creating,
-                    onSubmit: () => _submitDraft(context),
+                  ShadTab(
+                    value: QuickCreateType.draft,
+                    content: _DraftForm(
+                      titleController: _draftTitleController,
+                      bodyController: _draftBodyController,
+                      tagsController: _draftTagsController,
+                      creating: _creating,
+                      onSubmit: () => _submitDraft(context),
+                      autofocus: _type == QuickCreateType.draft,
+                      primaryFocusNode: _type == QuickCreateType.draft
+                          ? _sheetPrimaryFocusNode
+                          : null,
+                    ),
+                    child: const Text('长文'),
                   ),
-                  child: const Text('长文'),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _submitTask(BuildContext context) async {
-    final title = _taskTitleController.text.trim();
-    if (title.isEmpty) return;
+    final pending = _pendingTaskSubmitResult;
+    if (pending != null) {
+      setState(() {
+        _creating = true;
+        _clearSubmitError();
+      });
+      try {
+        await _addTaskToToday(pending.entryId);
+        _pendingTaskSubmitResult = null;
+        _resetTaskForm();
+        if (context.mounted) {
+          Navigator.of(context).pop(pending);
+        }
+      } catch (e, st) {
+        _setSubmitError(
+          type: QuickCreateType.task,
+          title: '加入今天失败',
+          description: '任务已创建（已进入待处理），但加入今天计划仍失败。输入已保留，请稍后重试。',
+          cause: e,
+          stackTrace: st,
+        );
+      } finally {
+        if (mounted) setState(() => _creating = false);
+      }
+      return;
+    }
 
-    setState(() => _creating = true);
+    final title = _taskTitleController.text.trim();
+    if (title.isEmpty) {
+      setState(() => _taskTitleValidationError = '标题不能为空');
+      return;
+    }
+    _taskTitleValidationError = null;
+
+    const createTriageStatus = domain.TriageStatus.inbox;
+    final resultTriageStatus = _taskAddToToday
+        ? domain.TriageStatus.plannedToday
+        : domain.TriageStatus.inbox;
+
+    setState(() {
+      _creating = true;
+      _clearSubmitError();
+    });
     try {
       final create = ref.read(createTaskUseCaseProvider);
       final task = await create(
@@ -180,32 +367,50 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
         estimatedPomodoros: _taskEstimatedPomodoros <= 0
             ? null
             : _taskEstimatedPomodoros,
-        triageStatus: _taskAddToToday
-            ? domain.TriageStatus.plannedToday
-            : domain.TriageStatus.inbox,
+        triageStatus: createTriageStatus,
       );
 
       if (_taskAddToToday) {
-        final now = DateTime.now();
-        final day = DateTime(now.year, now.month, now.day);
-        await ref
-            .read(todayPlanRepositoryProvider)
-            .addTask(day: day, taskId: task.id);
+        try {
+          await _addTaskToToday(task.id);
+        } catch (e, st) {
+          _pendingTaskSubmitResult = CaptureSubmitResult(
+            entryId: task.id,
+            entryKind: CaptureEntryKind.task,
+            triageStatus: resultTriageStatus,
+          );
+          _setSubmitError(
+            type: QuickCreateType.task,
+            title: '加入今天失败',
+            description: '任务已创建（已进入待处理），但加入今天计划失败。输入已保留，请点击“重试”。',
+            cause: e,
+            stackTrace: st,
+          );
+          return;
+        }
       }
 
-      _taskTitleController.clear();
-      _taskTagsController.clear();
-      _taskAddToToday = widget.initialTaskAddToToday;
-      _taskShowOptional = false;
-      _taskPriority = domain.TaskPriority.medium;
-      _taskDueAt = null;
-      _taskEstimatedPomodoros = 0;
-      if (context.mounted) Navigator.of(context).pop();
+      _resetTaskForm();
+      if (context.mounted) {
+        Navigator.of(context).pop(
+          CaptureSubmitResult(
+            entryId: task.id,
+            entryKind: CaptureEntryKind.task,
+            triageStatus: resultTriageStatus,
+          ),
+        );
+      }
     } on domain.TaskTitleEmptyException {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('标题不能为空')));
+      if (!mounted) return;
+      setState(() => _taskTitleValidationError = '标题不能为空');
+    } catch (e, st) {
+      _setSubmitError(
+        type: QuickCreateType.task,
+        title: '创建失败',
+        description: '本地写入失败，输入已保留。请点击“重试”。',
+        cause: e,
+        stackTrace: st,
+      );
     } finally {
       if (mounted) setState(() => _creating = false);
     }
@@ -216,24 +421,43 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
     if (body.trim().isEmpty) return;
     final title = _titleFromBody(body, fallback: '闪念');
 
-    setState(() => _creating = true);
+    setState(() {
+      _creating = true;
+      _clearSubmitError();
+    });
     try {
       final create = ref.read(createNoteUseCaseProvider);
-      await create(
+      final note = await create(
         title: title,
         body: body,
         tags: _parseTags(_memoTagsController.text),
         kind: domain.NoteKind.memo,
         triageStatus: domain.TriageStatus.inbox,
       );
-      _memoBodyController.clear();
-      _memoTagsController.clear();
-      if (context.mounted) Navigator.of(context).pop();
+      _resetMemoForm();
+      if (context.mounted) {
+        Navigator.of(context).pop(
+          CaptureSubmitResult(
+            entryId: note.id,
+            entryKind: CaptureEntryKind.memo,
+            triageStatus: note.triageStatus,
+          ),
+        );
+      }
     } on domain.NoteTitleEmptyException {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('标题不能为空')));
+      _setSubmitError(
+        type: QuickCreateType.memo,
+        title: '标题不能为空',
+        description: '请先填写内容再提交。',
+      );
+    } catch (e, st) {
+      _setSubmitError(
+        type: QuickCreateType.memo,
+        title: '创建失败',
+        description: '本地写入失败，输入已保留。请点击“重试”。',
+        cause: e,
+        stackTrace: st,
+      );
     } finally {
       if (mounted) setState(() => _creating = false);
     }
@@ -245,25 +469,43 @@ class _QuickCreateSheetState extends ConsumerState<QuickCreateSheet> {
         ? _titleFromBody(body, fallback: '长文草稿')
         : _draftTitleController.text.trim();
 
-    setState(() => _creating = true);
+    setState(() {
+      _creating = true;
+      _clearSubmitError();
+    });
     try {
       final create = ref.read(createNoteUseCaseProvider);
-      await create(
+      final note = await create(
         title: title,
         body: body,
         tags: _parseTags(_draftTagsController.text),
         kind: domain.NoteKind.draft,
         triageStatus: domain.TriageStatus.inbox,
       );
-      _draftTitleController.clear();
-      _draftBodyController.clear();
-      _draftTagsController.clear();
-      if (context.mounted) Navigator.of(context).pop();
+      _resetDraftForm();
+      if (context.mounted) {
+        Navigator.of(context).pop(
+          CaptureSubmitResult(
+            entryId: note.id,
+            entryKind: CaptureEntryKind.draft,
+            triageStatus: note.triageStatus,
+          ),
+        );
+      }
     } on domain.NoteTitleEmptyException {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('标题不能为空')));
+      _setSubmitError(
+        type: QuickCreateType.draft,
+        title: '标题不能为空',
+        description: '请先填写内容再提交。',
+      );
+    } catch (e, st) {
+      _setSubmitError(
+        type: QuickCreateType.draft,
+        title: '创建失败',
+        description: '本地写入失败，输入已保留。请点击“重试”。',
+        cause: e,
+        stackTrace: st,
+      );
     } finally {
       if (mounted) setState(() => _creating = false);
     }
@@ -311,6 +553,9 @@ class _TaskForm extends StatelessWidget {
     required this.onEstimatedPomodorosChanged,
     required this.creating,
     required this.onSubmit,
+    this.titleErrorText,
+    this.autofocus = false,
+    this.primaryFocusNode,
   });
 
   final TextEditingController titleController;
@@ -327,6 +572,9 @@ class _TaskForm extends StatelessWidget {
   final ValueChanged<int> onEstimatedPomodorosChanged;
   final bool creating;
   final VoidCallback onSubmit;
+  final String? titleErrorText;
+  final bool autofocus;
+  final FocusNode? primaryFocusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -345,6 +593,8 @@ class _TaskForm extends StatelessWidget {
               ShadInput(
                 key: const ValueKey('quick_create_task_title'),
                 controller: titleController,
+                autofocus: autofocus,
+                focusNode: primaryFocusNode,
                 enabled: !creating,
                 placeholder: Text(
                   '输入一句话创建任务…',
@@ -356,6 +606,16 @@ class _TaskForm extends StatelessWidget {
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onSubmit(),
               ),
+              if (titleErrorText != null) ...[
+                const SizedBox(height: DpSpacing.xs),
+                Text(
+                  titleErrorText!,
+                  style: shadTheme.textTheme.muted.copyWith(
+                    color: colorScheme.destructive,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               const SizedBox(height: DpSpacing.sm),
               ShadInput(
                 controller: tagsController,
@@ -436,6 +696,8 @@ class _TaskForm extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       useSafeArea: true,
+                      sheetAnimationStyle:
+                          DpAccessibility.bottomSheetAnimationStyle(context),
                       builder: (context) => DatePickerSheet(
                         title: '选择截止日期',
                         initialDate: initial,
@@ -499,10 +761,19 @@ class _TaskForm extends StatelessWidget {
         const SizedBox(height: DpSpacing.md),
         SizedBox(
           width: double.infinity,
-          child: ShadButton(
-            key: const ValueKey('quick_create_task_submit'),
-            onPressed: creating ? null : onSubmit,
-            child: Text(creating ? '创建中…' : '创建任务'),
+          child: Semantics(
+            key: const ValueKey('quick_create_task_submit_semantics'),
+            label: '创建任务',
+            button: true,
+            enabled: !creating,
+            child: ConstrainedBox(
+              constraints: DpAccessibility.minTouchTargetConstraints,
+              child: ShadButton(
+                key: const ValueKey('quick_create_task_submit'),
+                onPressed: creating ? null : onSubmit,
+                child: Text(creating ? '创建中…' : '创建任务'),
+              ),
+            ),
           ),
         ),
       ],
@@ -516,12 +787,16 @@ class _MemoForm extends StatelessWidget {
     required this.tagsController,
     required this.creating,
     required this.onSubmit,
+    this.autofocus = false,
+    this.primaryFocusNode,
   });
 
   final TextEditingController bodyController;
   final TextEditingController tagsController;
   final bool creating;
   final VoidCallback onSubmit;
+  final bool autofocus;
+  final FocusNode? primaryFocusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -540,6 +815,8 @@ class _MemoForm extends StatelessWidget {
               ShadInput(
                 key: const ValueKey('quick_create_memo_body'),
                 controller: bodyController,
+                autofocus: autofocus,
+                focusNode: primaryFocusNode,
                 enabled: !creating,
                 maxLines: 4,
                 placeholder: Text(
@@ -569,9 +846,19 @@ class _MemoForm extends StatelessWidget {
         const SizedBox(height: DpSpacing.md),
         SizedBox(
           width: double.infinity,
-          child: ShadButton(
-            onPressed: creating ? null : onSubmit,
-            child: Text(creating ? '创建中…' : '创建闪念'),
+          child: Semantics(
+            key: const ValueKey('quick_create_memo_submit_semantics'),
+            label: '创建闪念',
+            button: true,
+            enabled: !creating,
+            child: ConstrainedBox(
+              constraints: DpAccessibility.minTouchTargetConstraints,
+              child: ShadButton(
+                key: const ValueKey('quick_create_memo_submit'),
+                onPressed: creating ? null : onSubmit,
+                child: Text(creating ? '创建中…' : '创建闪念'),
+              ),
+            ),
           ),
         ),
       ],
@@ -586,6 +873,8 @@ class _DraftForm extends StatelessWidget {
     required this.tagsController,
     required this.creating,
     required this.onSubmit,
+    this.autofocus = false,
+    this.primaryFocusNode,
   });
 
   final TextEditingController titleController;
@@ -593,6 +882,8 @@ class _DraftForm extends StatelessWidget {
   final TextEditingController tagsController;
   final bool creating;
   final VoidCallback onSubmit;
+  final bool autofocus;
+  final FocusNode? primaryFocusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -624,6 +915,8 @@ class _DraftForm extends StatelessWidget {
               ShadInput(
                 key: const ValueKey('quick_create_draft_body'),
                 controller: bodyController,
+                autofocus: autofocus,
+                focusNode: primaryFocusNode,
                 enabled: !creating,
                 maxLines: 6,
                 placeholder: Text(
@@ -653,9 +946,19 @@ class _DraftForm extends StatelessWidget {
         const SizedBox(height: DpSpacing.md),
         SizedBox(
           width: double.infinity,
-          child: ShadButton(
-            onPressed: creating ? null : onSubmit,
-            child: Text(creating ? '创建中…' : '创建长文草稿'),
+          child: Semantics(
+            key: const ValueKey('quick_create_draft_submit_semantics'),
+            label: '创建长文草稿',
+            button: true,
+            enabled: !creating,
+            child: ConstrainedBox(
+              constraints: DpAccessibility.minTouchTargetConstraints,
+              child: ShadButton(
+                key: const ValueKey('quick_create_draft_submit'),
+                onPressed: creating ? null : onSubmit,
+                child: Text(creating ? '创建中…' : '创建长文草稿'),
+              ),
+            ),
           ),
         ),
       ],
@@ -712,18 +1015,34 @@ class _DueDateRow extends StatelessWidget {
                 ),
               ),
             ),
-            Tooltip(
-              message: '选择日期',
-              child: ShadIconButton.ghost(
-                icon: const Icon(Icons.edit_calendar_outlined, size: 18),
-                onPressed: enabled ? () async => onPick() : null,
+            Semantics(
+              label: '选择截止日期',
+              button: true,
+              enabled: enabled,
+              child: Tooltip(
+                message: '选择日期',
+                child: ConstrainedBox(
+                  constraints: DpAccessibility.minTouchTargetConstraints,
+                  child: ShadIconButton.ghost(
+                    icon: const Icon(Icons.edit_calendar_outlined, size: 18),
+                    onPressed: enabled ? () async => onPick() : null,
+                  ),
+                ),
               ),
             ),
-            Tooltip(
-              message: '清除',
-              child: ShadIconButton.ghost(
-                icon: const Icon(Icons.clear, size: 18),
-                onPressed: enabled ? onClear : null,
+            Semantics(
+              label: '清除截止日期',
+              button: true,
+              enabled: enabled && onClear != null,
+              child: Tooltip(
+                message: '清除',
+                child: ConstrainedBox(
+                  constraints: DpAccessibility.minTouchTargetConstraints,
+                  child: ShadIconButton.ghost(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: enabled ? onClear : null,
+                  ),
+                ),
               ),
             ),
           ],
@@ -733,15 +1052,21 @@ class _DueDateRow extends StatelessWidget {
           spacing: DpSpacing.sm,
           runSpacing: DpSpacing.sm,
           children: [
-            ShadButton.outline(
-              size: ShadButtonSize.sm,
-              onPressed: enabled ? onSetToday : null,
-              child: const Text('今天'),
+            ConstrainedBox(
+              constraints: DpAccessibility.minTouchTargetConstraints,
+              child: ShadButton.outline(
+                size: ShadButtonSize.sm,
+                onPressed: enabled ? onSetToday : null,
+                child: const Text('今天'),
+              ),
             ),
-            ShadButton.outline(
-              size: ShadButtonSize.sm,
-              onPressed: enabled ? onSetTomorrow : null,
-              child: const Text('明天'),
+            ConstrainedBox(
+              constraints: DpAccessibility.minTouchTargetConstraints,
+              child: ShadButton.outline(
+                size: ShadButtonSize.sm,
+                onPressed: enabled ? onSetTomorrow : null,
+                child: const Text('明天'),
+              ),
             ),
           ],
         ),

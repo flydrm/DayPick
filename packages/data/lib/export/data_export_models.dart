@@ -7,6 +7,7 @@ class ExportSnapshot {
     required this.notes,
     required this.weaveLinks,
     required this.pomodoroSessions,
+    required this.kpiDailyRollups,
     required this.pomodoroConfig,
     required this.appearanceConfig,
   });
@@ -18,6 +19,7 @@ class ExportSnapshot {
   final List<Map<String, Object?>> notes;
   final List<Map<String, Object?>> weaveLinks;
   final List<Map<String, Object?>> pomodoroSessions;
+  final List<Map<String, Object?>> kpiDailyRollups;
   final Map<String, Object?> pomodoroConfig;
   final Map<String, Object?> appearanceConfig;
 
@@ -27,4 +29,5 @@ class ExportSnapshot {
   int get sessionCount => pomodoroSessions.length;
   int get checklistCount => taskCheckItems.length;
   int get todayPlanItemCount => todayPlanItems.length;
+  int get kpiDailyRollupCount => kpiDailyRollups.length;
 }

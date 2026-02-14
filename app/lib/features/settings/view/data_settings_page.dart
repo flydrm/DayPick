@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:data/data.dart' as data;
+import 'package:domain/domain.dart' as domain;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/local_events/local_events_provider.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
@@ -15,7 +17,7 @@ import '../../../ui/tokens/dp_insets.dart';
 import '../../../ui/tokens/dp_spacing.dart';
 import '../../ai/providers/ai_providers.dart';
 import '../providers/data_providers.dart';
-import 'pin_entry_sheet.dart';
+import 'passphrase_entry_sheet.dart';
 
 class DataSettingsPage extends ConsumerWidget {
   const DataSettingsPage({super.key});
@@ -37,6 +39,24 @@ class DataSettingsPage extends ConsumerWidget {
             icon: Icon(Icons.storage_outlined),
             title: Text('无登录、可控可信'),
             description: Text('导出 / 备份 / 恢复 / 清空，作为“单设备隐私党”的底层承诺。'),
+          ),
+          const SizedBox(height: DpSpacing.md),
+          Text(
+            '指标',
+            style: shadTheme.textTheme.small.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.foreground,
+            ),
+          ),
+          const SizedBox(height: DpSpacing.sm),
+          ShadCard(
+            padding: EdgeInsets.zero,
+            child: _DataRow(
+              icon: Icons.insights_outlined,
+              title: '查看指标',
+              subtitle: 'KPI-1/2/3/4/5 + Inbox Health（本地）',
+              onTap: () => context.push('/stats?tab=kpi'),
+            ),
           ),
           const SizedBox(height: DpSpacing.md),
           Text(
@@ -103,9 +123,16 @@ class DataSettingsPage extends ConsumerWidget {
               children: [
                 _DataRow(
                   icon: Icons.lock_outline,
-                  title: '创建加密备份',
-                  subtitle: 'ZIP + AES-GCM，PIN 为恰好 6 位数字',
+                  title: '加密备份（不含密钥）',
+                  subtitle: 'ZIP + AES-GCM；不含 ai.apiKey/DB key',
                   onTap: () => _createBackup(context, ref),
+                ),
+                Divider(height: 0, color: colorScheme.border),
+                _DataRow(
+                  icon: Icons.security_outlined,
+                  title: '安全导出（含密钥）',
+                  subtitle: '包含 ai.apiKey；强提示 + 二次确认；强密码（非 6 位 PIN）',
+                  onTap: () => _createSecretBackup(context, ref),
                 ),
                 Divider(height: 0, color: colorScheme.border),
                 _DataRow(
@@ -310,20 +337,21 @@ class DataSettingsPage extends ConsumerWidget {
   }
 
   Future<void> _createBackup(BuildContext context, WidgetRef ref) async {
-    final pin = await showModalBottomSheet<String?>(
+    final passphrase = await showModalBottomSheet<String?>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => const PinEntrySheet(
-        request: PinEntryRequest(
-          title: '创建加密备份',
-          primaryLabel: '输入 6 位 PIN',
-          secondaryLabel: '再次输入 PIN',
+      builder: (context) => const PassphraseEntrySheet(
+        request: PassphraseEntryRequest(
+          title: '加密备份（不含密钥）',
+          primaryLabel: '输入备份密码',
+          secondaryLabel: '再次输入密码',
           requireConfirmation: true,
+          hintText: '密码丢失将无法恢复（不含 ai.apiKey/DB key）',
         ),
       ),
     );
-    if (pin == null) return;
+    if (passphrase == null) return;
     if (!context.mounted) return;
 
     final backupService = ref.read(dataBackupServiceProvider);
@@ -332,9 +360,13 @@ class DataSettingsPage extends ConsumerWidget {
     final bytes = await _runWithProgress(
       context,
       label: '生成备份…',
-      run: () => backupService.createEncryptedBackup(pin: pin),
+      run: () => backupService.createEncryptedBackup(passphrase: passphrase),
+      errorMessage: _backupErrorMessage,
     );
-    if (bytes == null) return;
+    if (bytes == null) {
+      await _recordBackupCreated(ref, includesSecrets: false, result: 'error');
+      return;
+    }
     if (!context.mounted) return;
 
     final fileName =
@@ -344,27 +376,172 @@ class DataSettingsPage extends ConsumerWidget {
       label: '保存到应用内…',
       run: () => store.saveToAppDocuments(bytes: bytes, fileName: fileName),
     );
-    if (savedPath == null) return;
+    if (savedPath == null) {
+      await _recordBackupCreated(ref, includesSecrets: false, result: 'error');
+      return;
+    }
     if (!context.mounted) return;
+
+    await _recordBackupCreated(ref, includesSecrets: false, result: 'ok');
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('已创建备份，可通过分享保存到文件系统/网盘')));
 
-    await SharePlus.instance.share(
-      ShareParams(
-        subject: 'DayPick 备份',
-        text: '备份已加密（PIN 丢失将无法恢复）。',
-        files: [
-          XFile.fromData(
-            bytes,
-            name: fileName,
-            mimeType: 'application/octet-stream',
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: 'DayPick 备份',
+          text: '备份已加密（密码丢失将无法恢复）。',
+          files: [
+            XFile.fromData(
+              bytes,
+              name: fileName,
+              mimeType: 'application/octet-stream',
+            ),
+          ],
+        ),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _createSecretBackup(BuildContext context, WidgetRef ref) async {
+    final acknowledged = await showShadDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        bool checked = false;
+        return StatefulBuilder(
+          builder: (context, setState) => ShadDialog.alert(
+            title: const Text('安全导出（含密钥）'),
+            description: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ShadAlert(
+                  icon: Icon(Icons.warning_amber_outlined),
+                  title: Text('该导出将包含设备上的密钥'),
+                  description: Text(
+                    '例如 AI API Key。\n\n'
+                    '请仅在你完全信任的环境中保存，并使用强密码。',
+                  ),
+                ),
+                const SizedBox(height: DpSpacing.md),
+                ShadCheckbox(
+                  value: checked,
+                  onChanged: (v) => setState(() => checked = v),
+                  label: const Text('我理解此导出包含密钥，丢失可能导致风险。'),
+                ),
+              ],
+            ),
+            actions: [
+              ShadButton.outline(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('取消'),
+              ),
+              ShadButton(
+                onPressed: checked
+                    ? () => Navigator.of(dialogContext).pop(true)
+                    : null,
+                child: const Text('继续'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (acknowledged != true) return;
+    if (!context.mounted) return;
+
+    final passphrase = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => const PassphraseEntrySheet(
+        request: PassphraseEntryRequest(
+          title: '安全导出（含密钥）',
+          primaryLabel: '输入 passphrase',
+          secondaryLabel: '再次输入 passphrase',
+          requireConfirmation: true,
+          hintText: '将包含 ai.apiKey；请使用强密码（≥12 位，含字母与数字）。',
+        ),
+      ),
+    );
+    if (passphrase == null) return;
+    if (!context.mounted) return;
+
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (dialogContext) => ShadDialog.alert(
+        title: const Text('确认创建“含密钥”加密包？'),
+        description: const Text('仅在你需要迁移设备且理解风险时使用。'),
+        actions: [
+          ShadButton.outline(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('取消'),
+          ),
+          ShadButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('确认创建'),
           ),
         ],
       ),
     );
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+
+    final backupService = ref.read(dataBackupServiceProvider);
+    final store = ref.read(backupFileStoreProvider);
+
+    final bytes = await _runWithProgress(
+      context,
+      label: '生成安全导出包…',
+      run: () => backupService.createEncryptedBackup(
+        passphrase: passphrase,
+        includesSecrets: true,
+      ),
+      errorMessage: _backupErrorMessage,
+    );
+    if (bytes == null) {
+      await _recordBackupCreated(ref, includesSecrets: true, result: 'error');
+      return;
+    }
+    if (!context.mounted) return;
+
+    final fileName =
+        'daypick_secure_export_${_ts(DateTime.now())}.${data.DataBackupService.fileExtension}';
+    final savedPath = await _runWithProgress(
+      context,
+      label: '保存到应用内…',
+      run: () => store.saveToAppDocuments(bytes: bytes, fileName: fileName),
+    );
+    if (savedPath == null) {
+      await _recordBackupCreated(ref, includesSecrets: true, result: 'error');
+      return;
+    }
+    if (!context.mounted) return;
+
+    await _recordBackupCreated(ref, includesSecrets: true, result: 'ok');
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已创建安全导出包（含密钥），请仅保存在可信环境')),
+    );
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: 'DayPick 安全导出（含密钥）',
+          text: '该包已加密且包含密钥；请妥善保管，密码丢失将无法恢复。',
+          files: [
+            XFile.fromData(
+              bytes,
+              name: fileName,
+              mimeType: 'application/octet-stream',
+            ),
+          ],
+        ),
+      );
+    } catch (_) {}
   }
 
   Future<void> _restoreBackup(BuildContext context, WidgetRef ref) async {
@@ -380,27 +557,31 @@ class DataSettingsPage extends ConsumerWidget {
 
     final bytes = await file.readAsBytes();
     if (!context.mounted) return;
-    final pin = await showModalBottomSheet<String?>(
+    final passphrase = await showModalBottomSheet<String?>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => const PinEntrySheet(
-        request: PinEntryRequest(
+      builder: (context) => const PassphraseEntrySheet(
+        request: PassphraseEntryRequest(
           title: '恢复备份',
-          primaryLabel: '输入备份 PIN',
+          primaryLabel: '输入备份密码',
           requireConfirmation: false,
+          hintText: '仅用于解密备份包（不会上传）',
         ),
       ),
     );
-    if (pin == null) return;
+    if (passphrase == null) return;
     if (!context.mounted) return;
 
     final backupService = ref.read(dataBackupServiceProvider);
     final preview = await _runWithProgress(
       context,
       label: '校验备份…',
-      run: () =>
-          backupService.readBackupPreview(encryptedBytes: bytes, pin: pin),
+      run: () => backupService.readBackupPreview(
+        encryptedBytes: bytes,
+        passphrase: passphrase,
+      ),
+      errorMessage: _backupErrorMessage,
     );
     if (preview == null) return;
     if (!context.mounted) return;
@@ -411,6 +592,10 @@ class DataSettingsPage extends ConsumerWidget {
       builder: (dialogContext) => ShadDialog.alert(
         title: const Text('确认恢复？'),
         description: Text(
+          '备份摘要（content-free）：\n'
+          '- ${preview.includesSecrets ? 'export_schema_version' : 'schema_version'}：${preview.schemaVersion}\n'
+          '- exported_at_utc_ms：${preview.exportedAtUtcMillis}\n'
+          '- includes_secrets：${preview.includesSecrets ? 'true' : 'false'}\n\n'
           '将恢复以下数量：\n'
           '- 任务：${preview.taskCount}\n'
           '- Checklist：${preview.checklistCount}\n'
@@ -434,13 +619,30 @@ class DataSettingsPage extends ConsumerWidget {
     if (confirmed != true) return;
     if (!context.mounted) return;
 
+    await _recordRestoreEvent(
+      ref,
+      includesSecrets: preview.includesSecrets,
+      eventName: domain.LocalEventNames.restoreStarted,
+      result: 'ok',
+    );
+    if (!context.mounted) return;
+
     final store = ref.read(backupFileStoreProvider);
     final safetyBytes = await _runWithProgress(
       context,
       label: '创建安全备份包…',
-      run: () => backupService.createEncryptedBackup(pin: pin),
+      run: () => backupService.createEncryptedBackup(passphrase: passphrase),
+      errorMessage: _backupErrorMessage,
     );
-    if (safetyBytes == null) return;
+    if (safetyBytes == null) {
+      await _recordRestoreEvent(
+        ref,
+        includesSecrets: preview.includesSecrets,
+        eventName: domain.LocalEventNames.restoreCompleted,
+        result: 'error',
+      );
+      return;
+    }
     if (!context.mounted) return;
 
     final safetyName =
@@ -451,21 +653,46 @@ class DataSettingsPage extends ConsumerWidget {
       run: () =>
           store.saveToAppDocuments(bytes: safetyBytes, fileName: safetyName),
     );
-    if (safetyPath == null) return;
+    if (safetyPath == null) {
+      await _recordRestoreEvent(
+        ref,
+        includesSecrets: preview.includesSecrets,
+        eventName: domain.LocalEventNames.restoreCompleted,
+        result: 'error',
+      );
+      return;
+    }
     if (!context.mounted) return;
 
-    final result = await _runWithProgress(
+    final (result, cancelled) = await _runWithCancellableProgress(
       context,
       label: '执行恢复…',
-      run: () => backupService.restoreFromEncryptedBackup(
+      run: (cancelToken) => backupService.restoreFromEncryptedBackup(
         encryptedBytes: bytes,
-        pin: pin,
+        passphrase: passphrase,
+        cancelToken: cancelToken,
       ),
+      errorMessage: _backupErrorMessage,
     );
-    if (result == null) return;
+    if (result == null) {
+      await _recordRestoreEvent(
+        ref,
+        includesSecrets: preview.includesSecrets,
+        eventName: domain.LocalEventNames.restoreCompleted,
+        result: cancelled ? 'cancelled' : 'error',
+      );
+      return;
+    }
     if (!context.mounted) return;
 
     await ref.read(cancelPomodoroNotificationUseCaseProvider)();
+
+    await _recordRestoreEvent(
+      ref,
+      includesSecrets: preview.includesSecrets,
+      eventName: domain.LocalEventNames.restoreCompleted,
+      result: 'ok',
+    );
 
     if (!context.mounted) return;
     await showShadDialog<void>(
@@ -488,18 +715,20 @@ class DataSettingsPage extends ConsumerWidget {
           ),
           ShadButton.secondary(
             onPressed: () async {
-              await SharePlus.instance.share(
-                ShareParams(
-                  subject: 'DayPick 恢复前安全备份包',
-                  files: [
-                    XFile.fromData(
-                      safetyBytes,
-                      name: safetyName,
-                      mimeType: 'application/octet-stream',
-                    ),
-                  ],
-                ),
-              );
+              try {
+                await SharePlus.instance.share(
+                  ShareParams(
+                    subject: 'DayPick 恢复前安全备份包',
+                    files: [
+                      XFile.fromData(
+                        safetyBytes,
+                        name: safetyName,
+                        mimeType: 'application/octet-stream',
+                      ),
+                    ],
+                  ),
+                );
+              } catch (_) {}
               if (dialogContext.mounted) Navigator.of(dialogContext).pop();
             },
             child: const Text('分享安全备份'),
@@ -565,6 +794,7 @@ class DataSettingsPage extends ConsumerWidget {
     BuildContext context, {
     required String label,
     required Future<T> Function() run,
+    String Function(Object error)? errorMessage,
   }) async {
     unawaited(
       showShadDialog<void>(
@@ -591,10 +821,133 @@ class DataSettingsPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('失败：$e')));
+        ).showSnackBar(
+          SnackBar(content: Text(errorMessage?.call(e) ?? '失败：$e')),
+        );
       }
       return null;
     }
+  }
+
+  Future<(T? value, bool cancelled)> _runWithCancellableProgress<T>(
+    BuildContext context, {
+    required String label,
+    required Future<T> Function(data.BackupCancellationToken cancelToken) run,
+    String Function(Object error)? errorMessage,
+  }) async {
+    final cancelToken = data.BackupCancellationToken();
+    unawaited(
+      showShadDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          var cancelling = false;
+          return StatefulBuilder(
+            builder: (context, setState) => ShadDialog(
+              title: const Text('处理中…'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const DpSpinner(size: 18, strokeWidth: 2),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(label)),
+                    ],
+                  ),
+                  const SizedBox(height: DpSpacing.md),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ShadButton.outline(
+                      onPressed: cancelling
+                          ? null
+                          : () {
+                              cancelToken.cancel();
+                              setState(() => cancelling = true);
+                            },
+                      child: Text(cancelling ? '取消中…' : '取消'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      final result = await run(cancelToken);
+      if (context.mounted) Navigator.of(context).pop();
+      return (result, false);
+    } catch (e) {
+      if (context.mounted) Navigator.of(context).pop();
+      if (e is data.BackupCancelledException || cancelToken.isCancelled) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已取消')));
+        }
+        return (null, true);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          SnackBar(content: Text(errorMessage?.call(e) ?? '失败：$e')),
+        );
+      }
+      return (null, false);
+    }
+  }
+
+  String _backupErrorMessage(Object error) {
+    if (error is data.BackupWrongPassphraseOrCorruptedException) {
+      return '失败：密码错误或文件损坏';
+    }
+    if (error is data.BackupWeakPassphraseException) {
+      return '失败：${error.toString()}';
+    }
+    if (error is data.BackupMissingAiApiKeyException) {
+      return '失败：${error.toString()}';
+    }
+    if (error is data.BackupMissingAiConfigException) {
+      return '失败：${error.toString()}';
+    }
+    if (error is data.BackupSensitiveContentDetectedException) {
+      return '失败：检测到疑似密钥，已中止';
+    }
+    if (error is data.BackupUnsupportedException) {
+      return '失败：${error.toString()}';
+    }
+    return '失败：操作失败，请重试';
+  }
+
+  Future<void> _recordBackupCreated(
+    WidgetRef ref, {
+    required bool includesSecrets,
+    required String result,
+  }) async {
+    try {
+      await ref.read(localEventsServiceProvider).record(
+        eventName: domain.LocalEventNames.backupCreated,
+        metaJson: {'includes_secrets': includesSecrets, 'result': result},
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _recordRestoreEvent(
+    WidgetRef ref, {
+    required bool includesSecrets,
+    required String eventName,
+    required String result,
+  }) async {
+    try {
+      await ref.read(localEventsServiceProvider).record(
+        eventName: eventName,
+        metaJson: {'includes_secrets': includesSecrets, 'result': result},
+      );
+    } catch (_) {}
   }
 
   String _ts(DateTime dt) {

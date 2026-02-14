@@ -2,6 +2,7 @@
     <!-- AI / 导出分享等功能需要联网能力（普通权限，不会弹窗）。 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <application
         android:label="DayPick·一页今日"
         android:name="${applicationName}"

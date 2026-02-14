@@ -12,6 +12,7 @@ class DayPickApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+    final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
     final appearanceAsync = ref.watch(appearanceConfigProvider);
     final appearance = appearanceAsync.maybeWhen(
       data: (v) => v,
@@ -39,6 +40,7 @@ class DayPickApp extends ConsumerWidget {
           title: 'DayPick · 一页今日',
           debugShowCheckedModeBanner: false,
           theme: materialTheme,
+          scaffoldMessengerKey: scaffoldMessengerKey,
           routerConfig: router,
           builder: (context, child) =>
               ShadAppBuilder(child: child ?? const SizedBox.shrink()),

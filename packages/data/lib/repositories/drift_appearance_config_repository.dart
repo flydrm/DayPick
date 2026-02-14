@@ -52,6 +52,8 @@ class DriftAppearanceConfigRepository
             timeboxingWorkdayEndMinutes: Value(
               config.timeboxingWorkdayEndMinutes,
             ),
+            calendarConstraintsDismissed: Value(config.calendarConstraintsDismissed),
+            calendarShowEventTitles: Value(config.calendarShowEventTitles),
             inboxTypeFilter: Value(config.inboxTypeFilter.index),
             inboxTodayOnly: Value(config.inboxTodayOnly),
             updatedAtUtcMillis: DateTime.now().toUtc().millisecondsSinceEpoch,
@@ -80,6 +82,8 @@ class DriftAppearanceConfigRepository
     final timeboxingLayoutIndex = row.timeboxingLayout;
     final timeboxingWorkdayStartMinutes = row.timeboxingWorkdayStartMinutes;
     final timeboxingWorkdayEndMinutes = row.timeboxingWorkdayEndMinutes;
+    final calendarConstraintsDismissed = row.calendarConstraintsDismissed;
+    final calendarShowEventTitles = row.calendarShowEventTitles;
     final inboxTypeFilterIndex = row.inboxTypeFilter;
     final inboxTodayOnly = row.inboxTodayOnly;
 
@@ -133,6 +137,8 @@ class DriftAppearanceConfigRepository
       timeboxingWorkdayEndMinutes: timeboxingWorkdayEndMinutes
           .clamp(0, 24 * 60 - 1)
           .toInt(),
+      calendarConstraintsDismissed: calendarConstraintsDismissed,
+      calendarShowEventTitles: calendarShowEventTitles,
       inboxTypeFilter: inboxTypeFilter,
       inboxTodayOnly: inboxTodayOnly,
     );

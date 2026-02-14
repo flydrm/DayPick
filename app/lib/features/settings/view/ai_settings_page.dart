@@ -69,7 +69,10 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
           const ShadAlert(
             icon: Icon(Icons.lock_outline),
             title: Text('本地密文存储'),
-            description: Text('apiKey 仅本地密文存储，不会被备份导出。'),
+            description: Text(
+              'apiKey 仅本地密文存储；默认导出/备份不包含。\n'
+              '仅在「数据 → 安全导出（含密钥）」时才会纳入加密包。',
+            ),
           ),
           const SizedBox(height: DpSpacing.md),
           DpSectionCard(

@@ -2,10 +2,26 @@ import 'dart:io';
 
 import 'package:data/data.dart' as data;
 import 'package:domain/domain.dart' as domain;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../feedback/action_toast_service.dart';
+import '../feature_flags/feature_flag_keys.dart';
+import '../feature_flags/feature_flags.dart';
+
 bool get _isFlutterTest => Platform.environment['FLUTTER_TEST'] == 'true';
+
+final scaffoldMessengerKeyProvider =
+    Provider<GlobalKey<ScaffoldMessengerState>>((ref) {
+      return GlobalKey<ScaffoldMessengerState>();
+    });
+
+final actionToastServiceProvider = Provider<ActionToastService>((ref) {
+  return ActionToastService(
+    scaffoldMessengerKey: ref.watch(scaffoldMessengerKeyProvider),
+  );
+});
 
 final uuidProvider = Provider<Uuid>((ref) => Uuid());
 
@@ -84,6 +100,22 @@ final appearanceConfigRepositoryProvider =
       return data.DriftAppearanceConfigRepository(db);
     });
 
+final calendarConstraintsRepositoryProvider =
+    Provider<domain.CalendarConstraintsRepository>((ref) {
+      var titlesEnabled = false;
+      ref.listen<AsyncValue<domain.AppearanceConfig>>(
+        appearanceConfigProvider,
+        (_, next) {
+          titlesEnabled = next.valueOrNull?.calendarShowEventTitles ?? false;
+        },
+        fireImmediately: true,
+      );
+
+      return data.PlatformCalendarConstraintsRepository(
+        isTitleReadEnabled: () => titlesEnabled,
+      );
+    });
+
 final todayPlanRepositoryProvider = Provider<domain.TodayPlanRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return data.DriftTodayPlanRepository(db);
@@ -92,6 +124,48 @@ final todayPlanRepositoryProvider = Provider<domain.TodayPlanRepository>((ref) {
 final weaveLinkRepositoryProvider = Provider<domain.WeaveLinkRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return data.DriftWeaveLinkRepository(db);
+});
+
+final featureFlagRepositoryProvider = Provider<domain.FeatureFlagRepository>((
+  ref,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return data.DriftFeatureFlagRepository(db);
+});
+
+final kpiRepositoryProvider = Provider<domain.KpiRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return data.DriftKpiRepository(db);
+});
+
+final kpiAggregationServiceProvider = Provider<data.KpiAggregationService>((
+  ref,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return data.KpiAggregationService(db);
+});
+
+final featureFlagsProvider = Provider<FeatureFlags>((ref) {
+  final repo = ref.watch(featureFlagRepositoryProvider);
+  final flags = FeatureFlags(
+    repository: repo,
+    seeds: defaultFeatureFlagSeeds(),
+  );
+  ref.onDispose(flags.dispose);
+  return flags;
+});
+
+final featureFlagsListProvider = StreamProvider<List<domain.FeatureFlag>>((
+  ref,
+) {
+  return ref.watch(featureFlagRepositoryProvider).watchAllFlags();
+});
+
+final featureFlagEnabledProvider = StreamProvider.family<bool, String>((
+  ref,
+  key,
+) {
+  return ref.watch(featureFlagsProvider).watchEnabled(key);
 });
 
 final localNotificationsServiceProvider =

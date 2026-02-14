@@ -11,9 +11,79 @@ import '../../../ui/kit/dp_spinner.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
 import '../../../ui/tokens/dp_insets.dart';
 import '../../../ui/tokens/dp_spacing.dart';
+import 'kpi_dashboard_tab.dart';
 
-class StatsPage extends ConsumerWidget {
-  const StatsPage({super.key});
+enum StatsInitialTab { pomodoro, kpi }
+
+class StatsPage extends ConsumerStatefulWidget {
+  const StatsPage({super.key, this.initialTab = StatsInitialTab.pomodoro});
+
+  final StatsInitialTab initialTab;
+
+  @override
+  ConsumerState<StatsPage> createState() => _StatsPageState();
+}
+
+enum _StatsTab { pomodoro, kpi }
+
+class _StatsPageState extends ConsumerState<StatsPage> {
+  late _StatsTab _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = switch (widget.initialTab) {
+      StatsInitialTab.kpi => _StatsTab.kpi,
+      StatsInitialTab.pomodoro => _StatsTab.pomodoro,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPageScaffold(
+      title: '统计',
+      showCreateAction: false,
+      showSearchAction: false,
+      showSettingsAction: false,
+      body: Column(
+        children: [
+          Padding(
+            padding: DpInsets.page,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _ToggleChip(
+                    label: '指标',
+                    selected: _tab == _StatsTab.kpi,
+                    onTap: () => setState(() => _tab = _StatsTab.kpi),
+                  ),
+                ),
+                const SizedBox(width: DpSpacing.sm),
+                Expanded(
+                  child: _ToggleChip(
+                    label: '番茄',
+                    selected: _tab == _StatsTab.pomodoro,
+                    onTap: () => setState(() => _tab = _StatsTab.pomodoro),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: DpSpacing.sm),
+          Expanded(
+            child: switch (_tab) {
+              _StatsTab.kpi => const KpiDashboardTab(),
+              _StatsTab.pomodoro => const _PomodoroStatsTab(),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PomodoroStatsTab extends ConsumerWidget {
+  const _PomodoroStatsTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,143 +93,160 @@ class StatsPage extends ConsumerWidget {
     final appearanceAsync = ref.watch(appearanceConfigProvider);
     final sessionsAsync = ref.watch(_statsSessionsProvider(range));
 
-    return AppPageScaffold(
-      title: '统计',
-      showCreateAction: false,
-      showSearchAction: false,
-      showSettingsAction: false,
-      body: sessionsAsync.when(
-        loading: () => const Center(child: DpSpinner()),
-        error: (error, stack) => Padding(
-          padding: DpInsets.page,
-          child: DpInlineNotice(
-            variant: DpInlineNoticeVariant.destructive,
-            title: '加载失败',
-            description: '$error',
-            icon: const Icon(Icons.error_outline),
-          ),
+    return sessionsAsync.when(
+      loading: () => const Center(child: DpSpinner()),
+      error: (error, stack) => Padding(
+        padding: DpInsets.page,
+        child: DpInlineNotice(
+          variant: DpInlineNoticeVariant.destructive,
+          title: '加载失败',
+          description: '$error',
+          icon: const Icon(Icons.error_outline),
         ),
-        data: (sessions) {
-          final byDay = _groupSessionsByLocalDay(sessions);
-          final gridDays = range.days;
-          final maxCount = gridDays
-              .map((d) => byDay[_formatDateYmd(d)]?.total ?? 0)
-              .fold<int>(0, max);
-
-          final todayStart = DateTime(now.year, now.month, now.day);
-          final last7Start = todayStart.subtract(const Duration(days: 6));
-          var last7Total = 0;
-          var last7Draft = 0;
-          for (var i = 0; i < 7; i += 1) {
-            final d = last7Start.add(Duration(days: i));
-            final stat = byDay[_formatDateYmd(d)];
-            last7Total += stat?.total ?? 0;
-            last7Draft += stat?.draft ?? 0;
-          }
-
-          var streak = 0;
-          for (var i = 0; i < 365; i += 1) {
-            final d = todayStart.subtract(Duration(days: i));
-            final stat = byDay[_formatDateYmd(d)];
-            if ((stat?.total ?? 0) <= 0) break;
-            streak += 1;
-          }
-
-          final shadTheme = ShadTheme.of(context);
-          final colorScheme = shadTheme.colorScheme;
-
-          return ListView(
-            padding: DpInsets.page,
-            children: [
-              appearanceAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-                data: (config) {
-                  if (config.statsEnabled) return const SizedBox.shrink();
-                  return ShadAlert(
-                    icon: const Icon(Icons.insights_outlined),
-                    title: const Text('统计默认关闭'),
-                    description: const Text('开启后可在 Today 工作台添加「统计/热力图」模块。'),
-                    trailing: ShadButton(
-                      size: ShadButtonSize.sm,
-                      onPressed: () async {
-                        final repo = ref.read(
-                          appearanceConfigRepositoryProvider,
-                        );
-                        final nextModules =
-                            config.todayModules.contains(
-                              domain.TodayWorkbenchModule.stats,
-                            )
-                            ? config.todayModules
-                            : [
-                                ...config.todayModules,
-                                domain.TodayWorkbenchModule.stats,
-                              ];
-                        await repo.save(
-                          config.copyWith(
-                            statsEnabled: true,
-                            todayModules: List.unmodifiable(nextModules),
-                          ),
-                        );
-                      },
-                      child: const Text('立即启用'),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: DpSpacing.md),
-              ShadCard(
-                padding: DpInsets.card,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      '概览',
-                      style: shadTheme.textTheme.small.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.foreground,
-                      ),
-                    ),
-                    const SizedBox(height: DpSpacing.sm),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        _StatChip(
-                          label: '最近 7 天',
-                          value: '$last7Total',
-                          hint: last7Draft > 0 ? '草稿 $last7Draft' : null,
-                        ),
-                        _StatChip(label: '连续天数', value: '$streak'),
-                        _StatChip(
-                          label: '近 12 周总计',
-                          value: '${sessions.length}',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: DpSpacing.md),
-              ShadCard(
-                padding: DpInsets.card,
-                title: Text(
-                  '近 12 周热力图（番茄）',
-                  style: shadTheme.textTheme.small.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.foreground,
-                  ),
-                ),
-                child: _Heatmap12Weeks(
-                  range: range,
-                  byDay: byDay,
-                  maxCount: maxCount,
-                ),
-              ),
-            ],
-          );
-        },
       ),
+      data: (sessions) {
+        final byDay = _groupSessionsByLocalDay(sessions);
+        final gridDays = range.days;
+        final maxCount = gridDays
+            .map((d) => byDay[_formatDateYmd(d)]?.total ?? 0)
+            .fold<int>(0, max);
+
+        final todayStart = DateTime(now.year, now.month, now.day);
+        final last7Start = todayStart.subtract(const Duration(days: 6));
+        var last7Total = 0;
+        var last7Draft = 0;
+        for (var i = 0; i < 7; i += 1) {
+          final d = last7Start.add(Duration(days: i));
+          final stat = byDay[_formatDateYmd(d)];
+          last7Total += stat?.total ?? 0;
+          last7Draft += stat?.draft ?? 0;
+        }
+
+        var streak = 0;
+        for (var i = 0; i < 365; i += 1) {
+          final d = todayStart.subtract(Duration(days: i));
+          final stat = byDay[_formatDateYmd(d)];
+          if ((stat?.total ?? 0) <= 0) break;
+          streak += 1;
+        }
+
+        final shadTheme = ShadTheme.of(context);
+        final colorScheme = shadTheme.colorScheme;
+
+        return ListView(
+          padding: DpInsets.page,
+          children: [
+            appearanceAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (config) {
+                if (config.statsEnabled) return const SizedBox.shrink();
+                return ShadAlert(
+                  icon: const Icon(Icons.insights_outlined),
+                  title: const Text('统计默认关闭'),
+                  description: const Text('开启后可在 Today 工作台添加「统计/热力图」模块。'),
+                  trailing: ShadButton(
+                    size: ShadButtonSize.sm,
+                    onPressed: () async {
+                      final repo = ref.read(
+                        appearanceConfigRepositoryProvider,
+                      );
+                      final nextModules =
+                          config.todayModules.contains(
+                            domain.TodayWorkbenchModule.stats,
+                          )
+                          ? config.todayModules
+                          : [
+                              ...config.todayModules,
+                              domain.TodayWorkbenchModule.stats,
+                            ];
+                      await repo.save(
+                        config.copyWith(
+                          statsEnabled: true,
+                          todayModules: List.unmodifiable(nextModules),
+                        ),
+                      );
+                    },
+                    child: const Text('立即启用'),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: DpSpacing.md),
+            ShadCard(
+              padding: DpInsets.card,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '概览',
+                    style: shadTheme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.foreground,
+                    ),
+                  ),
+                  const SizedBox(height: DpSpacing.sm),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _StatChip(
+                        label: '最近 7 天',
+                        value: '$last7Total',
+                        hint: last7Draft > 0 ? '草稿 $last7Draft' : null,
+                      ),
+                      _StatChip(label: '连续天数', value: '$streak'),
+                      _StatChip(
+                        label: '近 12 周总计',
+                        value: '${sessions.length}',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: DpSpacing.md),
+            ShadCard(
+              padding: DpInsets.card,
+              title: Text(
+                '近 12 周热力图（番茄）',
+                style: shadTheme.textTheme.small.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.foreground,
+                ),
+              ),
+              child: _Heatmap12Weeks(
+                range: range,
+                byDay: byDay,
+                maxCount: maxCount,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ToggleChip extends StatelessWidget {
+  const _ToggleChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = selected ? ShadButton.secondary : ShadButton.outline;
+    return button(
+      size: ShadButtonSize.sm,
+      onPressed: onTap,
+      leading: selected ? const Icon(Icons.check, size: 16) : null,
+      child: Text(label),
     );
   }
 }

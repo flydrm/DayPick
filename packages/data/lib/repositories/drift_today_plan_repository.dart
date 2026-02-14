@@ -65,6 +65,8 @@ class DriftTodayPlanRepository implements domain.TodayPlanRepository {
       if (existing.segment != segment) {
         await moveTaskToSection(day: day, taskId: taskId, section: section);
       }
+      final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+      await _markTasksPlannedToday([taskId], nowUtcMillis: now);
       return;
     }
 

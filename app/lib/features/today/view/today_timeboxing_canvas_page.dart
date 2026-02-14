@@ -8,6 +8,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/providers/app_providers.dart';
 import '../../../ui/kit/dp_empty_state.dart';
+import '../../../ui/kit/dp_action_toast.dart';
 import '../../../ui/kit/dp_inline_notice.dart';
 import '../../../ui/scaffolds/app_page_scaffold.dart';
 import '../../../ui/sheets/time_picker_sheet.dart';
@@ -1006,6 +1007,24 @@ class _TimeboxingReorderSheetState
     }
   }
 
+  Future<void> _restoreOrder(List<String> snapshot) async {
+    if (!mounted) return;
+    setState(() => _taskIds = List<String>.from(snapshot));
+    await _persist();
+  }
+
+  void _showReorderSavedToast(List<String> previous) {
+    ref
+        .read(actionToastServiceProvider)
+        .showSuccess(
+          '已更新时间块顺序',
+          undo: DpActionToastUndoAction(
+            label: '撤销',
+            onPressed: () => _restoreOrder(previous),
+          ),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     final shadTheme = ShadTheme.of(context);
@@ -1103,12 +1122,15 @@ class _TimeboxingReorderSheetState
                     buildDefaultDragHandles: false,
                     itemCount: blocks.length,
                     onReorder: (oldIndex, newIndex) async {
+                      final previous = List<String>.from(_taskIds);
                       setState(() {
                         if (newIndex > oldIndex) newIndex -= 1;
                         final item = _taskIds.removeAt(oldIndex);
                         _taskIds.insert(newIndex, item);
                       });
                       await _persist();
+                      if (!mounted) return;
+                      _showReorderSavedToast(previous);
                     },
                     itemBuilder: (context, index) {
                       final b = blocks[index];

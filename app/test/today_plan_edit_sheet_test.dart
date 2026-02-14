@@ -13,8 +13,16 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'test_utils.dart';
 
+class _ReplaceCall {
+  const _ReplaceCall({required this.section, required this.taskIds});
+
+  final domain.TodayPlanSection section;
+  final List<String> taskIds;
+}
+
 class _FakeTodayPlanRepository implements domain.TodayPlanRepository {
   final List<List<String>> replaceCalls = [];
+  final List<_ReplaceCall> replaceCallRecords = [];
 
   @override
   Stream<List<String>> watchTaskIdsForDay({
@@ -48,6 +56,9 @@ class _FakeTodayPlanRepository implements domain.TodayPlanRepository {
     domain.TodayPlanSection section = domain.TodayPlanSection.today,
   }) async {
     replaceCalls.add(taskIds);
+    replaceCallRecords.add(
+      _ReplaceCall(section: section, taskIds: List<String>.of(taskIds)),
+    );
   }
 
   @override
@@ -206,6 +217,77 @@ void main() {
 
     expect(repo.replaceCalls, isNotEmpty);
     expect(repo.replaceCalls, contains(equals(<String>['t-1'])));
+    await disposeApp(tester);
+  });
+
+  testWidgets('TodayPlanEditSheet removes with undo support', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    final repo = _FakeTodayPlanRepository();
+    final router = GoRouter(
+      initialLocation: '/sheet',
+      routes: [
+        GoRoute(
+          path: '/sheet',
+          builder: (context, state) =>
+              const Scaffold(body: TodayPlanEditSheet()),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          goRouterProvider.overrideWithValue(router),
+          appearanceConfigProvider.overrideWith(
+            (ref) => Stream.value(const domain.AppearanceConfig()),
+          ),
+          tasksStreamProvider.overrideWith(
+            (ref) => Stream.value([
+              _task(id: 't-1', title: '任务 1', now: now),
+              _task(id: 't-2', title: '任务 2', now: now),
+            ]),
+          ),
+          todayPlanTaskIdsProvider.overrideWith(
+            (ref) => Stream.value(const <String>['t-1', 't-2']),
+          ),
+          todayEveningPlanTaskIdsProvider.overrideWith(
+            (ref) => Stream.value(const <String>[]),
+          ),
+          todayPlanRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: const DayPickApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final firstRow = find.byKey(const ValueKey('today_plan_item:t-1'));
+    await tester.tap(
+      find.descendant(
+        of: firstRow,
+        matching: find.byIcon(Icons.remove_circle_outline),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('today_plan_item:t-1')), findsNothing);
+    final undoButton = find.byKey(const ValueKey('dp_action_toast_undo'));
+    expect(undoButton, findsOneWidget);
+
+    await tester.tap(undoButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('today_plan_item:t-1')), findsOneWidget);
+    final hasRestoreCall = repo.replaceCallRecords.any(
+      (call) =>
+          call.section == domain.TodayPlanSection.today &&
+          call.taskIds.length == 2 &&
+          call.taskIds[0] == 't-1' &&
+          call.taskIds[1] == 't-2',
+    );
+    expect(hasRestoreCall, isTrue);
     await disposeApp(tester);
   });
 }

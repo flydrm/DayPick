@@ -70,9 +70,9 @@ class PrivacyPage extends StatelessWidget {
           ),
           const SizedBox(height: DpSpacing.sm),
           Text(
-            '- AI 的 apiKey 只在本地密文存储，不会进入导出/备份包。\n'
-            '- 备份采用强加密（PIN 为恰好 6 位数字，允许 0 开头）；PIN 不保存、不回填。\n'
-            '- 请妥善保管 PIN：遗失将无法恢复。',
+            '- AI 的 apiKey 默认只在本地密文存储，不会进入明文导出/普通加密备份。\n'
+            '- 仅当你选择「数据 → 安全导出（含密钥）」时，才会把 apiKey 纳入加密包。\n'
+            '- 加密包使用 passphrase（至少 6 位）；普通备份可用 6 位数字 PIN，而“含密钥”导出要求强密码且禁止 6 位 PIN。密码不保存、不回填，遗失将无法恢复。',
             style: shadTheme.textTheme.muted.copyWith(
               color: colorScheme.mutedForeground,
             ),

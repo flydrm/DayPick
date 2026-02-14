@@ -1,4 +1,5 @@
 import 'package:daypick/app/daypick_app.dart';
+import 'package:daypick/core/capture/capture_submit_result.dart';
 import 'package:daypick/core/providers/app_providers.dart';
 import 'package:daypick/routing/app_router.dart';
 import 'package:daypick/ui/sheets/quick_create_sheet.dart';
@@ -36,7 +37,7 @@ class _HostPage extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: ShadButton(
-          onPressed: () => showModalBottomSheet<void>(
+          onPressed: () => showModalBottomSheet<CaptureSubmitResult>(
             context: context,
             isScrollControlled: true,
             useSafeArea: true,

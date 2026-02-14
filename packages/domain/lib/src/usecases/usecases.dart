@@ -12,3 +12,4 @@ export 'tasks/create_task.dart';
 export 'tasks/task_list_query.dart';
 export 'tasks/update_task.dart';
 export 'today/today_queue_rule.dart';
+export 'calendar/calendar_busy_free_calculator.dart';

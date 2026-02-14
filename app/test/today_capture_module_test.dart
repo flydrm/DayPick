@@ -96,4 +96,3 @@ void main() {
     await disposeApp(tester);
   });
 }
-

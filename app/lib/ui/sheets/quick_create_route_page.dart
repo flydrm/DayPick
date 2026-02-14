@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/capture/capture_submit_result.dart';
+import '../capture/capture_submit_feedback.dart';
 import '../kit/dp_spinner.dart';
+import '../tokens/dp_accessibility.dart';
 import 'quick_create_sheet.dart';
 
 class QuickCreateRoutePage extends StatefulWidget {
@@ -28,9 +32,13 @@ class _QuickCreateRoutePageState extends State<QuickCreateRoutePage> {
     super.didChangeDependencies();
     if (_opened) return;
     _opened = true;
+    final container = ProviderScope.containerOf(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _openSheet();
+      final result = await _openSheet();
       if (!mounted) return;
+      if (result != null) {
+        showCaptureSubmitSuccessToast(container: container, result: result);
+      }
       if (context.canPop()) {
         context.pop();
       } else {
@@ -39,11 +47,12 @@ class _QuickCreateRoutePageState extends State<QuickCreateRoutePage> {
     });
   }
 
-  Future<void> _openSheet() async {
-    await showModalBottomSheet<void>(
+  Future<CaptureSubmitResult?> _openSheet() async {
+    return showModalBottomSheet<CaptureSubmitResult>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      sheetAnimationStyle: DpAccessibility.bottomSheetAnimationStyle(context),
       builder: (context) => QuickCreateSheet(
         initialType: widget.initialType,
         initialTaskAddToToday: widget.initialTaskAddToToday,

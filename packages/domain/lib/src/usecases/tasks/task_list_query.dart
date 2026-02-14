@@ -50,7 +50,8 @@ class TaskListQuery {
       if (priority != null && task.priority != priority) return false;
       if (normalizedTag != null &&
           normalizedTag.isNotEmpty &&
-          !task.tags.contains(normalizedTag)) return false;
+          !task.tags.contains(normalizedTag))
+        return false;
 
       if (dueToday && !_isDueToday(task.dueAt, startOfToday)) return false;
       if (overdue && !_isOverdue(task.dueAt, startOfToday)) return false;

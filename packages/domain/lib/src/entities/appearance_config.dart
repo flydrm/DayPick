@@ -48,6 +48,8 @@ class AppearanceConfig {
     this.timeboxingLayout = TimeboxingLayout.full,
     this.timeboxingWorkdayStartMinutes = 7 * 60,
     this.timeboxingWorkdayEndMinutes = 21 * 60,
+    this.calendarConstraintsDismissed = false,
+    this.calendarShowEventTitles = false,
     this.inboxTypeFilter = InboxTypeFilter.all,
     this.inboxTodayOnly = false,
   });
@@ -63,6 +65,8 @@ class AppearanceConfig {
   final TimeboxingLayout timeboxingLayout;
   final int timeboxingWorkdayStartMinutes;
   final int timeboxingWorkdayEndMinutes;
+  final bool calendarConstraintsDismissed;
+  final bool calendarShowEventTitles;
   final InboxTypeFilter inboxTypeFilter;
   final bool inboxTodayOnly;
 
@@ -78,6 +82,8 @@ class AppearanceConfig {
     TimeboxingLayout? timeboxingLayout,
     int? timeboxingWorkdayStartMinutes,
     int? timeboxingWorkdayEndMinutes,
+    bool? calendarConstraintsDismissed,
+    bool? calendarShowEventTitles,
     InboxTypeFilter? inboxTypeFilter,
     bool? inboxTodayOnly,
   }) {
@@ -96,6 +102,10 @@ class AppearanceConfig {
           timeboxingWorkdayStartMinutes ?? this.timeboxingWorkdayStartMinutes,
       timeboxingWorkdayEndMinutes:
           timeboxingWorkdayEndMinutes ?? this.timeboxingWorkdayEndMinutes,
+      calendarConstraintsDismissed:
+          calendarConstraintsDismissed ?? this.calendarConstraintsDismissed,
+      calendarShowEventTitles:
+          calendarShowEventTitles ?? this.calendarShowEventTitles,
       inboxTypeFilter: inboxTypeFilter ?? this.inboxTypeFilter,
       inboxTodayOnly: inboxTodayOnly ?? this.inboxTodayOnly,
     );

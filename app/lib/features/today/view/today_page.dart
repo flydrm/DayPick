@@ -14,16 +14,18 @@ import '../../notes/providers/note_providers.dart';
 import '../../tasks/providers/task_providers.dart';
 import '../../tasks/view/task_list_item.dart';
 import '../providers/today_plan_providers.dart';
-import 'today_plan_edit_sheet.dart';
 import 'today_daily_log_sheet.dart';
 import 'today_planning_ritual_sheet.dart';
 import 'today_onboarding_card.dart';
 import 'today_timeboxing_card.dart';
 import 'today_weave_card.dart';
 import 'today_workbench_edit_sheet.dart';
+import 'today_bridge_highlight.dart';
 
 class TodayPage extends ConsumerStatefulWidget {
-  const TodayPage({super.key});
+  const TodayPage({super.key, this.rawHighlight});
+
+  final String? rawHighlight;
 
   @override
   ConsumerState<TodayPage> createState() => _TodayPageState();
@@ -33,6 +35,10 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   bool _dismissedOnboarding = false;
   bool _autoMarkOnboardingRequested = false;
   bool _savingOnboardingDone = false;
+  String? _highlightedTaskId;
+  String? _highlightFallbackMessage;
+  String? _lastAutoScrolledHighlightId;
+  final Map<String, GlobalKey> _highlightItemKeys = <String, GlobalKey>{};
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +86,21 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     final inboxCount = inboxTaskCount + inboxNotes.length;
     final anySessionCount = anySessionCountAsync.valueOrNull ?? 0;
     final byId = {for (final t in tasks) t.id: t};
+    final bridgeHighlight = resolveTodayBridgeHighlight(
+      rawHighlight: widget.rawHighlight,
+      tasks: tasks,
+    );
+
+    if (_highlightedTaskId != bridgeHighlight.highlightedEntryId ||
+        _highlightFallbackMessage != bridgeHighlight.fallbackMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _highlightedTaskId = bridgeHighlight.highlightedEntryId;
+          _highlightFallbackMessage = bridgeHighlight.fallbackMessage;
+        });
+      });
+    }
     final planIds = planIdsAsync.valueOrNull ?? const <String>[];
     final eveningPlanIds = eveningPlanIdsAsync.valueOrNull ?? const <String>[];
     final planTasks = <domain.Task>[
@@ -113,6 +134,24 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       now: now,
     );
 
+    final hasTodayPlanModule = modules.contains(
+      domain.TodayWorkbenchModule.todayPlan,
+    );
+    final highlightVisibleTaskIds = <String>{
+      if (hasTodayPlanModule) ...[
+        for (final task in planTasks) task.id,
+        for (final task in eveningPlanTasks) task.id,
+      ],
+      if (hasTodayPlanModule && planTasks.isEmpty)
+        for (final task in result.todayQueue) task.id,
+    };
+    final effectiveHighlightFallbackMessage =
+        _highlightFallbackMessage ??
+        (_highlightedTaskId != null &&
+                !highlightVisibleTaskIds.contains(_highlightedTaskId)
+            ? '已加入，但未定位到条目。'
+            : null);
+
     final activePomodoro = activePomodoroAsync.valueOrNull;
     final activeTask = activePomodoro == null
         ? null
@@ -141,6 +180,17 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           icon: const Icon(Icons.error_outline),
         ),
         const SizedBox(height: 12),
+      ]);
+    }
+
+    if (effectiveHighlightFallbackMessage != null) {
+      children.addAll([
+        DpInlineNotice(
+          key: const ValueKey('today_bridge_fallback_notice'),
+          title: '定位失败回退',
+          description: effectiveHighlightFallbackMessage,
+        ),
+        const SizedBox(height: DpSpacing.md),
       ]);
     }
 
@@ -226,9 +276,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                             Icons.add_task_outlined,
                             size: 16,
                           ),
-                          onPressed: () => context.push(
-                            '/create?type=task&addToToday=1',
-                          ),
+                          onPressed: () =>
+                              context.push('/create?type=task&addToToday=1'),
                           child: const Text('任务'),
                         ),
                         ShadButton.outline(
@@ -369,7 +418,10 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         children: [
                           for (var i = 0; i < planTasks.length; i++) ...[
                             TaskListItem(
+                              key: _highlightKeyForTask(planTasks[i].id),
                               task: planTasks[i],
+                              highlighted:
+                                  _highlightedTaskId == planTasks[i].id,
                               onTap: () =>
                                   context.push('/tasks/${planTasks[i].id}'),
                               trailing: Tooltip(
@@ -429,14 +481,22 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                                   i < result.todayQueue.length;
                                   i++
                                 ) ...[
-                                  TaskListItem(
+                                  KeyedSubtree(
                                     key: ValueKey(
                                       'today_queue_suggested:${result.todayQueue[i].id}',
                                     ),
-                                    task: result.todayQueue[i],
-                                    dense: true,
-                                    onTap: () => context.push(
-                                      '/tasks/${result.todayQueue[i].id}',
+                                    child: TaskListItem(
+                                      key: _highlightKeyForTask(
+                                        result.todayQueue[i].id,
+                                      ),
+                                      task: result.todayQueue[i],
+                                      highlighted:
+                                          _highlightedTaskId ==
+                                          result.todayQueue[i].id,
+                                      dense: true,
+                                      onTap: () => context.push(
+                                        '/tasks/${result.todayQueue[i].id}',
+                                      ),
                                     ),
                                   ),
                                   if (i != result.todayQueue.length - 1)
@@ -490,7 +550,10 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         children: [
                           for (var i = 0; i < eveningPlanTasks.length; i++) ...[
                             TaskListItem(
+                              key: _highlightKeyForTask(eveningPlanTasks[i].id),
                               task: eveningPlanTasks[i],
+                              highlighted:
+                                  _highlightedTaskId == eveningPlanTasks[i].id,
                               onTap: () => context.push(
                                 '/tasks/${eveningPlanTasks[i].id}',
                               ),
@@ -576,6 +639,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       }
     }
 
+    _scheduleHighlightScrollIfNeeded(visibleTaskIds: highlightVisibleTaskIds);
+
     return AppPageScaffold(
       title: '今天',
       createRoute: '/create?addToToday=1',
@@ -624,6 +689,41 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       ],
       body: ListView(padding: DpInsets.page, children: children),
     );
+  }
+
+  GlobalKey _highlightKeyForTask(String taskId) {
+    return _highlightItemKeys.putIfAbsent(
+      taskId,
+      () => GlobalKey(debugLabel: 'today_highlight_item:$taskId'),
+    );
+  }
+
+  void _scheduleHighlightScrollIfNeeded({required Set<String> visibleTaskIds}) {
+    final highlightedTaskId = _highlightedTaskId;
+    if (highlightedTaskId == null) {
+      _lastAutoScrolledHighlightId = null;
+      return;
+    }
+    if (!visibleTaskIds.contains(highlightedTaskId)) return;
+    if (_lastAutoScrolledHighlightId == highlightedTaskId) return;
+
+    _lastAutoScrolledHighlightId = highlightedTaskId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final targetContext =
+          _highlightItemKeys[highlightedTaskId]?.currentContext;
+      if (targetContext == null) {
+        _lastAutoScrolledHighlightId = null;
+        return;
+      }
+
+      Scrollable.ensureVisible(
+        targetContext,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _persistOnboardingDone() async {
@@ -677,12 +777,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   }
 
   Future<void> _openPlanEditor(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => const TodayPlanEditSheet(),
-    );
+    await context.push('/today/plan');
   }
 
   Future<void> _fillPlanFromSuggested(

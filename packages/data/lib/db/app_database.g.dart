@@ -3614,6 +3614,36 @@ class $AppearanceConfigsTable extends AppearanceConfigs
         requiredDuringInsert: false,
         defaultValue: const Constant(21 * 60),
       );
+  static const VerificationMeta _calendarConstraintsDismissedMeta =
+      const VerificationMeta('calendarConstraintsDismissed');
+  @override
+  late final GeneratedColumn<bool> calendarConstraintsDismissed =
+      GeneratedColumn<bool>(
+        'calendar_constraints_dismissed',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("calendar_constraints_dismissed" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
+  static const VerificationMeta _calendarShowEventTitlesMeta =
+      const VerificationMeta('calendarShowEventTitles');
+  @override
+  late final GeneratedColumn<bool> calendarShowEventTitles =
+      GeneratedColumn<bool>(
+        'calendar_show_event_titles',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("calendar_show_event_titles" IN (0, 1))',
+        ),
+        defaultValue: const Constant(false),
+      );
   static const VerificationMeta _inboxTypeFilterMeta = const VerificationMeta(
     'inboxTypeFilter',
   );
@@ -3665,6 +3695,8 @@ class $AppearanceConfigsTable extends AppearanceConfigs
     timeboxingLayout,
     timeboxingWorkdayStartMinutes,
     timeboxingWorkdayEndMinutes,
+    calendarConstraintsDismissed,
+    calendarShowEventTitles,
     inboxTypeFilter,
     inboxTodayOnly,
     updatedAtUtcMillis,
@@ -3771,6 +3803,24 @@ class $AppearanceConfigsTable extends AppearanceConfigs
         ),
       );
     }
+    if (data.containsKey('calendar_constraints_dismissed')) {
+      context.handle(
+        _calendarConstraintsDismissedMeta,
+        calendarConstraintsDismissed.isAcceptableOrUnknown(
+          data['calendar_constraints_dismissed']!,
+          _calendarConstraintsDismissedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('calendar_show_event_titles')) {
+      context.handle(
+        _calendarShowEventTitlesMeta,
+        calendarShowEventTitles.isAcceptableOrUnknown(
+          data['calendar_show_event_titles']!,
+          _calendarShowEventTitlesMeta,
+        ),
+      );
+    }
     if (data.containsKey('inbox_type_filter')) {
       context.handle(
         _inboxTypeFilterMeta,
@@ -3857,6 +3907,14 @@ class $AppearanceConfigsTable extends AppearanceConfigs
         DriftSqlType.int,
         data['${effectivePrefix}timeboxing_workday_end_minutes'],
       )!,
+      calendarConstraintsDismissed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}calendar_constraints_dismissed'],
+      )!,
+      calendarShowEventTitles: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}calendar_show_event_titles'],
+      )!,
       inboxTypeFilter: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}inbox_type_filter'],
@@ -3892,6 +3950,8 @@ class AppearanceConfigRow extends DataClass
   final int timeboxingLayout;
   final int timeboxingWorkdayStartMinutes;
   final int timeboxingWorkdayEndMinutes;
+  final bool calendarConstraintsDismissed;
+  final bool calendarShowEventTitles;
   final int inboxTypeFilter;
   final bool inboxTodayOnly;
   final int updatedAtUtcMillis;
@@ -3908,6 +3968,8 @@ class AppearanceConfigRow extends DataClass
     required this.timeboxingLayout,
     required this.timeboxingWorkdayStartMinutes,
     required this.timeboxingWorkdayEndMinutes,
+    required this.calendarConstraintsDismissed,
+    required this.calendarShowEventTitles,
     required this.inboxTypeFilter,
     required this.inboxTodayOnly,
     required this.updatedAtUtcMillis,
@@ -3933,6 +3995,10 @@ class AppearanceConfigRow extends DataClass
     map['timeboxing_workday_end_minutes'] = Variable<int>(
       timeboxingWorkdayEndMinutes,
     );
+    map['calendar_constraints_dismissed'] = Variable<bool>(
+      calendarConstraintsDismissed,
+    );
+    map['calendar_show_event_titles'] = Variable<bool>(calendarShowEventTitles);
     map['inbox_type_filter'] = Variable<int>(inboxTypeFilter);
     map['inbox_today_only'] = Variable<bool>(inboxTodayOnly);
     map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
@@ -3955,6 +4021,8 @@ class AppearanceConfigRow extends DataClass
       timeboxingLayout: Value(timeboxingLayout),
       timeboxingWorkdayStartMinutes: Value(timeboxingWorkdayStartMinutes),
       timeboxingWorkdayEndMinutes: Value(timeboxingWorkdayEndMinutes),
+      calendarConstraintsDismissed: Value(calendarConstraintsDismissed),
+      calendarShowEventTitles: Value(calendarShowEventTitles),
       inboxTypeFilter: Value(inboxTypeFilter),
       inboxTodayOnly: Value(inboxTodayOnly),
       updatedAtUtcMillis: Value(updatedAtUtcMillis),
@@ -3985,6 +4053,12 @@ class AppearanceConfigRow extends DataClass
       timeboxingWorkdayEndMinutes: serializer.fromJson<int>(
         json['timeboxingWorkdayEndMinutes'],
       ),
+      calendarConstraintsDismissed: serializer.fromJson<bool>(
+        json['calendarConstraintsDismissed'],
+      ),
+      calendarShowEventTitles: serializer.fromJson<bool>(
+        json['calendarShowEventTitles'],
+      ),
       inboxTypeFilter: serializer.fromJson<int>(json['inboxTypeFilter']),
       inboxTodayOnly: serializer.fromJson<bool>(json['inboxTodayOnly']),
       updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
@@ -4010,6 +4084,12 @@ class AppearanceConfigRow extends DataClass
       'timeboxingWorkdayEndMinutes': serializer.toJson<int>(
         timeboxingWorkdayEndMinutes,
       ),
+      'calendarConstraintsDismissed': serializer.toJson<bool>(
+        calendarConstraintsDismissed,
+      ),
+      'calendarShowEventTitles': serializer.toJson<bool>(
+        calendarShowEventTitles,
+      ),
       'inboxTypeFilter': serializer.toJson<int>(inboxTypeFilter),
       'inboxTodayOnly': serializer.toJson<bool>(inboxTodayOnly),
       'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
@@ -4029,6 +4109,8 @@ class AppearanceConfigRow extends DataClass
     int? timeboxingLayout,
     int? timeboxingWorkdayStartMinutes,
     int? timeboxingWorkdayEndMinutes,
+    bool? calendarConstraintsDismissed,
+    bool? calendarShowEventTitles,
     int? inboxTypeFilter,
     bool? inboxTodayOnly,
     int? updatedAtUtcMillis,
@@ -4049,6 +4131,10 @@ class AppearanceConfigRow extends DataClass
         timeboxingWorkdayStartMinutes ?? this.timeboxingWorkdayStartMinutes,
     timeboxingWorkdayEndMinutes:
         timeboxingWorkdayEndMinutes ?? this.timeboxingWorkdayEndMinutes,
+    calendarConstraintsDismissed:
+        calendarConstraintsDismissed ?? this.calendarConstraintsDismissed,
+    calendarShowEventTitles:
+        calendarShowEventTitles ?? this.calendarShowEventTitles,
     inboxTypeFilter: inboxTypeFilter ?? this.inboxTypeFilter,
     inboxTodayOnly: inboxTodayOnly ?? this.inboxTodayOnly,
     updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
@@ -4083,6 +4169,12 @@ class AppearanceConfigRow extends DataClass
       timeboxingWorkdayEndMinutes: data.timeboxingWorkdayEndMinutes.present
           ? data.timeboxingWorkdayEndMinutes.value
           : this.timeboxingWorkdayEndMinutes,
+      calendarConstraintsDismissed: data.calendarConstraintsDismissed.present
+          ? data.calendarConstraintsDismissed.value
+          : this.calendarConstraintsDismissed,
+      calendarShowEventTitles: data.calendarShowEventTitles.present
+          ? data.calendarShowEventTitles.value
+          : this.calendarShowEventTitles,
       inboxTypeFilter: data.inboxTypeFilter.present
           ? data.inboxTypeFilter.value
           : this.inboxTypeFilter,
@@ -4112,6 +4204,10 @@ class AppearanceConfigRow extends DataClass
             'timeboxingWorkdayStartMinutes: $timeboxingWorkdayStartMinutes, ',
           )
           ..write('timeboxingWorkdayEndMinutes: $timeboxingWorkdayEndMinutes, ')
+          ..write(
+            'calendarConstraintsDismissed: $calendarConstraintsDismissed, ',
+          )
+          ..write('calendarShowEventTitles: $calendarShowEventTitles, ')
           ..write('inboxTypeFilter: $inboxTypeFilter, ')
           ..write('inboxTodayOnly: $inboxTodayOnly, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
@@ -4133,6 +4229,8 @@ class AppearanceConfigRow extends DataClass
     timeboxingLayout,
     timeboxingWorkdayStartMinutes,
     timeboxingWorkdayEndMinutes,
+    calendarConstraintsDismissed,
+    calendarShowEventTitles,
     inboxTypeFilter,
     inboxTodayOnly,
     updatedAtUtcMillis,
@@ -4155,6 +4253,9 @@ class AppearanceConfigRow extends DataClass
               this.timeboxingWorkdayStartMinutes &&
           other.timeboxingWorkdayEndMinutes ==
               this.timeboxingWorkdayEndMinutes &&
+          other.calendarConstraintsDismissed ==
+              this.calendarConstraintsDismissed &&
+          other.calendarShowEventTitles == this.calendarShowEventTitles &&
           other.inboxTypeFilter == this.inboxTypeFilter &&
           other.inboxTodayOnly == this.inboxTodayOnly &&
           other.updatedAtUtcMillis == this.updatedAtUtcMillis);
@@ -4173,6 +4274,8 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
   final Value<int> timeboxingLayout;
   final Value<int> timeboxingWorkdayStartMinutes;
   final Value<int> timeboxingWorkdayEndMinutes;
+  final Value<bool> calendarConstraintsDismissed;
+  final Value<bool> calendarShowEventTitles;
   final Value<int> inboxTypeFilter;
   final Value<bool> inboxTodayOnly;
   final Value<int> updatedAtUtcMillis;
@@ -4189,6 +4292,8 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     this.timeboxingLayout = const Value.absent(),
     this.timeboxingWorkdayStartMinutes = const Value.absent(),
     this.timeboxingWorkdayEndMinutes = const Value.absent(),
+    this.calendarConstraintsDismissed = const Value.absent(),
+    this.calendarShowEventTitles = const Value.absent(),
     this.inboxTypeFilter = const Value.absent(),
     this.inboxTodayOnly = const Value.absent(),
     this.updatedAtUtcMillis = const Value.absent(),
@@ -4206,6 +4311,8 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     this.timeboxingLayout = const Value.absent(),
     this.timeboxingWorkdayStartMinutes = const Value.absent(),
     this.timeboxingWorkdayEndMinutes = const Value.absent(),
+    this.calendarConstraintsDismissed = const Value.absent(),
+    this.calendarShowEventTitles = const Value.absent(),
     this.inboxTypeFilter = const Value.absent(),
     this.inboxTodayOnly = const Value.absent(),
     required int updatedAtUtcMillis,
@@ -4223,6 +4330,8 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     Expression<int>? timeboxingLayout,
     Expression<int>? timeboxingWorkdayStartMinutes,
     Expression<int>? timeboxingWorkdayEndMinutes,
+    Expression<bool>? calendarConstraintsDismissed,
+    Expression<bool>? calendarShowEventTitles,
     Expression<int>? inboxTypeFilter,
     Expression<bool>? inboxTodayOnly,
     Expression<int>? updatedAtUtcMillis,
@@ -4243,6 +4352,10 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
         'timeboxing_workday_start_minutes': timeboxingWorkdayStartMinutes,
       if (timeboxingWorkdayEndMinutes != null)
         'timeboxing_workday_end_minutes': timeboxingWorkdayEndMinutes,
+      if (calendarConstraintsDismissed != null)
+        'calendar_constraints_dismissed': calendarConstraintsDismissed,
+      if (calendarShowEventTitles != null)
+        'calendar_show_event_titles': calendarShowEventTitles,
       if (inboxTypeFilter != null) 'inbox_type_filter': inboxTypeFilter,
       if (inboxTodayOnly != null) 'inbox_today_only': inboxTodayOnly,
       if (updatedAtUtcMillis != null)
@@ -4263,6 +4376,8 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
     Value<int>? timeboxingLayout,
     Value<int>? timeboxingWorkdayStartMinutes,
     Value<int>? timeboxingWorkdayEndMinutes,
+    Value<bool>? calendarConstraintsDismissed,
+    Value<bool>? calendarShowEventTitles,
     Value<int>? inboxTypeFilter,
     Value<bool>? inboxTodayOnly,
     Value<int>? updatedAtUtcMillis,
@@ -4283,6 +4398,10 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
           timeboxingWorkdayStartMinutes ?? this.timeboxingWorkdayStartMinutes,
       timeboxingWorkdayEndMinutes:
           timeboxingWorkdayEndMinutes ?? this.timeboxingWorkdayEndMinutes,
+      calendarConstraintsDismissed:
+          calendarConstraintsDismissed ?? this.calendarConstraintsDismissed,
+      calendarShowEventTitles:
+          calendarShowEventTitles ?? this.calendarShowEventTitles,
       inboxTypeFilter: inboxTypeFilter ?? this.inboxTypeFilter,
       inboxTodayOnly: inboxTodayOnly ?? this.inboxTodayOnly,
       updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
@@ -4334,6 +4453,16 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
         timeboxingWorkdayEndMinutes.value,
       );
     }
+    if (calendarConstraintsDismissed.present) {
+      map['calendar_constraints_dismissed'] = Variable<bool>(
+        calendarConstraintsDismissed.value,
+      );
+    }
+    if (calendarShowEventTitles.present) {
+      map['calendar_show_event_titles'] = Variable<bool>(
+        calendarShowEventTitles.value,
+      );
+    }
     if (inboxTypeFilter.present) {
       map['inbox_type_filter'] = Variable<int>(inboxTypeFilter.value);
     }
@@ -4363,6 +4492,10 @@ class AppearanceConfigsCompanion extends UpdateCompanion<AppearanceConfigRow> {
             'timeboxingWorkdayStartMinutes: $timeboxingWorkdayStartMinutes, ',
           )
           ..write('timeboxingWorkdayEndMinutes: $timeboxingWorkdayEndMinutes, ')
+          ..write(
+            'calendarConstraintsDismissed: $calendarConstraintsDismissed, ',
+          )
+          ..write('calendarShowEventTitles: $calendarShowEventTitles, ')
           ..write('inboxTypeFilter: $inboxTypeFilter, ')
           ..write('inboxTodayOnly: $inboxTodayOnly, ')
           ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
@@ -5279,6 +5412,2700 @@ class WeaveLinksCompanion extends UpdateCompanion<WeaveLinkRow> {
   }
 }
 
+class $FeatureFlagsTable extends FeatureFlags
+    with TableInfo<$FeatureFlagsTable, FeatureFlagRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FeatureFlagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerMeta = const VerificationMeta('owner');
+  @override
+  late final GeneratedColumn<String> owner = GeneratedColumn<String>(
+    'owner',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiryAtUtcMillisMeta = const VerificationMeta(
+    'expiryAtUtcMillis',
+  );
+  @override
+  late final GeneratedColumn<int> expiryAtUtcMillis = GeneratedColumn<int>(
+    'expiry_at_utc_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _defaultValueMeta = const VerificationMeta(
+    'defaultValue',
+  );
+  @override
+  late final GeneratedColumn<bool> defaultValue = GeneratedColumn<bool>(
+    'default_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("default_value" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _killSwitchMeta = const VerificationMeta(
+    'killSwitch',
+  );
+  @override
+  late final GeneratedColumn<bool> killSwitch = GeneratedColumn<bool>(
+    'kill_switch',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("kill_switch" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _overrideValueMeta = const VerificationMeta(
+    'overrideValue',
+  );
+  @override
+  late final GeneratedColumn<bool> overrideValue = GeneratedColumn<bool>(
+    'override_value',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("override_value" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _updatedAtUtcMillisMeta =
+      const VerificationMeta('updatedAtUtcMillis');
+  @override
+  late final GeneratedColumn<int> updatedAtUtcMillis = GeneratedColumn<int>(
+    'updated_at_utc_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    key,
+    owner,
+    expiryAtUtcMillis,
+    defaultValue,
+    killSwitch,
+    overrideValue,
+    updatedAtUtcMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'feature_flags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FeatureFlagRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('owner')) {
+      context.handle(
+        _ownerMeta,
+        owner.isAcceptableOrUnknown(data['owner']!, _ownerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerMeta);
+    }
+    if (data.containsKey('expiry_at_utc_millis')) {
+      context.handle(
+        _expiryAtUtcMillisMeta,
+        expiryAtUtcMillis.isAcceptableOrUnknown(
+          data['expiry_at_utc_millis']!,
+          _expiryAtUtcMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expiryAtUtcMillisMeta);
+    }
+    if (data.containsKey('default_value')) {
+      context.handle(
+        _defaultValueMeta,
+        defaultValue.isAcceptableOrUnknown(
+          data['default_value']!,
+          _defaultValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_defaultValueMeta);
+    }
+    if (data.containsKey('kill_switch')) {
+      context.handle(
+        _killSwitchMeta,
+        killSwitch.isAcceptableOrUnknown(data['kill_switch']!, _killSwitchMeta),
+      );
+    }
+    if (data.containsKey('override_value')) {
+      context.handle(
+        _overrideValueMeta,
+        overrideValue.isAcceptableOrUnknown(
+          data['override_value']!,
+          _overrideValueMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at_utc_millis')) {
+      context.handle(
+        _updatedAtUtcMillisMeta,
+        updatedAtUtcMillis.isAcceptableOrUnknown(
+          data['updated_at_utc_millis']!,
+          _updatedAtUtcMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtUtcMillisMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  FeatureFlagRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FeatureFlagRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      owner: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner'],
+      )!,
+      expiryAtUtcMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}expiry_at_utc_millis'],
+      )!,
+      defaultValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}default_value'],
+      )!,
+      killSwitch: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}kill_switch'],
+      )!,
+      overrideValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}override_value'],
+      ),
+      updatedAtUtcMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_utc_millis'],
+      )!,
+    );
+  }
+
+  @override
+  $FeatureFlagsTable createAlias(String alias) {
+    return $FeatureFlagsTable(attachedDatabase, alias);
+  }
+}
+
+class FeatureFlagRow extends DataClass implements Insertable<FeatureFlagRow> {
+  final String key;
+  final String owner;
+  final int expiryAtUtcMillis;
+  final bool defaultValue;
+  final bool killSwitch;
+  final bool? overrideValue;
+  final int updatedAtUtcMillis;
+  const FeatureFlagRow({
+    required this.key,
+    required this.owner,
+    required this.expiryAtUtcMillis,
+    required this.defaultValue,
+    required this.killSwitch,
+    this.overrideValue,
+    required this.updatedAtUtcMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['owner'] = Variable<String>(owner);
+    map['expiry_at_utc_millis'] = Variable<int>(expiryAtUtcMillis);
+    map['default_value'] = Variable<bool>(defaultValue);
+    map['kill_switch'] = Variable<bool>(killSwitch);
+    if (!nullToAbsent || overrideValue != null) {
+      map['override_value'] = Variable<bool>(overrideValue);
+    }
+    map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis);
+    return map;
+  }
+
+  FeatureFlagsCompanion toCompanion(bool nullToAbsent) {
+    return FeatureFlagsCompanion(
+      key: Value(key),
+      owner: Value(owner),
+      expiryAtUtcMillis: Value(expiryAtUtcMillis),
+      defaultValue: Value(defaultValue),
+      killSwitch: Value(killSwitch),
+      overrideValue: overrideValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(overrideValue),
+      updatedAtUtcMillis: Value(updatedAtUtcMillis),
+    );
+  }
+
+  factory FeatureFlagRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FeatureFlagRow(
+      key: serializer.fromJson<String>(json['key']),
+      owner: serializer.fromJson<String>(json['owner']),
+      expiryAtUtcMillis: serializer.fromJson<int>(json['expiryAtUtcMillis']),
+      defaultValue: serializer.fromJson<bool>(json['defaultValue']),
+      killSwitch: serializer.fromJson<bool>(json['killSwitch']),
+      overrideValue: serializer.fromJson<bool?>(json['overrideValue']),
+      updatedAtUtcMillis: serializer.fromJson<int>(json['updatedAtUtcMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'owner': serializer.toJson<String>(owner),
+      'expiryAtUtcMillis': serializer.toJson<int>(expiryAtUtcMillis),
+      'defaultValue': serializer.toJson<bool>(defaultValue),
+      'killSwitch': serializer.toJson<bool>(killSwitch),
+      'overrideValue': serializer.toJson<bool?>(overrideValue),
+      'updatedAtUtcMillis': serializer.toJson<int>(updatedAtUtcMillis),
+    };
+  }
+
+  FeatureFlagRow copyWith({
+    String? key,
+    String? owner,
+    int? expiryAtUtcMillis,
+    bool? defaultValue,
+    bool? killSwitch,
+    Value<bool?> overrideValue = const Value.absent(),
+    int? updatedAtUtcMillis,
+  }) => FeatureFlagRow(
+    key: key ?? this.key,
+    owner: owner ?? this.owner,
+    expiryAtUtcMillis: expiryAtUtcMillis ?? this.expiryAtUtcMillis,
+    defaultValue: defaultValue ?? this.defaultValue,
+    killSwitch: killSwitch ?? this.killSwitch,
+    overrideValue: overrideValue.present
+        ? overrideValue.value
+        : this.overrideValue,
+    updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
+  );
+  FeatureFlagRow copyWithCompanion(FeatureFlagsCompanion data) {
+    return FeatureFlagRow(
+      key: data.key.present ? data.key.value : this.key,
+      owner: data.owner.present ? data.owner.value : this.owner,
+      expiryAtUtcMillis: data.expiryAtUtcMillis.present
+          ? data.expiryAtUtcMillis.value
+          : this.expiryAtUtcMillis,
+      defaultValue: data.defaultValue.present
+          ? data.defaultValue.value
+          : this.defaultValue,
+      killSwitch: data.killSwitch.present
+          ? data.killSwitch.value
+          : this.killSwitch,
+      overrideValue: data.overrideValue.present
+          ? data.overrideValue.value
+          : this.overrideValue,
+      updatedAtUtcMillis: data.updatedAtUtcMillis.present
+          ? data.updatedAtUtcMillis.value
+          : this.updatedAtUtcMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeatureFlagRow(')
+          ..write('key: $key, ')
+          ..write('owner: $owner, ')
+          ..write('expiryAtUtcMillis: $expiryAtUtcMillis, ')
+          ..write('defaultValue: $defaultValue, ')
+          ..write('killSwitch: $killSwitch, ')
+          ..write('overrideValue: $overrideValue, ')
+          ..write('updatedAtUtcMillis: $updatedAtUtcMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    key,
+    owner,
+    expiryAtUtcMillis,
+    defaultValue,
+    killSwitch,
+    overrideValue,
+    updatedAtUtcMillis,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FeatureFlagRow &&
+          other.key == this.key &&
+          other.owner == this.owner &&
+          other.expiryAtUtcMillis == this.expiryAtUtcMillis &&
+          other.defaultValue == this.defaultValue &&
+          other.killSwitch == this.killSwitch &&
+          other.overrideValue == this.overrideValue &&
+          other.updatedAtUtcMillis == this.updatedAtUtcMillis);
+}
+
+class FeatureFlagsCompanion extends UpdateCompanion<FeatureFlagRow> {
+  final Value<String> key;
+  final Value<String> owner;
+  final Value<int> expiryAtUtcMillis;
+  final Value<bool> defaultValue;
+  final Value<bool> killSwitch;
+  final Value<bool?> overrideValue;
+  final Value<int> updatedAtUtcMillis;
+  final Value<int> rowid;
+  const FeatureFlagsCompanion({
+    this.key = const Value.absent(),
+    this.owner = const Value.absent(),
+    this.expiryAtUtcMillis = const Value.absent(),
+    this.defaultValue = const Value.absent(),
+    this.killSwitch = const Value.absent(),
+    this.overrideValue = const Value.absent(),
+    this.updatedAtUtcMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FeatureFlagsCompanion.insert({
+    required String key,
+    required String owner,
+    required int expiryAtUtcMillis,
+    required bool defaultValue,
+    this.killSwitch = const Value.absent(),
+    this.overrideValue = const Value.absent(),
+    required int updatedAtUtcMillis,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       owner = Value(owner),
+       expiryAtUtcMillis = Value(expiryAtUtcMillis),
+       defaultValue = Value(defaultValue),
+       updatedAtUtcMillis = Value(updatedAtUtcMillis);
+  static Insertable<FeatureFlagRow> custom({
+    Expression<String>? key,
+    Expression<String>? owner,
+    Expression<int>? expiryAtUtcMillis,
+    Expression<bool>? defaultValue,
+    Expression<bool>? killSwitch,
+    Expression<bool>? overrideValue,
+    Expression<int>? updatedAtUtcMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (owner != null) 'owner': owner,
+      if (expiryAtUtcMillis != null) 'expiry_at_utc_millis': expiryAtUtcMillis,
+      if (defaultValue != null) 'default_value': defaultValue,
+      if (killSwitch != null) 'kill_switch': killSwitch,
+      if (overrideValue != null) 'override_value': overrideValue,
+      if (updatedAtUtcMillis != null)
+        'updated_at_utc_millis': updatedAtUtcMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FeatureFlagsCompanion copyWith({
+    Value<String>? key,
+    Value<String>? owner,
+    Value<int>? expiryAtUtcMillis,
+    Value<bool>? defaultValue,
+    Value<bool>? killSwitch,
+    Value<bool?>? overrideValue,
+    Value<int>? updatedAtUtcMillis,
+    Value<int>? rowid,
+  }) {
+    return FeatureFlagsCompanion(
+      key: key ?? this.key,
+      owner: owner ?? this.owner,
+      expiryAtUtcMillis: expiryAtUtcMillis ?? this.expiryAtUtcMillis,
+      defaultValue: defaultValue ?? this.defaultValue,
+      killSwitch: killSwitch ?? this.killSwitch,
+      overrideValue: overrideValue ?? this.overrideValue,
+      updatedAtUtcMillis: updatedAtUtcMillis ?? this.updatedAtUtcMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (owner.present) {
+      map['owner'] = Variable<String>(owner.value);
+    }
+    if (expiryAtUtcMillis.present) {
+      map['expiry_at_utc_millis'] = Variable<int>(expiryAtUtcMillis.value);
+    }
+    if (defaultValue.present) {
+      map['default_value'] = Variable<bool>(defaultValue.value);
+    }
+    if (killSwitch.present) {
+      map['kill_switch'] = Variable<bool>(killSwitch.value);
+    }
+    if (overrideValue.present) {
+      map['override_value'] = Variable<bool>(overrideValue.value);
+    }
+    if (updatedAtUtcMillis.present) {
+      map['updated_at_utc_millis'] = Variable<int>(updatedAtUtcMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeatureFlagsCompanion(')
+          ..write('key: $key, ')
+          ..write('owner: $owner, ')
+          ..write('expiryAtUtcMillis: $expiryAtUtcMillis, ')
+          ..write('defaultValue: $defaultValue, ')
+          ..write('killSwitch: $killSwitch, ')
+          ..write('overrideValue: $overrideValue, ')
+          ..write('updatedAtUtcMillis: $updatedAtUtcMillis, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalEventsTable extends LocalEvents
+    with TableInfo<$LocalEventsTable, LocalEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _eventNameMeta = const VerificationMeta(
+    'eventName',
+  );
+  @override
+  late final GeneratedColumn<String> eventName = GeneratedColumn<String>(
+    'event_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _occurredAtUtcMsMeta = const VerificationMeta(
+    'occurredAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> occurredAtUtcMs = GeneratedColumn<int>(
+    'occurred_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _appVersionMeta = const VerificationMeta(
+    'appVersion',
+  );
+  @override
+  late final GeneratedColumn<String> appVersion = GeneratedColumn<String>(
+    'app_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _featureFlagsMeta = const VerificationMeta(
+    'featureFlags',
+  );
+  @override
+  late final GeneratedColumn<String> featureFlags = GeneratedColumn<String>(
+    'feature_flags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metaJsonMeta = const VerificationMeta(
+    'metaJson',
+  );
+  @override
+  late final GeneratedColumn<String> metaJson = GeneratedColumn<String>(
+    'meta_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    eventName,
+    occurredAtUtcMs,
+    appVersion,
+    featureFlags,
+    metaJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('event_name')) {
+      context.handle(
+        _eventNameMeta,
+        eventName.isAcceptableOrUnknown(data['event_name']!, _eventNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventNameMeta);
+    }
+    if (data.containsKey('occurred_at_utc_ms')) {
+      context.handle(
+        _occurredAtUtcMsMeta,
+        occurredAtUtcMs.isAcceptableOrUnknown(
+          data['occurred_at_utc_ms']!,
+          _occurredAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtUtcMsMeta);
+    }
+    if (data.containsKey('app_version')) {
+      context.handle(
+        _appVersionMeta,
+        appVersion.isAcceptableOrUnknown(data['app_version']!, _appVersionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_appVersionMeta);
+    }
+    if (data.containsKey('feature_flags')) {
+      context.handle(
+        _featureFlagsMeta,
+        featureFlags.isAcceptableOrUnknown(
+          data['feature_flags']!,
+          _featureFlagsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_featureFlagsMeta);
+    }
+    if (data.containsKey('meta_json')) {
+      context.handle(
+        _metaJsonMeta,
+        metaJson.isAcceptableOrUnknown(data['meta_json']!, _metaJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_metaJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      eventName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_name'],
+      )!,
+      occurredAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}occurred_at_utc_ms'],
+      )!,
+      appVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}app_version'],
+      )!,
+      featureFlags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}feature_flags'],
+      )!,
+      metaJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meta_json'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalEventsTable createAlias(String alias) {
+    return $LocalEventsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalEventRow extends DataClass implements Insertable<LocalEventRow> {
+  final String id;
+  final String eventName;
+  final int occurredAtUtcMs;
+  final String appVersion;
+  final String featureFlags;
+  final String metaJson;
+  const LocalEventRow({
+    required this.id,
+    required this.eventName,
+    required this.occurredAtUtcMs,
+    required this.appVersion,
+    required this.featureFlags,
+    required this.metaJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['event_name'] = Variable<String>(eventName);
+    map['occurred_at_utc_ms'] = Variable<int>(occurredAtUtcMs);
+    map['app_version'] = Variable<String>(appVersion);
+    map['feature_flags'] = Variable<String>(featureFlags);
+    map['meta_json'] = Variable<String>(metaJson);
+    return map;
+  }
+
+  LocalEventsCompanion toCompanion(bool nullToAbsent) {
+    return LocalEventsCompanion(
+      id: Value(id),
+      eventName: Value(eventName),
+      occurredAtUtcMs: Value(occurredAtUtcMs),
+      appVersion: Value(appVersion),
+      featureFlags: Value(featureFlags),
+      metaJson: Value(metaJson),
+    );
+  }
+
+  factory LocalEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalEventRow(
+      id: serializer.fromJson<String>(json['id']),
+      eventName: serializer.fromJson<String>(json['eventName']),
+      occurredAtUtcMs: serializer.fromJson<int>(json['occurredAtUtcMs']),
+      appVersion: serializer.fromJson<String>(json['appVersion']),
+      featureFlags: serializer.fromJson<String>(json['featureFlags']),
+      metaJson: serializer.fromJson<String>(json['metaJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'eventName': serializer.toJson<String>(eventName),
+      'occurredAtUtcMs': serializer.toJson<int>(occurredAtUtcMs),
+      'appVersion': serializer.toJson<String>(appVersion),
+      'featureFlags': serializer.toJson<String>(featureFlags),
+      'metaJson': serializer.toJson<String>(metaJson),
+    };
+  }
+
+  LocalEventRow copyWith({
+    String? id,
+    String? eventName,
+    int? occurredAtUtcMs,
+    String? appVersion,
+    String? featureFlags,
+    String? metaJson,
+  }) => LocalEventRow(
+    id: id ?? this.id,
+    eventName: eventName ?? this.eventName,
+    occurredAtUtcMs: occurredAtUtcMs ?? this.occurredAtUtcMs,
+    appVersion: appVersion ?? this.appVersion,
+    featureFlags: featureFlags ?? this.featureFlags,
+    metaJson: metaJson ?? this.metaJson,
+  );
+  LocalEventRow copyWithCompanion(LocalEventsCompanion data) {
+    return LocalEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      eventName: data.eventName.present ? data.eventName.value : this.eventName,
+      occurredAtUtcMs: data.occurredAtUtcMs.present
+          ? data.occurredAtUtcMs.value
+          : this.occurredAtUtcMs,
+      appVersion: data.appVersion.present
+          ? data.appVersion.value
+          : this.appVersion,
+      featureFlags: data.featureFlags.present
+          ? data.featureFlags.value
+          : this.featureFlags,
+      metaJson: data.metaJson.present ? data.metaJson.value : this.metaJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalEventRow(')
+          ..write('id: $id, ')
+          ..write('eventName: $eventName, ')
+          ..write('occurredAtUtcMs: $occurredAtUtcMs, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('featureFlags: $featureFlags, ')
+          ..write('metaJson: $metaJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    eventName,
+    occurredAtUtcMs,
+    appVersion,
+    featureFlags,
+    metaJson,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalEventRow &&
+          other.id == this.id &&
+          other.eventName == this.eventName &&
+          other.occurredAtUtcMs == this.occurredAtUtcMs &&
+          other.appVersion == this.appVersion &&
+          other.featureFlags == this.featureFlags &&
+          other.metaJson == this.metaJson);
+}
+
+class LocalEventsCompanion extends UpdateCompanion<LocalEventRow> {
+  final Value<String> id;
+  final Value<String> eventName;
+  final Value<int> occurredAtUtcMs;
+  final Value<String> appVersion;
+  final Value<String> featureFlags;
+  final Value<String> metaJson;
+  final Value<int> rowid;
+  const LocalEventsCompanion({
+    this.id = const Value.absent(),
+    this.eventName = const Value.absent(),
+    this.occurredAtUtcMs = const Value.absent(),
+    this.appVersion = const Value.absent(),
+    this.featureFlags = const Value.absent(),
+    this.metaJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalEventsCompanion.insert({
+    required String id,
+    required String eventName,
+    required int occurredAtUtcMs,
+    required String appVersion,
+    required String featureFlags,
+    required String metaJson,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       eventName = Value(eventName),
+       occurredAtUtcMs = Value(occurredAtUtcMs),
+       appVersion = Value(appVersion),
+       featureFlags = Value(featureFlags),
+       metaJson = Value(metaJson);
+  static Insertable<LocalEventRow> custom({
+    Expression<String>? id,
+    Expression<String>? eventName,
+    Expression<int>? occurredAtUtcMs,
+    Expression<String>? appVersion,
+    Expression<String>? featureFlags,
+    Expression<String>? metaJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (eventName != null) 'event_name': eventName,
+      if (occurredAtUtcMs != null) 'occurred_at_utc_ms': occurredAtUtcMs,
+      if (appVersion != null) 'app_version': appVersion,
+      if (featureFlags != null) 'feature_flags': featureFlags,
+      if (metaJson != null) 'meta_json': metaJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? eventName,
+    Value<int>? occurredAtUtcMs,
+    Value<String>? appVersion,
+    Value<String>? featureFlags,
+    Value<String>? metaJson,
+    Value<int>? rowid,
+  }) {
+    return LocalEventsCompanion(
+      id: id ?? this.id,
+      eventName: eventName ?? this.eventName,
+      occurredAtUtcMs: occurredAtUtcMs ?? this.occurredAtUtcMs,
+      appVersion: appVersion ?? this.appVersion,
+      featureFlags: featureFlags ?? this.featureFlags,
+      metaJson: metaJson ?? this.metaJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (eventName.present) {
+      map['event_name'] = Variable<String>(eventName.value);
+    }
+    if (occurredAtUtcMs.present) {
+      map['occurred_at_utc_ms'] = Variable<int>(occurredAtUtcMs.value);
+    }
+    if (appVersion.present) {
+      map['app_version'] = Variable<String>(appVersion.value);
+    }
+    if (featureFlags.present) {
+      map['feature_flags'] = Variable<String>(featureFlags.value);
+    }
+    if (metaJson.present) {
+      map['meta_json'] = Variable<String>(metaJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('eventName: $eventName, ')
+          ..write('occurredAtUtcMs: $occurredAtUtcMs, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('featureFlags: $featureFlags, ')
+          ..write('metaJson: $metaJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KpiDailyRollupsTable extends KpiDailyRollups
+    with TableInfo<$KpiDailyRollupsTable, KpiDailyRollupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KpiDailyRollupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dayKeyMeta = const VerificationMeta('dayKey');
+  @override
+  late final GeneratedColumn<String> dayKey = GeneratedColumn<String>(
+    'day_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _segmentMeta = const VerificationMeta(
+    'segment',
+  );
+  @override
+  late final GeneratedColumn<String> segment = GeneratedColumn<String>(
+    'segment',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _segmentStrategyMeta = const VerificationMeta(
+    'segmentStrategy',
+  );
+  @override
+  late final GeneratedColumn<String> segmentStrategy = GeneratedColumn<String>(
+    'segment_strategy',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sampleThresholdMeta = const VerificationMeta(
+    'sampleThreshold',
+  );
+  @override
+  late final GeneratedColumn<int> sampleThreshold = GeneratedColumn<int>(
+    'sample_threshold',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _computedAtUtcMsMeta = const VerificationMeta(
+    'computedAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> computedAtUtcMs = GeneratedColumn<int>(
+    'computed_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clarityOkCountMeta = const VerificationMeta(
+    'clarityOkCount',
+  );
+  @override
+  late final GeneratedColumn<int> clarityOkCount = GeneratedColumn<int>(
+    'clarity_ok_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clarityTotalCountMeta = const VerificationMeta(
+    'clarityTotalCount',
+  );
+  @override
+  late final GeneratedColumn<int> clarityTotalCount = GeneratedColumn<int>(
+    'clarity_total_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clarityInsufficientMeta =
+      const VerificationMeta('clarityInsufficient');
+  @override
+  late final GeneratedColumn<bool> clarityInsufficient = GeneratedColumn<bool>(
+    'clarity_insufficient',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("clarity_insufficient" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _clarityInsufficientReasonMeta =
+      const VerificationMeta('clarityInsufficientReason');
+  @override
+  late final GeneratedColumn<String> clarityInsufficientReason =
+      GeneratedColumn<String>(
+        'clarity_insufficient_reason',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _clarityFailureBucketCountsJsonMeta =
+      const VerificationMeta('clarityFailureBucketCountsJson');
+  @override
+  late final GeneratedColumn<String> clarityFailureBucketCountsJson =
+      GeneratedColumn<String>(
+        'clarity_failure_bucket_counts_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _ttfaSampleCountMeta = const VerificationMeta(
+    'ttfaSampleCount',
+  );
+  @override
+  late final GeneratedColumn<int> ttfaSampleCount = GeneratedColumn<int>(
+    'ttfa_sample_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ttfaP50MsMeta = const VerificationMeta(
+    'ttfaP50Ms',
+  );
+  @override
+  late final GeneratedColumn<int> ttfaP50Ms = GeneratedColumn<int>(
+    'ttfa_p50_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ttfaP90MsMeta = const VerificationMeta(
+    'ttfaP90Ms',
+  );
+  @override
+  late final GeneratedColumn<int> ttfaP90Ms = GeneratedColumn<int>(
+    'ttfa_p90_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ttfaInsufficientMeta = const VerificationMeta(
+    'ttfaInsufficient',
+  );
+  @override
+  late final GeneratedColumn<bool> ttfaInsufficient = GeneratedColumn<bool>(
+    'ttfa_insufficient',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("ttfa_insufficient" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _ttfaInsufficientReasonMeta =
+      const VerificationMeta('ttfaInsufficientReason');
+  @override
+  late final GeneratedColumn<String> ttfaInsufficientReason =
+      GeneratedColumn<String>(
+        'ttfa_insufficient_reason',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _mainlineCompletedCountMeta =
+      const VerificationMeta('mainlineCompletedCount');
+  @override
+  late final GeneratedColumn<int> mainlineCompletedCount = GeneratedColumn<int>(
+    'mainline_completed_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mainlineInsufficientMeta =
+      const VerificationMeta('mainlineInsufficient');
+  @override
+  late final GeneratedColumn<bool> mainlineInsufficient = GeneratedColumn<bool>(
+    'mainline_insufficient',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("mainline_insufficient" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _mainlineInsufficientReasonMeta =
+      const VerificationMeta('mainlineInsufficientReason');
+  @override
+  late final GeneratedColumn<String> mainlineInsufficientReason =
+      GeneratedColumn<String>(
+        'mainline_insufficient_reason',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _journalOpenedCountMeta =
+      const VerificationMeta('journalOpenedCount');
+  @override
+  late final GeneratedColumn<int> journalOpenedCount = GeneratedColumn<int>(
+    'journal_opened_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _journalCompletedCountMeta =
+      const VerificationMeta('journalCompletedCount');
+  @override
+  late final GeneratedColumn<int> journalCompletedCount = GeneratedColumn<int>(
+    'journal_completed_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _journalInsufficientMeta =
+      const VerificationMeta('journalInsufficient');
+  @override
+  late final GeneratedColumn<bool> journalInsufficient = GeneratedColumn<bool>(
+    'journal_insufficient',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("journal_insufficient" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _journalInsufficientReasonMeta =
+      const VerificationMeta('journalInsufficientReason');
+  @override
+  late final GeneratedColumn<String> journalInsufficientReason =
+      GeneratedColumn<String>(
+        'journal_insufficient_reason',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _activeDayCountMeta = const VerificationMeta(
+    'activeDayCount',
+  );
+  @override
+  late final GeneratedColumn<int> activeDayCount = GeneratedColumn<int>(
+    'active_day_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _r7RetainedMeta = const VerificationMeta(
+    'r7Retained',
+  );
+  @override
+  late final GeneratedColumn<bool> r7Retained = GeneratedColumn<bool>(
+    'r7_retained',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("r7_retained" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _r7InsufficientMeta = const VerificationMeta(
+    'r7Insufficient',
+  );
+  @override
+  late final GeneratedColumn<bool> r7Insufficient = GeneratedColumn<bool>(
+    'r7_insufficient',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("r7_insufficient" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _r7InsufficientReasonMeta =
+      const VerificationMeta('r7InsufficientReason');
+  @override
+  late final GeneratedColumn<String> r7InsufficientReason =
+      GeneratedColumn<String>(
+        'r7_insufficient_reason',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _inboxPendingCountMeta = const VerificationMeta(
+    'inboxPendingCount',
+  );
+  @override
+  late final GeneratedColumn<int> inboxPendingCount = GeneratedColumn<int>(
+    'inbox_pending_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _inboxCreatedCountMeta = const VerificationMeta(
+    'inboxCreatedCount',
+  );
+  @override
+  late final GeneratedColumn<int> inboxCreatedCount = GeneratedColumn<int>(
+    'inbox_created_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _inboxProcessedCountMeta =
+      const VerificationMeta('inboxProcessedCount');
+  @override
+  late final GeneratedColumn<int> inboxProcessedCount = GeneratedColumn<int>(
+    'inbox_processed_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    dayKey,
+    segment,
+    segmentStrategy,
+    sampleThreshold,
+    computedAtUtcMs,
+    clarityOkCount,
+    clarityTotalCount,
+    clarityInsufficient,
+    clarityInsufficientReason,
+    clarityFailureBucketCountsJson,
+    ttfaSampleCount,
+    ttfaP50Ms,
+    ttfaP90Ms,
+    ttfaInsufficient,
+    ttfaInsufficientReason,
+    mainlineCompletedCount,
+    mainlineInsufficient,
+    mainlineInsufficientReason,
+    journalOpenedCount,
+    journalCompletedCount,
+    journalInsufficient,
+    journalInsufficientReason,
+    activeDayCount,
+    r7Retained,
+    r7Insufficient,
+    r7InsufficientReason,
+    inboxPendingCount,
+    inboxCreatedCount,
+    inboxProcessedCount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'kpi_daily_rollups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KpiDailyRollupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('day_key')) {
+      context.handle(
+        _dayKeyMeta,
+        dayKey.isAcceptableOrUnknown(data['day_key']!, _dayKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayKeyMeta);
+    }
+    if (data.containsKey('segment')) {
+      context.handle(
+        _segmentMeta,
+        segment.isAcceptableOrUnknown(data['segment']!, _segmentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_segmentMeta);
+    }
+    if (data.containsKey('segment_strategy')) {
+      context.handle(
+        _segmentStrategyMeta,
+        segmentStrategy.isAcceptableOrUnknown(
+          data['segment_strategy']!,
+          _segmentStrategyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_segmentStrategyMeta);
+    }
+    if (data.containsKey('sample_threshold')) {
+      context.handle(
+        _sampleThresholdMeta,
+        sampleThreshold.isAcceptableOrUnknown(
+          data['sample_threshold']!,
+          _sampleThresholdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sampleThresholdMeta);
+    }
+    if (data.containsKey('computed_at_utc_ms')) {
+      context.handle(
+        _computedAtUtcMsMeta,
+        computedAtUtcMs.isAcceptableOrUnknown(
+          data['computed_at_utc_ms']!,
+          _computedAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_computedAtUtcMsMeta);
+    }
+    if (data.containsKey('clarity_ok_count')) {
+      context.handle(
+        _clarityOkCountMeta,
+        clarityOkCount.isAcceptableOrUnknown(
+          data['clarity_ok_count']!,
+          _clarityOkCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clarityOkCountMeta);
+    }
+    if (data.containsKey('clarity_total_count')) {
+      context.handle(
+        _clarityTotalCountMeta,
+        clarityTotalCount.isAcceptableOrUnknown(
+          data['clarity_total_count']!,
+          _clarityTotalCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clarityTotalCountMeta);
+    }
+    if (data.containsKey('clarity_insufficient')) {
+      context.handle(
+        _clarityInsufficientMeta,
+        clarityInsufficient.isAcceptableOrUnknown(
+          data['clarity_insufficient']!,
+          _clarityInsufficientMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clarityInsufficientMeta);
+    }
+    if (data.containsKey('clarity_insufficient_reason')) {
+      context.handle(
+        _clarityInsufficientReasonMeta,
+        clarityInsufficientReason.isAcceptableOrUnknown(
+          data['clarity_insufficient_reason']!,
+          _clarityInsufficientReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('clarity_failure_bucket_counts_json')) {
+      context.handle(
+        _clarityFailureBucketCountsJsonMeta,
+        clarityFailureBucketCountsJson.isAcceptableOrUnknown(
+          data['clarity_failure_bucket_counts_json']!,
+          _clarityFailureBucketCountsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('ttfa_sample_count')) {
+      context.handle(
+        _ttfaSampleCountMeta,
+        ttfaSampleCount.isAcceptableOrUnknown(
+          data['ttfa_sample_count']!,
+          _ttfaSampleCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ttfaSampleCountMeta);
+    }
+    if (data.containsKey('ttfa_p50_ms')) {
+      context.handle(
+        _ttfaP50MsMeta,
+        ttfaP50Ms.isAcceptableOrUnknown(data['ttfa_p50_ms']!, _ttfaP50MsMeta),
+      );
+    }
+    if (data.containsKey('ttfa_p90_ms')) {
+      context.handle(
+        _ttfaP90MsMeta,
+        ttfaP90Ms.isAcceptableOrUnknown(data['ttfa_p90_ms']!, _ttfaP90MsMeta),
+      );
+    }
+    if (data.containsKey('ttfa_insufficient')) {
+      context.handle(
+        _ttfaInsufficientMeta,
+        ttfaInsufficient.isAcceptableOrUnknown(
+          data['ttfa_insufficient']!,
+          _ttfaInsufficientMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ttfaInsufficientMeta);
+    }
+    if (data.containsKey('ttfa_insufficient_reason')) {
+      context.handle(
+        _ttfaInsufficientReasonMeta,
+        ttfaInsufficientReason.isAcceptableOrUnknown(
+          data['ttfa_insufficient_reason']!,
+          _ttfaInsufficientReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('mainline_completed_count')) {
+      context.handle(
+        _mainlineCompletedCountMeta,
+        mainlineCompletedCount.isAcceptableOrUnknown(
+          data['mainline_completed_count']!,
+          _mainlineCompletedCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mainlineCompletedCountMeta);
+    }
+    if (data.containsKey('mainline_insufficient')) {
+      context.handle(
+        _mainlineInsufficientMeta,
+        mainlineInsufficient.isAcceptableOrUnknown(
+          data['mainline_insufficient']!,
+          _mainlineInsufficientMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mainlineInsufficientMeta);
+    }
+    if (data.containsKey('mainline_insufficient_reason')) {
+      context.handle(
+        _mainlineInsufficientReasonMeta,
+        mainlineInsufficientReason.isAcceptableOrUnknown(
+          data['mainline_insufficient_reason']!,
+          _mainlineInsufficientReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('journal_opened_count')) {
+      context.handle(
+        _journalOpenedCountMeta,
+        journalOpenedCount.isAcceptableOrUnknown(
+          data['journal_opened_count']!,
+          _journalOpenedCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_journalOpenedCountMeta);
+    }
+    if (data.containsKey('journal_completed_count')) {
+      context.handle(
+        _journalCompletedCountMeta,
+        journalCompletedCount.isAcceptableOrUnknown(
+          data['journal_completed_count']!,
+          _journalCompletedCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_journalCompletedCountMeta);
+    }
+    if (data.containsKey('journal_insufficient')) {
+      context.handle(
+        _journalInsufficientMeta,
+        journalInsufficient.isAcceptableOrUnknown(
+          data['journal_insufficient']!,
+          _journalInsufficientMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_journalInsufficientMeta);
+    }
+    if (data.containsKey('journal_insufficient_reason')) {
+      context.handle(
+        _journalInsufficientReasonMeta,
+        journalInsufficientReason.isAcceptableOrUnknown(
+          data['journal_insufficient_reason']!,
+          _journalInsufficientReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('active_day_count')) {
+      context.handle(
+        _activeDayCountMeta,
+        activeDayCount.isAcceptableOrUnknown(
+          data['active_day_count']!,
+          _activeDayCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_activeDayCountMeta);
+    }
+    if (data.containsKey('r7_retained')) {
+      context.handle(
+        _r7RetainedMeta,
+        r7Retained.isAcceptableOrUnknown(data['r7_retained']!, _r7RetainedMeta),
+      );
+    }
+    if (data.containsKey('r7_insufficient')) {
+      context.handle(
+        _r7InsufficientMeta,
+        r7Insufficient.isAcceptableOrUnknown(
+          data['r7_insufficient']!,
+          _r7InsufficientMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_r7InsufficientMeta);
+    }
+    if (data.containsKey('r7_insufficient_reason')) {
+      context.handle(
+        _r7InsufficientReasonMeta,
+        r7InsufficientReason.isAcceptableOrUnknown(
+          data['r7_insufficient_reason']!,
+          _r7InsufficientReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inbox_pending_count')) {
+      context.handle(
+        _inboxPendingCountMeta,
+        inboxPendingCount.isAcceptableOrUnknown(
+          data['inbox_pending_count']!,
+          _inboxPendingCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inboxPendingCountMeta);
+    }
+    if (data.containsKey('inbox_created_count')) {
+      context.handle(
+        _inboxCreatedCountMeta,
+        inboxCreatedCount.isAcceptableOrUnknown(
+          data['inbox_created_count']!,
+          _inboxCreatedCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inboxCreatedCountMeta);
+    }
+    if (data.containsKey('inbox_processed_count')) {
+      context.handle(
+        _inboxProcessedCountMeta,
+        inboxProcessedCount.isAcceptableOrUnknown(
+          data['inbox_processed_count']!,
+          _inboxProcessedCountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inboxProcessedCountMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {dayKey, segment};
+  @override
+  KpiDailyRollupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KpiDailyRollupRow(
+      dayKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_key'],
+      )!,
+      segment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}segment'],
+      )!,
+      segmentStrategy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}segment_strategy'],
+      )!,
+      sampleThreshold: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sample_threshold'],
+      )!,
+      computedAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}computed_at_utc_ms'],
+      )!,
+      clarityOkCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}clarity_ok_count'],
+      )!,
+      clarityTotalCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}clarity_total_count'],
+      )!,
+      clarityInsufficient: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}clarity_insufficient'],
+      )!,
+      clarityInsufficientReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}clarity_insufficient_reason'],
+      ),
+      clarityFailureBucketCountsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}clarity_failure_bucket_counts_json'],
+      ),
+      ttfaSampleCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ttfa_sample_count'],
+      )!,
+      ttfaP50Ms: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ttfa_p50_ms'],
+      ),
+      ttfaP90Ms: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ttfa_p90_ms'],
+      ),
+      ttfaInsufficient: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}ttfa_insufficient'],
+      )!,
+      ttfaInsufficientReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ttfa_insufficient_reason'],
+      ),
+      mainlineCompletedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mainline_completed_count'],
+      )!,
+      mainlineInsufficient: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}mainline_insufficient'],
+      )!,
+      mainlineInsufficientReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mainline_insufficient_reason'],
+      ),
+      journalOpenedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}journal_opened_count'],
+      )!,
+      journalCompletedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}journal_completed_count'],
+      )!,
+      journalInsufficient: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}journal_insufficient'],
+      )!,
+      journalInsufficientReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}journal_insufficient_reason'],
+      ),
+      activeDayCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}active_day_count'],
+      )!,
+      r7Retained: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}r7_retained'],
+      ),
+      r7Insufficient: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}r7_insufficient'],
+      )!,
+      r7InsufficientReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}r7_insufficient_reason'],
+      ),
+      inboxPendingCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}inbox_pending_count'],
+      )!,
+      inboxCreatedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}inbox_created_count'],
+      )!,
+      inboxProcessedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}inbox_processed_count'],
+      )!,
+    );
+  }
+
+  @override
+  $KpiDailyRollupsTable createAlias(String alias) {
+    return $KpiDailyRollupsTable(attachedDatabase, alias);
+  }
+}
+
+class KpiDailyRollupRow extends DataClass
+    implements Insertable<KpiDailyRollupRow> {
+  final String dayKey;
+  final String segment;
+  final String segmentStrategy;
+  final int sampleThreshold;
+  final int computedAtUtcMs;
+  final int clarityOkCount;
+  final int clarityTotalCount;
+  final bool clarityInsufficient;
+  final String? clarityInsufficientReason;
+  final String? clarityFailureBucketCountsJson;
+  final int ttfaSampleCount;
+  final int? ttfaP50Ms;
+  final int? ttfaP90Ms;
+  final bool ttfaInsufficient;
+  final String? ttfaInsufficientReason;
+  final int mainlineCompletedCount;
+  final bool mainlineInsufficient;
+  final String? mainlineInsufficientReason;
+  final int journalOpenedCount;
+  final int journalCompletedCount;
+  final bool journalInsufficient;
+  final String? journalInsufficientReason;
+  final int activeDayCount;
+  final bool? r7Retained;
+  final bool r7Insufficient;
+  final String? r7InsufficientReason;
+  final int inboxPendingCount;
+  final int inboxCreatedCount;
+  final int inboxProcessedCount;
+  const KpiDailyRollupRow({
+    required this.dayKey,
+    required this.segment,
+    required this.segmentStrategy,
+    required this.sampleThreshold,
+    required this.computedAtUtcMs,
+    required this.clarityOkCount,
+    required this.clarityTotalCount,
+    required this.clarityInsufficient,
+    this.clarityInsufficientReason,
+    this.clarityFailureBucketCountsJson,
+    required this.ttfaSampleCount,
+    this.ttfaP50Ms,
+    this.ttfaP90Ms,
+    required this.ttfaInsufficient,
+    this.ttfaInsufficientReason,
+    required this.mainlineCompletedCount,
+    required this.mainlineInsufficient,
+    this.mainlineInsufficientReason,
+    required this.journalOpenedCount,
+    required this.journalCompletedCount,
+    required this.journalInsufficient,
+    this.journalInsufficientReason,
+    required this.activeDayCount,
+    this.r7Retained,
+    required this.r7Insufficient,
+    this.r7InsufficientReason,
+    required this.inboxPendingCount,
+    required this.inboxCreatedCount,
+    required this.inboxProcessedCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['day_key'] = Variable<String>(dayKey);
+    map['segment'] = Variable<String>(segment);
+    map['segment_strategy'] = Variable<String>(segmentStrategy);
+    map['sample_threshold'] = Variable<int>(sampleThreshold);
+    map['computed_at_utc_ms'] = Variable<int>(computedAtUtcMs);
+    map['clarity_ok_count'] = Variable<int>(clarityOkCount);
+    map['clarity_total_count'] = Variable<int>(clarityTotalCount);
+    map['clarity_insufficient'] = Variable<bool>(clarityInsufficient);
+    if (!nullToAbsent || clarityInsufficientReason != null) {
+      map['clarity_insufficient_reason'] = Variable<String>(
+        clarityInsufficientReason,
+      );
+    }
+    if (!nullToAbsent || clarityFailureBucketCountsJson != null) {
+      map['clarity_failure_bucket_counts_json'] = Variable<String>(
+        clarityFailureBucketCountsJson,
+      );
+    }
+    map['ttfa_sample_count'] = Variable<int>(ttfaSampleCount);
+    if (!nullToAbsent || ttfaP50Ms != null) {
+      map['ttfa_p50_ms'] = Variable<int>(ttfaP50Ms);
+    }
+    if (!nullToAbsent || ttfaP90Ms != null) {
+      map['ttfa_p90_ms'] = Variable<int>(ttfaP90Ms);
+    }
+    map['ttfa_insufficient'] = Variable<bool>(ttfaInsufficient);
+    if (!nullToAbsent || ttfaInsufficientReason != null) {
+      map['ttfa_insufficient_reason'] = Variable<String>(
+        ttfaInsufficientReason,
+      );
+    }
+    map['mainline_completed_count'] = Variable<int>(mainlineCompletedCount);
+    map['mainline_insufficient'] = Variable<bool>(mainlineInsufficient);
+    if (!nullToAbsent || mainlineInsufficientReason != null) {
+      map['mainline_insufficient_reason'] = Variable<String>(
+        mainlineInsufficientReason,
+      );
+    }
+    map['journal_opened_count'] = Variable<int>(journalOpenedCount);
+    map['journal_completed_count'] = Variable<int>(journalCompletedCount);
+    map['journal_insufficient'] = Variable<bool>(journalInsufficient);
+    if (!nullToAbsent || journalInsufficientReason != null) {
+      map['journal_insufficient_reason'] = Variable<String>(
+        journalInsufficientReason,
+      );
+    }
+    map['active_day_count'] = Variable<int>(activeDayCount);
+    if (!nullToAbsent || r7Retained != null) {
+      map['r7_retained'] = Variable<bool>(r7Retained);
+    }
+    map['r7_insufficient'] = Variable<bool>(r7Insufficient);
+    if (!nullToAbsent || r7InsufficientReason != null) {
+      map['r7_insufficient_reason'] = Variable<String>(r7InsufficientReason);
+    }
+    map['inbox_pending_count'] = Variable<int>(inboxPendingCount);
+    map['inbox_created_count'] = Variable<int>(inboxCreatedCount);
+    map['inbox_processed_count'] = Variable<int>(inboxProcessedCount);
+    return map;
+  }
+
+  KpiDailyRollupsCompanion toCompanion(bool nullToAbsent) {
+    return KpiDailyRollupsCompanion(
+      dayKey: Value(dayKey),
+      segment: Value(segment),
+      segmentStrategy: Value(segmentStrategy),
+      sampleThreshold: Value(sampleThreshold),
+      computedAtUtcMs: Value(computedAtUtcMs),
+      clarityOkCount: Value(clarityOkCount),
+      clarityTotalCount: Value(clarityTotalCount),
+      clarityInsufficient: Value(clarityInsufficient),
+      clarityInsufficientReason:
+          clarityInsufficientReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clarityInsufficientReason),
+      clarityFailureBucketCountsJson:
+          clarityFailureBucketCountsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clarityFailureBucketCountsJson),
+      ttfaSampleCount: Value(ttfaSampleCount),
+      ttfaP50Ms: ttfaP50Ms == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ttfaP50Ms),
+      ttfaP90Ms: ttfaP90Ms == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ttfaP90Ms),
+      ttfaInsufficient: Value(ttfaInsufficient),
+      ttfaInsufficientReason: ttfaInsufficientReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ttfaInsufficientReason),
+      mainlineCompletedCount: Value(mainlineCompletedCount),
+      mainlineInsufficient: Value(mainlineInsufficient),
+      mainlineInsufficientReason:
+          mainlineInsufficientReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mainlineInsufficientReason),
+      journalOpenedCount: Value(journalOpenedCount),
+      journalCompletedCount: Value(journalCompletedCount),
+      journalInsufficient: Value(journalInsufficient),
+      journalInsufficientReason:
+          journalInsufficientReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(journalInsufficientReason),
+      activeDayCount: Value(activeDayCount),
+      r7Retained: r7Retained == null && nullToAbsent
+          ? const Value.absent()
+          : Value(r7Retained),
+      r7Insufficient: Value(r7Insufficient),
+      r7InsufficientReason: r7InsufficientReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(r7InsufficientReason),
+      inboxPendingCount: Value(inboxPendingCount),
+      inboxCreatedCount: Value(inboxCreatedCount),
+      inboxProcessedCount: Value(inboxProcessedCount),
+    );
+  }
+
+  factory KpiDailyRollupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KpiDailyRollupRow(
+      dayKey: serializer.fromJson<String>(json['dayKey']),
+      segment: serializer.fromJson<String>(json['segment']),
+      segmentStrategy: serializer.fromJson<String>(json['segmentStrategy']),
+      sampleThreshold: serializer.fromJson<int>(json['sampleThreshold']),
+      computedAtUtcMs: serializer.fromJson<int>(json['computedAtUtcMs']),
+      clarityOkCount: serializer.fromJson<int>(json['clarityOkCount']),
+      clarityTotalCount: serializer.fromJson<int>(json['clarityTotalCount']),
+      clarityInsufficient: serializer.fromJson<bool>(
+        json['clarityInsufficient'],
+      ),
+      clarityInsufficientReason: serializer.fromJson<String?>(
+        json['clarityInsufficientReason'],
+      ),
+      clarityFailureBucketCountsJson: serializer.fromJson<String?>(
+        json['clarityFailureBucketCountsJson'],
+      ),
+      ttfaSampleCount: serializer.fromJson<int>(json['ttfaSampleCount']),
+      ttfaP50Ms: serializer.fromJson<int?>(json['ttfaP50Ms']),
+      ttfaP90Ms: serializer.fromJson<int?>(json['ttfaP90Ms']),
+      ttfaInsufficient: serializer.fromJson<bool>(json['ttfaInsufficient']),
+      ttfaInsufficientReason: serializer.fromJson<String?>(
+        json['ttfaInsufficientReason'],
+      ),
+      mainlineCompletedCount: serializer.fromJson<int>(
+        json['mainlineCompletedCount'],
+      ),
+      mainlineInsufficient: serializer.fromJson<bool>(
+        json['mainlineInsufficient'],
+      ),
+      mainlineInsufficientReason: serializer.fromJson<String?>(
+        json['mainlineInsufficientReason'],
+      ),
+      journalOpenedCount: serializer.fromJson<int>(json['journalOpenedCount']),
+      journalCompletedCount: serializer.fromJson<int>(
+        json['journalCompletedCount'],
+      ),
+      journalInsufficient: serializer.fromJson<bool>(
+        json['journalInsufficient'],
+      ),
+      journalInsufficientReason: serializer.fromJson<String?>(
+        json['journalInsufficientReason'],
+      ),
+      activeDayCount: serializer.fromJson<int>(json['activeDayCount']),
+      r7Retained: serializer.fromJson<bool?>(json['r7Retained']),
+      r7Insufficient: serializer.fromJson<bool>(json['r7Insufficient']),
+      r7InsufficientReason: serializer.fromJson<String?>(
+        json['r7InsufficientReason'],
+      ),
+      inboxPendingCount: serializer.fromJson<int>(json['inboxPendingCount']),
+      inboxCreatedCount: serializer.fromJson<int>(json['inboxCreatedCount']),
+      inboxProcessedCount: serializer.fromJson<int>(
+        json['inboxProcessedCount'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'dayKey': serializer.toJson<String>(dayKey),
+      'segment': serializer.toJson<String>(segment),
+      'segmentStrategy': serializer.toJson<String>(segmentStrategy),
+      'sampleThreshold': serializer.toJson<int>(sampleThreshold),
+      'computedAtUtcMs': serializer.toJson<int>(computedAtUtcMs),
+      'clarityOkCount': serializer.toJson<int>(clarityOkCount),
+      'clarityTotalCount': serializer.toJson<int>(clarityTotalCount),
+      'clarityInsufficient': serializer.toJson<bool>(clarityInsufficient),
+      'clarityInsufficientReason': serializer.toJson<String?>(
+        clarityInsufficientReason,
+      ),
+      'clarityFailureBucketCountsJson': serializer.toJson<String?>(
+        clarityFailureBucketCountsJson,
+      ),
+      'ttfaSampleCount': serializer.toJson<int>(ttfaSampleCount),
+      'ttfaP50Ms': serializer.toJson<int?>(ttfaP50Ms),
+      'ttfaP90Ms': serializer.toJson<int?>(ttfaP90Ms),
+      'ttfaInsufficient': serializer.toJson<bool>(ttfaInsufficient),
+      'ttfaInsufficientReason': serializer.toJson<String?>(
+        ttfaInsufficientReason,
+      ),
+      'mainlineCompletedCount': serializer.toJson<int>(mainlineCompletedCount),
+      'mainlineInsufficient': serializer.toJson<bool>(mainlineInsufficient),
+      'mainlineInsufficientReason': serializer.toJson<String?>(
+        mainlineInsufficientReason,
+      ),
+      'journalOpenedCount': serializer.toJson<int>(journalOpenedCount),
+      'journalCompletedCount': serializer.toJson<int>(journalCompletedCount),
+      'journalInsufficient': serializer.toJson<bool>(journalInsufficient),
+      'journalInsufficientReason': serializer.toJson<String?>(
+        journalInsufficientReason,
+      ),
+      'activeDayCount': serializer.toJson<int>(activeDayCount),
+      'r7Retained': serializer.toJson<bool?>(r7Retained),
+      'r7Insufficient': serializer.toJson<bool>(r7Insufficient),
+      'r7InsufficientReason': serializer.toJson<String?>(r7InsufficientReason),
+      'inboxPendingCount': serializer.toJson<int>(inboxPendingCount),
+      'inboxCreatedCount': serializer.toJson<int>(inboxCreatedCount),
+      'inboxProcessedCount': serializer.toJson<int>(inboxProcessedCount),
+    };
+  }
+
+  KpiDailyRollupRow copyWith({
+    String? dayKey,
+    String? segment,
+    String? segmentStrategy,
+    int? sampleThreshold,
+    int? computedAtUtcMs,
+    int? clarityOkCount,
+    int? clarityTotalCount,
+    bool? clarityInsufficient,
+    Value<String?> clarityInsufficientReason = const Value.absent(),
+    Value<String?> clarityFailureBucketCountsJson = const Value.absent(),
+    int? ttfaSampleCount,
+    Value<int?> ttfaP50Ms = const Value.absent(),
+    Value<int?> ttfaP90Ms = const Value.absent(),
+    bool? ttfaInsufficient,
+    Value<String?> ttfaInsufficientReason = const Value.absent(),
+    int? mainlineCompletedCount,
+    bool? mainlineInsufficient,
+    Value<String?> mainlineInsufficientReason = const Value.absent(),
+    int? journalOpenedCount,
+    int? journalCompletedCount,
+    bool? journalInsufficient,
+    Value<String?> journalInsufficientReason = const Value.absent(),
+    int? activeDayCount,
+    Value<bool?> r7Retained = const Value.absent(),
+    bool? r7Insufficient,
+    Value<String?> r7InsufficientReason = const Value.absent(),
+    int? inboxPendingCount,
+    int? inboxCreatedCount,
+    int? inboxProcessedCount,
+  }) => KpiDailyRollupRow(
+    dayKey: dayKey ?? this.dayKey,
+    segment: segment ?? this.segment,
+    segmentStrategy: segmentStrategy ?? this.segmentStrategy,
+    sampleThreshold: sampleThreshold ?? this.sampleThreshold,
+    computedAtUtcMs: computedAtUtcMs ?? this.computedAtUtcMs,
+    clarityOkCount: clarityOkCount ?? this.clarityOkCount,
+    clarityTotalCount: clarityTotalCount ?? this.clarityTotalCount,
+    clarityInsufficient: clarityInsufficient ?? this.clarityInsufficient,
+    clarityInsufficientReason: clarityInsufficientReason.present
+        ? clarityInsufficientReason.value
+        : this.clarityInsufficientReason,
+    clarityFailureBucketCountsJson: clarityFailureBucketCountsJson.present
+        ? clarityFailureBucketCountsJson.value
+        : this.clarityFailureBucketCountsJson,
+    ttfaSampleCount: ttfaSampleCount ?? this.ttfaSampleCount,
+    ttfaP50Ms: ttfaP50Ms.present ? ttfaP50Ms.value : this.ttfaP50Ms,
+    ttfaP90Ms: ttfaP90Ms.present ? ttfaP90Ms.value : this.ttfaP90Ms,
+    ttfaInsufficient: ttfaInsufficient ?? this.ttfaInsufficient,
+    ttfaInsufficientReason: ttfaInsufficientReason.present
+        ? ttfaInsufficientReason.value
+        : this.ttfaInsufficientReason,
+    mainlineCompletedCount:
+        mainlineCompletedCount ?? this.mainlineCompletedCount,
+    mainlineInsufficient: mainlineInsufficient ?? this.mainlineInsufficient,
+    mainlineInsufficientReason: mainlineInsufficientReason.present
+        ? mainlineInsufficientReason.value
+        : this.mainlineInsufficientReason,
+    journalOpenedCount: journalOpenedCount ?? this.journalOpenedCount,
+    journalCompletedCount: journalCompletedCount ?? this.journalCompletedCount,
+    journalInsufficient: journalInsufficient ?? this.journalInsufficient,
+    journalInsufficientReason: journalInsufficientReason.present
+        ? journalInsufficientReason.value
+        : this.journalInsufficientReason,
+    activeDayCount: activeDayCount ?? this.activeDayCount,
+    r7Retained: r7Retained.present ? r7Retained.value : this.r7Retained,
+    r7Insufficient: r7Insufficient ?? this.r7Insufficient,
+    r7InsufficientReason: r7InsufficientReason.present
+        ? r7InsufficientReason.value
+        : this.r7InsufficientReason,
+    inboxPendingCount: inboxPendingCount ?? this.inboxPendingCount,
+    inboxCreatedCount: inboxCreatedCount ?? this.inboxCreatedCount,
+    inboxProcessedCount: inboxProcessedCount ?? this.inboxProcessedCount,
+  );
+  KpiDailyRollupRow copyWithCompanion(KpiDailyRollupsCompanion data) {
+    return KpiDailyRollupRow(
+      dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
+      segment: data.segment.present ? data.segment.value : this.segment,
+      segmentStrategy: data.segmentStrategy.present
+          ? data.segmentStrategy.value
+          : this.segmentStrategy,
+      sampleThreshold: data.sampleThreshold.present
+          ? data.sampleThreshold.value
+          : this.sampleThreshold,
+      computedAtUtcMs: data.computedAtUtcMs.present
+          ? data.computedAtUtcMs.value
+          : this.computedAtUtcMs,
+      clarityOkCount: data.clarityOkCount.present
+          ? data.clarityOkCount.value
+          : this.clarityOkCount,
+      clarityTotalCount: data.clarityTotalCount.present
+          ? data.clarityTotalCount.value
+          : this.clarityTotalCount,
+      clarityInsufficient: data.clarityInsufficient.present
+          ? data.clarityInsufficient.value
+          : this.clarityInsufficient,
+      clarityInsufficientReason: data.clarityInsufficientReason.present
+          ? data.clarityInsufficientReason.value
+          : this.clarityInsufficientReason,
+      clarityFailureBucketCountsJson:
+          data.clarityFailureBucketCountsJson.present
+          ? data.clarityFailureBucketCountsJson.value
+          : this.clarityFailureBucketCountsJson,
+      ttfaSampleCount: data.ttfaSampleCount.present
+          ? data.ttfaSampleCount.value
+          : this.ttfaSampleCount,
+      ttfaP50Ms: data.ttfaP50Ms.present ? data.ttfaP50Ms.value : this.ttfaP50Ms,
+      ttfaP90Ms: data.ttfaP90Ms.present ? data.ttfaP90Ms.value : this.ttfaP90Ms,
+      ttfaInsufficient: data.ttfaInsufficient.present
+          ? data.ttfaInsufficient.value
+          : this.ttfaInsufficient,
+      ttfaInsufficientReason: data.ttfaInsufficientReason.present
+          ? data.ttfaInsufficientReason.value
+          : this.ttfaInsufficientReason,
+      mainlineCompletedCount: data.mainlineCompletedCount.present
+          ? data.mainlineCompletedCount.value
+          : this.mainlineCompletedCount,
+      mainlineInsufficient: data.mainlineInsufficient.present
+          ? data.mainlineInsufficient.value
+          : this.mainlineInsufficient,
+      mainlineInsufficientReason: data.mainlineInsufficientReason.present
+          ? data.mainlineInsufficientReason.value
+          : this.mainlineInsufficientReason,
+      journalOpenedCount: data.journalOpenedCount.present
+          ? data.journalOpenedCount.value
+          : this.journalOpenedCount,
+      journalCompletedCount: data.journalCompletedCount.present
+          ? data.journalCompletedCount.value
+          : this.journalCompletedCount,
+      journalInsufficient: data.journalInsufficient.present
+          ? data.journalInsufficient.value
+          : this.journalInsufficient,
+      journalInsufficientReason: data.journalInsufficientReason.present
+          ? data.journalInsufficientReason.value
+          : this.journalInsufficientReason,
+      activeDayCount: data.activeDayCount.present
+          ? data.activeDayCount.value
+          : this.activeDayCount,
+      r7Retained: data.r7Retained.present
+          ? data.r7Retained.value
+          : this.r7Retained,
+      r7Insufficient: data.r7Insufficient.present
+          ? data.r7Insufficient.value
+          : this.r7Insufficient,
+      r7InsufficientReason: data.r7InsufficientReason.present
+          ? data.r7InsufficientReason.value
+          : this.r7InsufficientReason,
+      inboxPendingCount: data.inboxPendingCount.present
+          ? data.inboxPendingCount.value
+          : this.inboxPendingCount,
+      inboxCreatedCount: data.inboxCreatedCount.present
+          ? data.inboxCreatedCount.value
+          : this.inboxCreatedCount,
+      inboxProcessedCount: data.inboxProcessedCount.present
+          ? data.inboxProcessedCount.value
+          : this.inboxProcessedCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KpiDailyRollupRow(')
+          ..write('dayKey: $dayKey, ')
+          ..write('segment: $segment, ')
+          ..write('segmentStrategy: $segmentStrategy, ')
+          ..write('sampleThreshold: $sampleThreshold, ')
+          ..write('computedAtUtcMs: $computedAtUtcMs, ')
+          ..write('clarityOkCount: $clarityOkCount, ')
+          ..write('clarityTotalCount: $clarityTotalCount, ')
+          ..write('clarityInsufficient: $clarityInsufficient, ')
+          ..write('clarityInsufficientReason: $clarityInsufficientReason, ')
+          ..write(
+            'clarityFailureBucketCountsJson: $clarityFailureBucketCountsJson, ',
+          )
+          ..write('ttfaSampleCount: $ttfaSampleCount, ')
+          ..write('ttfaP50Ms: $ttfaP50Ms, ')
+          ..write('ttfaP90Ms: $ttfaP90Ms, ')
+          ..write('ttfaInsufficient: $ttfaInsufficient, ')
+          ..write('ttfaInsufficientReason: $ttfaInsufficientReason, ')
+          ..write('mainlineCompletedCount: $mainlineCompletedCount, ')
+          ..write('mainlineInsufficient: $mainlineInsufficient, ')
+          ..write('mainlineInsufficientReason: $mainlineInsufficientReason, ')
+          ..write('journalOpenedCount: $journalOpenedCount, ')
+          ..write('journalCompletedCount: $journalCompletedCount, ')
+          ..write('journalInsufficient: $journalInsufficient, ')
+          ..write('journalInsufficientReason: $journalInsufficientReason, ')
+          ..write('activeDayCount: $activeDayCount, ')
+          ..write('r7Retained: $r7Retained, ')
+          ..write('r7Insufficient: $r7Insufficient, ')
+          ..write('r7InsufficientReason: $r7InsufficientReason, ')
+          ..write('inboxPendingCount: $inboxPendingCount, ')
+          ..write('inboxCreatedCount: $inboxCreatedCount, ')
+          ..write('inboxProcessedCount: $inboxProcessedCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    dayKey,
+    segment,
+    segmentStrategy,
+    sampleThreshold,
+    computedAtUtcMs,
+    clarityOkCount,
+    clarityTotalCount,
+    clarityInsufficient,
+    clarityInsufficientReason,
+    clarityFailureBucketCountsJson,
+    ttfaSampleCount,
+    ttfaP50Ms,
+    ttfaP90Ms,
+    ttfaInsufficient,
+    ttfaInsufficientReason,
+    mainlineCompletedCount,
+    mainlineInsufficient,
+    mainlineInsufficientReason,
+    journalOpenedCount,
+    journalCompletedCount,
+    journalInsufficient,
+    journalInsufficientReason,
+    activeDayCount,
+    r7Retained,
+    r7Insufficient,
+    r7InsufficientReason,
+    inboxPendingCount,
+    inboxCreatedCount,
+    inboxProcessedCount,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KpiDailyRollupRow &&
+          other.dayKey == this.dayKey &&
+          other.segment == this.segment &&
+          other.segmentStrategy == this.segmentStrategy &&
+          other.sampleThreshold == this.sampleThreshold &&
+          other.computedAtUtcMs == this.computedAtUtcMs &&
+          other.clarityOkCount == this.clarityOkCount &&
+          other.clarityTotalCount == this.clarityTotalCount &&
+          other.clarityInsufficient == this.clarityInsufficient &&
+          other.clarityInsufficientReason == this.clarityInsufficientReason &&
+          other.clarityFailureBucketCountsJson ==
+              this.clarityFailureBucketCountsJson &&
+          other.ttfaSampleCount == this.ttfaSampleCount &&
+          other.ttfaP50Ms == this.ttfaP50Ms &&
+          other.ttfaP90Ms == this.ttfaP90Ms &&
+          other.ttfaInsufficient == this.ttfaInsufficient &&
+          other.ttfaInsufficientReason == this.ttfaInsufficientReason &&
+          other.mainlineCompletedCount == this.mainlineCompletedCount &&
+          other.mainlineInsufficient == this.mainlineInsufficient &&
+          other.mainlineInsufficientReason == this.mainlineInsufficientReason &&
+          other.journalOpenedCount == this.journalOpenedCount &&
+          other.journalCompletedCount == this.journalCompletedCount &&
+          other.journalInsufficient == this.journalInsufficient &&
+          other.journalInsufficientReason == this.journalInsufficientReason &&
+          other.activeDayCount == this.activeDayCount &&
+          other.r7Retained == this.r7Retained &&
+          other.r7Insufficient == this.r7Insufficient &&
+          other.r7InsufficientReason == this.r7InsufficientReason &&
+          other.inboxPendingCount == this.inboxPendingCount &&
+          other.inboxCreatedCount == this.inboxCreatedCount &&
+          other.inboxProcessedCount == this.inboxProcessedCount);
+}
+
+class KpiDailyRollupsCompanion extends UpdateCompanion<KpiDailyRollupRow> {
+  final Value<String> dayKey;
+  final Value<String> segment;
+  final Value<String> segmentStrategy;
+  final Value<int> sampleThreshold;
+  final Value<int> computedAtUtcMs;
+  final Value<int> clarityOkCount;
+  final Value<int> clarityTotalCount;
+  final Value<bool> clarityInsufficient;
+  final Value<String?> clarityInsufficientReason;
+  final Value<String?> clarityFailureBucketCountsJson;
+  final Value<int> ttfaSampleCount;
+  final Value<int?> ttfaP50Ms;
+  final Value<int?> ttfaP90Ms;
+  final Value<bool> ttfaInsufficient;
+  final Value<String?> ttfaInsufficientReason;
+  final Value<int> mainlineCompletedCount;
+  final Value<bool> mainlineInsufficient;
+  final Value<String?> mainlineInsufficientReason;
+  final Value<int> journalOpenedCount;
+  final Value<int> journalCompletedCount;
+  final Value<bool> journalInsufficient;
+  final Value<String?> journalInsufficientReason;
+  final Value<int> activeDayCount;
+  final Value<bool?> r7Retained;
+  final Value<bool> r7Insufficient;
+  final Value<String?> r7InsufficientReason;
+  final Value<int> inboxPendingCount;
+  final Value<int> inboxCreatedCount;
+  final Value<int> inboxProcessedCount;
+  final Value<int> rowid;
+  const KpiDailyRollupsCompanion({
+    this.dayKey = const Value.absent(),
+    this.segment = const Value.absent(),
+    this.segmentStrategy = const Value.absent(),
+    this.sampleThreshold = const Value.absent(),
+    this.computedAtUtcMs = const Value.absent(),
+    this.clarityOkCount = const Value.absent(),
+    this.clarityTotalCount = const Value.absent(),
+    this.clarityInsufficient = const Value.absent(),
+    this.clarityInsufficientReason = const Value.absent(),
+    this.clarityFailureBucketCountsJson = const Value.absent(),
+    this.ttfaSampleCount = const Value.absent(),
+    this.ttfaP50Ms = const Value.absent(),
+    this.ttfaP90Ms = const Value.absent(),
+    this.ttfaInsufficient = const Value.absent(),
+    this.ttfaInsufficientReason = const Value.absent(),
+    this.mainlineCompletedCount = const Value.absent(),
+    this.mainlineInsufficient = const Value.absent(),
+    this.mainlineInsufficientReason = const Value.absent(),
+    this.journalOpenedCount = const Value.absent(),
+    this.journalCompletedCount = const Value.absent(),
+    this.journalInsufficient = const Value.absent(),
+    this.journalInsufficientReason = const Value.absent(),
+    this.activeDayCount = const Value.absent(),
+    this.r7Retained = const Value.absent(),
+    this.r7Insufficient = const Value.absent(),
+    this.r7InsufficientReason = const Value.absent(),
+    this.inboxPendingCount = const Value.absent(),
+    this.inboxCreatedCount = const Value.absent(),
+    this.inboxProcessedCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KpiDailyRollupsCompanion.insert({
+    required String dayKey,
+    required String segment,
+    required String segmentStrategy,
+    required int sampleThreshold,
+    required int computedAtUtcMs,
+    required int clarityOkCount,
+    required int clarityTotalCount,
+    required bool clarityInsufficient,
+    this.clarityInsufficientReason = const Value.absent(),
+    this.clarityFailureBucketCountsJson = const Value.absent(),
+    required int ttfaSampleCount,
+    this.ttfaP50Ms = const Value.absent(),
+    this.ttfaP90Ms = const Value.absent(),
+    required bool ttfaInsufficient,
+    this.ttfaInsufficientReason = const Value.absent(),
+    required int mainlineCompletedCount,
+    required bool mainlineInsufficient,
+    this.mainlineInsufficientReason = const Value.absent(),
+    required int journalOpenedCount,
+    required int journalCompletedCount,
+    required bool journalInsufficient,
+    this.journalInsufficientReason = const Value.absent(),
+    required int activeDayCount,
+    this.r7Retained = const Value.absent(),
+    required bool r7Insufficient,
+    this.r7InsufficientReason = const Value.absent(),
+    required int inboxPendingCount,
+    required int inboxCreatedCount,
+    required int inboxProcessedCount,
+    this.rowid = const Value.absent(),
+  }) : dayKey = Value(dayKey),
+       segment = Value(segment),
+       segmentStrategy = Value(segmentStrategy),
+       sampleThreshold = Value(sampleThreshold),
+       computedAtUtcMs = Value(computedAtUtcMs),
+       clarityOkCount = Value(clarityOkCount),
+       clarityTotalCount = Value(clarityTotalCount),
+       clarityInsufficient = Value(clarityInsufficient),
+       ttfaSampleCount = Value(ttfaSampleCount),
+       ttfaInsufficient = Value(ttfaInsufficient),
+       mainlineCompletedCount = Value(mainlineCompletedCount),
+       mainlineInsufficient = Value(mainlineInsufficient),
+       journalOpenedCount = Value(journalOpenedCount),
+       journalCompletedCount = Value(journalCompletedCount),
+       journalInsufficient = Value(journalInsufficient),
+       activeDayCount = Value(activeDayCount),
+       r7Insufficient = Value(r7Insufficient),
+       inboxPendingCount = Value(inboxPendingCount),
+       inboxCreatedCount = Value(inboxCreatedCount),
+       inboxProcessedCount = Value(inboxProcessedCount);
+  static Insertable<KpiDailyRollupRow> custom({
+    Expression<String>? dayKey,
+    Expression<String>? segment,
+    Expression<String>? segmentStrategy,
+    Expression<int>? sampleThreshold,
+    Expression<int>? computedAtUtcMs,
+    Expression<int>? clarityOkCount,
+    Expression<int>? clarityTotalCount,
+    Expression<bool>? clarityInsufficient,
+    Expression<String>? clarityInsufficientReason,
+    Expression<String>? clarityFailureBucketCountsJson,
+    Expression<int>? ttfaSampleCount,
+    Expression<int>? ttfaP50Ms,
+    Expression<int>? ttfaP90Ms,
+    Expression<bool>? ttfaInsufficient,
+    Expression<String>? ttfaInsufficientReason,
+    Expression<int>? mainlineCompletedCount,
+    Expression<bool>? mainlineInsufficient,
+    Expression<String>? mainlineInsufficientReason,
+    Expression<int>? journalOpenedCount,
+    Expression<int>? journalCompletedCount,
+    Expression<bool>? journalInsufficient,
+    Expression<String>? journalInsufficientReason,
+    Expression<int>? activeDayCount,
+    Expression<bool>? r7Retained,
+    Expression<bool>? r7Insufficient,
+    Expression<String>? r7InsufficientReason,
+    Expression<int>? inboxPendingCount,
+    Expression<int>? inboxCreatedCount,
+    Expression<int>? inboxProcessedCount,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (dayKey != null) 'day_key': dayKey,
+      if (segment != null) 'segment': segment,
+      if (segmentStrategy != null) 'segment_strategy': segmentStrategy,
+      if (sampleThreshold != null) 'sample_threshold': sampleThreshold,
+      if (computedAtUtcMs != null) 'computed_at_utc_ms': computedAtUtcMs,
+      if (clarityOkCount != null) 'clarity_ok_count': clarityOkCount,
+      if (clarityTotalCount != null) 'clarity_total_count': clarityTotalCount,
+      if (clarityInsufficient != null)
+        'clarity_insufficient': clarityInsufficient,
+      if (clarityInsufficientReason != null)
+        'clarity_insufficient_reason': clarityInsufficientReason,
+      if (clarityFailureBucketCountsJson != null)
+        'clarity_failure_bucket_counts_json': clarityFailureBucketCountsJson,
+      if (ttfaSampleCount != null) 'ttfa_sample_count': ttfaSampleCount,
+      if (ttfaP50Ms != null) 'ttfa_p50_ms': ttfaP50Ms,
+      if (ttfaP90Ms != null) 'ttfa_p90_ms': ttfaP90Ms,
+      if (ttfaInsufficient != null) 'ttfa_insufficient': ttfaInsufficient,
+      if (ttfaInsufficientReason != null)
+        'ttfa_insufficient_reason': ttfaInsufficientReason,
+      if (mainlineCompletedCount != null)
+        'mainline_completed_count': mainlineCompletedCount,
+      if (mainlineInsufficient != null)
+        'mainline_insufficient': mainlineInsufficient,
+      if (mainlineInsufficientReason != null)
+        'mainline_insufficient_reason': mainlineInsufficientReason,
+      if (journalOpenedCount != null)
+        'journal_opened_count': journalOpenedCount,
+      if (journalCompletedCount != null)
+        'journal_completed_count': journalCompletedCount,
+      if (journalInsufficient != null)
+        'journal_insufficient': journalInsufficient,
+      if (journalInsufficientReason != null)
+        'journal_insufficient_reason': journalInsufficientReason,
+      if (activeDayCount != null) 'active_day_count': activeDayCount,
+      if (r7Retained != null) 'r7_retained': r7Retained,
+      if (r7Insufficient != null) 'r7_insufficient': r7Insufficient,
+      if (r7InsufficientReason != null)
+        'r7_insufficient_reason': r7InsufficientReason,
+      if (inboxPendingCount != null) 'inbox_pending_count': inboxPendingCount,
+      if (inboxCreatedCount != null) 'inbox_created_count': inboxCreatedCount,
+      if (inboxProcessedCount != null)
+        'inbox_processed_count': inboxProcessedCount,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KpiDailyRollupsCompanion copyWith({
+    Value<String>? dayKey,
+    Value<String>? segment,
+    Value<String>? segmentStrategy,
+    Value<int>? sampleThreshold,
+    Value<int>? computedAtUtcMs,
+    Value<int>? clarityOkCount,
+    Value<int>? clarityTotalCount,
+    Value<bool>? clarityInsufficient,
+    Value<String?>? clarityInsufficientReason,
+    Value<String?>? clarityFailureBucketCountsJson,
+    Value<int>? ttfaSampleCount,
+    Value<int?>? ttfaP50Ms,
+    Value<int?>? ttfaP90Ms,
+    Value<bool>? ttfaInsufficient,
+    Value<String?>? ttfaInsufficientReason,
+    Value<int>? mainlineCompletedCount,
+    Value<bool>? mainlineInsufficient,
+    Value<String?>? mainlineInsufficientReason,
+    Value<int>? journalOpenedCount,
+    Value<int>? journalCompletedCount,
+    Value<bool>? journalInsufficient,
+    Value<String?>? journalInsufficientReason,
+    Value<int>? activeDayCount,
+    Value<bool?>? r7Retained,
+    Value<bool>? r7Insufficient,
+    Value<String?>? r7InsufficientReason,
+    Value<int>? inboxPendingCount,
+    Value<int>? inboxCreatedCount,
+    Value<int>? inboxProcessedCount,
+    Value<int>? rowid,
+  }) {
+    return KpiDailyRollupsCompanion(
+      dayKey: dayKey ?? this.dayKey,
+      segment: segment ?? this.segment,
+      segmentStrategy: segmentStrategy ?? this.segmentStrategy,
+      sampleThreshold: sampleThreshold ?? this.sampleThreshold,
+      computedAtUtcMs: computedAtUtcMs ?? this.computedAtUtcMs,
+      clarityOkCount: clarityOkCount ?? this.clarityOkCount,
+      clarityTotalCount: clarityTotalCount ?? this.clarityTotalCount,
+      clarityInsufficient: clarityInsufficient ?? this.clarityInsufficient,
+      clarityInsufficientReason:
+          clarityInsufficientReason ?? this.clarityInsufficientReason,
+      clarityFailureBucketCountsJson:
+          clarityFailureBucketCountsJson ?? this.clarityFailureBucketCountsJson,
+      ttfaSampleCount: ttfaSampleCount ?? this.ttfaSampleCount,
+      ttfaP50Ms: ttfaP50Ms ?? this.ttfaP50Ms,
+      ttfaP90Ms: ttfaP90Ms ?? this.ttfaP90Ms,
+      ttfaInsufficient: ttfaInsufficient ?? this.ttfaInsufficient,
+      ttfaInsufficientReason:
+          ttfaInsufficientReason ?? this.ttfaInsufficientReason,
+      mainlineCompletedCount:
+          mainlineCompletedCount ?? this.mainlineCompletedCount,
+      mainlineInsufficient: mainlineInsufficient ?? this.mainlineInsufficient,
+      mainlineInsufficientReason:
+          mainlineInsufficientReason ?? this.mainlineInsufficientReason,
+      journalOpenedCount: journalOpenedCount ?? this.journalOpenedCount,
+      journalCompletedCount:
+          journalCompletedCount ?? this.journalCompletedCount,
+      journalInsufficient: journalInsufficient ?? this.journalInsufficient,
+      journalInsufficientReason:
+          journalInsufficientReason ?? this.journalInsufficientReason,
+      activeDayCount: activeDayCount ?? this.activeDayCount,
+      r7Retained: r7Retained ?? this.r7Retained,
+      r7Insufficient: r7Insufficient ?? this.r7Insufficient,
+      r7InsufficientReason: r7InsufficientReason ?? this.r7InsufficientReason,
+      inboxPendingCount: inboxPendingCount ?? this.inboxPendingCount,
+      inboxCreatedCount: inboxCreatedCount ?? this.inboxCreatedCount,
+      inboxProcessedCount: inboxProcessedCount ?? this.inboxProcessedCount,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (dayKey.present) {
+      map['day_key'] = Variable<String>(dayKey.value);
+    }
+    if (segment.present) {
+      map['segment'] = Variable<String>(segment.value);
+    }
+    if (segmentStrategy.present) {
+      map['segment_strategy'] = Variable<String>(segmentStrategy.value);
+    }
+    if (sampleThreshold.present) {
+      map['sample_threshold'] = Variable<int>(sampleThreshold.value);
+    }
+    if (computedAtUtcMs.present) {
+      map['computed_at_utc_ms'] = Variable<int>(computedAtUtcMs.value);
+    }
+    if (clarityOkCount.present) {
+      map['clarity_ok_count'] = Variable<int>(clarityOkCount.value);
+    }
+    if (clarityTotalCount.present) {
+      map['clarity_total_count'] = Variable<int>(clarityTotalCount.value);
+    }
+    if (clarityInsufficient.present) {
+      map['clarity_insufficient'] = Variable<bool>(clarityInsufficient.value);
+    }
+    if (clarityInsufficientReason.present) {
+      map['clarity_insufficient_reason'] = Variable<String>(
+        clarityInsufficientReason.value,
+      );
+    }
+    if (clarityFailureBucketCountsJson.present) {
+      map['clarity_failure_bucket_counts_json'] = Variable<String>(
+        clarityFailureBucketCountsJson.value,
+      );
+    }
+    if (ttfaSampleCount.present) {
+      map['ttfa_sample_count'] = Variable<int>(ttfaSampleCount.value);
+    }
+    if (ttfaP50Ms.present) {
+      map['ttfa_p50_ms'] = Variable<int>(ttfaP50Ms.value);
+    }
+    if (ttfaP90Ms.present) {
+      map['ttfa_p90_ms'] = Variable<int>(ttfaP90Ms.value);
+    }
+    if (ttfaInsufficient.present) {
+      map['ttfa_insufficient'] = Variable<bool>(ttfaInsufficient.value);
+    }
+    if (ttfaInsufficientReason.present) {
+      map['ttfa_insufficient_reason'] = Variable<String>(
+        ttfaInsufficientReason.value,
+      );
+    }
+    if (mainlineCompletedCount.present) {
+      map['mainline_completed_count'] = Variable<int>(
+        mainlineCompletedCount.value,
+      );
+    }
+    if (mainlineInsufficient.present) {
+      map['mainline_insufficient'] = Variable<bool>(mainlineInsufficient.value);
+    }
+    if (mainlineInsufficientReason.present) {
+      map['mainline_insufficient_reason'] = Variable<String>(
+        mainlineInsufficientReason.value,
+      );
+    }
+    if (journalOpenedCount.present) {
+      map['journal_opened_count'] = Variable<int>(journalOpenedCount.value);
+    }
+    if (journalCompletedCount.present) {
+      map['journal_completed_count'] = Variable<int>(
+        journalCompletedCount.value,
+      );
+    }
+    if (journalInsufficient.present) {
+      map['journal_insufficient'] = Variable<bool>(journalInsufficient.value);
+    }
+    if (journalInsufficientReason.present) {
+      map['journal_insufficient_reason'] = Variable<String>(
+        journalInsufficientReason.value,
+      );
+    }
+    if (activeDayCount.present) {
+      map['active_day_count'] = Variable<int>(activeDayCount.value);
+    }
+    if (r7Retained.present) {
+      map['r7_retained'] = Variable<bool>(r7Retained.value);
+    }
+    if (r7Insufficient.present) {
+      map['r7_insufficient'] = Variable<bool>(r7Insufficient.value);
+    }
+    if (r7InsufficientReason.present) {
+      map['r7_insufficient_reason'] = Variable<String>(
+        r7InsufficientReason.value,
+      );
+    }
+    if (inboxPendingCount.present) {
+      map['inbox_pending_count'] = Variable<int>(inboxPendingCount.value);
+    }
+    if (inboxCreatedCount.present) {
+      map['inbox_created_count'] = Variable<int>(inboxCreatedCount.value);
+    }
+    if (inboxProcessedCount.present) {
+      map['inbox_processed_count'] = Variable<int>(inboxProcessedCount.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KpiDailyRollupsCompanion(')
+          ..write('dayKey: $dayKey, ')
+          ..write('segment: $segment, ')
+          ..write('segmentStrategy: $segmentStrategy, ')
+          ..write('sampleThreshold: $sampleThreshold, ')
+          ..write('computedAtUtcMs: $computedAtUtcMs, ')
+          ..write('clarityOkCount: $clarityOkCount, ')
+          ..write('clarityTotalCount: $clarityTotalCount, ')
+          ..write('clarityInsufficient: $clarityInsufficient, ')
+          ..write('clarityInsufficientReason: $clarityInsufficientReason, ')
+          ..write(
+            'clarityFailureBucketCountsJson: $clarityFailureBucketCountsJson, ',
+          )
+          ..write('ttfaSampleCount: $ttfaSampleCount, ')
+          ..write('ttfaP50Ms: $ttfaP50Ms, ')
+          ..write('ttfaP90Ms: $ttfaP90Ms, ')
+          ..write('ttfaInsufficient: $ttfaInsufficient, ')
+          ..write('ttfaInsufficientReason: $ttfaInsufficientReason, ')
+          ..write('mainlineCompletedCount: $mainlineCompletedCount, ')
+          ..write('mainlineInsufficient: $mainlineInsufficient, ')
+          ..write('mainlineInsufficientReason: $mainlineInsufficientReason, ')
+          ..write('journalOpenedCount: $journalOpenedCount, ')
+          ..write('journalCompletedCount: $journalCompletedCount, ')
+          ..write('journalInsufficient: $journalInsufficient, ')
+          ..write('journalInsufficientReason: $journalInsufficientReason, ')
+          ..write('activeDayCount: $activeDayCount, ')
+          ..write('r7Retained: $r7Retained, ')
+          ..write('r7Insufficient: $r7Insufficient, ')
+          ..write('r7InsufficientReason: $r7InsufficientReason, ')
+          ..write('inboxPendingCount: $inboxPendingCount, ')
+          ..write('inboxCreatedCount: $inboxCreatedCount, ')
+          ..write('inboxProcessedCount: $inboxProcessedCount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5298,6 +8125,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $AppearanceConfigsTable(this);
   late final $TodayPlanItemsTable todayPlanItems = $TodayPlanItemsTable(this);
   late final $WeaveLinksTable weaveLinks = $WeaveLinksTable(this);
+  late final $FeatureFlagsTable featureFlags = $FeatureFlagsTable(this);
+  late final $LocalEventsTable localEvents = $LocalEventsTable(this);
+  late final $KpiDailyRollupsTable kpiDailyRollups = $KpiDailyRollupsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5312,6 +8144,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     appearanceConfigs,
     todayPlanItems,
     weaveLinks,
+    featureFlags,
+    localEvents,
+    kpiDailyRollups,
   ];
 }
 
@@ -7047,6 +9882,8 @@ typedef $$AppearanceConfigsTableCreateCompanionBuilder =
       Value<int> timeboxingLayout,
       Value<int> timeboxingWorkdayStartMinutes,
       Value<int> timeboxingWorkdayEndMinutes,
+      Value<bool> calendarConstraintsDismissed,
+      Value<bool> calendarShowEventTitles,
       Value<int> inboxTypeFilter,
       Value<bool> inboxTodayOnly,
       required int updatedAtUtcMillis,
@@ -7065,6 +9902,8 @@ typedef $$AppearanceConfigsTableUpdateCompanionBuilder =
       Value<int> timeboxingLayout,
       Value<int> timeboxingWorkdayStartMinutes,
       Value<int> timeboxingWorkdayEndMinutes,
+      Value<bool> calendarConstraintsDismissed,
+      Value<bool> calendarShowEventTitles,
       Value<int> inboxTypeFilter,
       Value<bool> inboxTodayOnly,
       Value<int> updatedAtUtcMillis,
@@ -7136,6 +9975,16 @@ class $$AppearanceConfigsTableFilterComposer
 
   ColumnFilters<int> get timeboxingWorkdayEndMinutes => $composableBuilder(
     column: $table.timeboxingWorkdayEndMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get calendarConstraintsDismissed => $composableBuilder(
+    column: $table.calendarConstraintsDismissed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get calendarShowEventTitles => $composableBuilder(
+    column: $table.calendarShowEventTitles,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7224,6 +10073,16 @@ class $$AppearanceConfigsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get calendarConstraintsDismissed => $composableBuilder(
+    column: $table.calendarConstraintsDismissed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get calendarShowEventTitles => $composableBuilder(
+    column: $table.calendarShowEventTitles,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get inboxTypeFilter => $composableBuilder(
     column: $table.inboxTypeFilter,
     builder: (column) => ColumnOrderings(column),
@@ -7301,6 +10160,16 @@ class $$AppearanceConfigsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get calendarConstraintsDismissed => $composableBuilder(
+    column: $table.calendarConstraintsDismissed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get calendarShowEventTitles => $composableBuilder(
+    column: $table.calendarShowEventTitles,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get inboxTypeFilter => $composableBuilder(
     column: $table.inboxTypeFilter,
     builder: (column) => column,
@@ -7369,6 +10238,8 @@ class $$AppearanceConfigsTableTableManager
                 Value<int> timeboxingLayout = const Value.absent(),
                 Value<int> timeboxingWorkdayStartMinutes = const Value.absent(),
                 Value<int> timeboxingWorkdayEndMinutes = const Value.absent(),
+                Value<bool> calendarConstraintsDismissed = const Value.absent(),
+                Value<bool> calendarShowEventTitles = const Value.absent(),
                 Value<int> inboxTypeFilter = const Value.absent(),
                 Value<bool> inboxTodayOnly = const Value.absent(),
                 Value<int> updatedAtUtcMillis = const Value.absent(),
@@ -7385,6 +10256,8 @@ class $$AppearanceConfigsTableTableManager
                 timeboxingLayout: timeboxingLayout,
                 timeboxingWorkdayStartMinutes: timeboxingWorkdayStartMinutes,
                 timeboxingWorkdayEndMinutes: timeboxingWorkdayEndMinutes,
+                calendarConstraintsDismissed: calendarConstraintsDismissed,
+                calendarShowEventTitles: calendarShowEventTitles,
                 inboxTypeFilter: inboxTypeFilter,
                 inboxTodayOnly: inboxTodayOnly,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -7403,6 +10276,8 @@ class $$AppearanceConfigsTableTableManager
                 Value<int> timeboxingLayout = const Value.absent(),
                 Value<int> timeboxingWorkdayStartMinutes = const Value.absent(),
                 Value<int> timeboxingWorkdayEndMinutes = const Value.absent(),
+                Value<bool> calendarConstraintsDismissed = const Value.absent(),
+                Value<bool> calendarShowEventTitles = const Value.absent(),
                 Value<int> inboxTypeFilter = const Value.absent(),
                 Value<bool> inboxTodayOnly = const Value.absent(),
                 required int updatedAtUtcMillis,
@@ -7419,6 +10294,8 @@ class $$AppearanceConfigsTableTableManager
                 timeboxingLayout: timeboxingLayout,
                 timeboxingWorkdayStartMinutes: timeboxingWorkdayStartMinutes,
                 timeboxingWorkdayEndMinutes: timeboxingWorkdayEndMinutes,
+                calendarConstraintsDismissed: calendarConstraintsDismissed,
+                calendarShowEventTitles: calendarShowEventTitles,
                 inboxTypeFilter: inboxTypeFilter,
                 inboxTodayOnly: inboxTodayOnly,
                 updatedAtUtcMillis: updatedAtUtcMillis,
@@ -7929,6 +10806,1198 @@ typedef $$WeaveLinksTableProcessedTableManager =
       WeaveLinkRow,
       PrefetchHooks Function()
     >;
+typedef $$FeatureFlagsTableCreateCompanionBuilder =
+    FeatureFlagsCompanion Function({
+      required String key,
+      required String owner,
+      required int expiryAtUtcMillis,
+      required bool defaultValue,
+      Value<bool> killSwitch,
+      Value<bool?> overrideValue,
+      required int updatedAtUtcMillis,
+      Value<int> rowid,
+    });
+typedef $$FeatureFlagsTableUpdateCompanionBuilder =
+    FeatureFlagsCompanion Function({
+      Value<String> key,
+      Value<String> owner,
+      Value<int> expiryAtUtcMillis,
+      Value<bool> defaultValue,
+      Value<bool> killSwitch,
+      Value<bool?> overrideValue,
+      Value<int> updatedAtUtcMillis,
+      Value<int> rowid,
+    });
+
+class $$FeatureFlagsTableFilterComposer
+    extends Composer<_$AppDatabase, $FeatureFlagsTable> {
+  $$FeatureFlagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get owner => $composableBuilder(
+    column: $table.owner,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get expiryAtUtcMillis => $composableBuilder(
+    column: $table.expiryAtUtcMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get defaultValue => $composableBuilder(
+    column: $table.defaultValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get killSwitch => $composableBuilder(
+    column: $table.killSwitch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get overrideValue => $composableBuilder(
+    column: $table.overrideValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FeatureFlagsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FeatureFlagsTable> {
+  $$FeatureFlagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get owner => $composableBuilder(
+    column: $table.owner,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get expiryAtUtcMillis => $composableBuilder(
+    column: $table.expiryAtUtcMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get defaultValue => $composableBuilder(
+    column: $table.defaultValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get killSwitch => $composableBuilder(
+    column: $table.killSwitch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get overrideValue => $composableBuilder(
+    column: $table.overrideValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FeatureFlagsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FeatureFlagsTable> {
+  $$FeatureFlagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get owner =>
+      $composableBuilder(column: $table.owner, builder: (column) => column);
+
+  GeneratedColumn<int> get expiryAtUtcMillis => $composableBuilder(
+    column: $table.expiryAtUtcMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get defaultValue => $composableBuilder(
+    column: $table.defaultValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get killSwitch => $composableBuilder(
+    column: $table.killSwitch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get overrideValue => $composableBuilder(
+    column: $table.overrideValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtUtcMillis => $composableBuilder(
+    column: $table.updatedAtUtcMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$FeatureFlagsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FeatureFlagsTable,
+          FeatureFlagRow,
+          $$FeatureFlagsTableFilterComposer,
+          $$FeatureFlagsTableOrderingComposer,
+          $$FeatureFlagsTableAnnotationComposer,
+          $$FeatureFlagsTableCreateCompanionBuilder,
+          $$FeatureFlagsTableUpdateCompanionBuilder,
+          (
+            FeatureFlagRow,
+            BaseReferences<_$AppDatabase, $FeatureFlagsTable, FeatureFlagRow>,
+          ),
+          FeatureFlagRow,
+          PrefetchHooks Function()
+        > {
+  $$FeatureFlagsTableTableManager(_$AppDatabase db, $FeatureFlagsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FeatureFlagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FeatureFlagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FeatureFlagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> owner = const Value.absent(),
+                Value<int> expiryAtUtcMillis = const Value.absent(),
+                Value<bool> defaultValue = const Value.absent(),
+                Value<bool> killSwitch = const Value.absent(),
+                Value<bool?> overrideValue = const Value.absent(),
+                Value<int> updatedAtUtcMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FeatureFlagsCompanion(
+                key: key,
+                owner: owner,
+                expiryAtUtcMillis: expiryAtUtcMillis,
+                defaultValue: defaultValue,
+                killSwitch: killSwitch,
+                overrideValue: overrideValue,
+                updatedAtUtcMillis: updatedAtUtcMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String owner,
+                required int expiryAtUtcMillis,
+                required bool defaultValue,
+                Value<bool> killSwitch = const Value.absent(),
+                Value<bool?> overrideValue = const Value.absent(),
+                required int updatedAtUtcMillis,
+                Value<int> rowid = const Value.absent(),
+              }) => FeatureFlagsCompanion.insert(
+                key: key,
+                owner: owner,
+                expiryAtUtcMillis: expiryAtUtcMillis,
+                defaultValue: defaultValue,
+                killSwitch: killSwitch,
+                overrideValue: overrideValue,
+                updatedAtUtcMillis: updatedAtUtcMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FeatureFlagsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FeatureFlagsTable,
+      FeatureFlagRow,
+      $$FeatureFlagsTableFilterComposer,
+      $$FeatureFlagsTableOrderingComposer,
+      $$FeatureFlagsTableAnnotationComposer,
+      $$FeatureFlagsTableCreateCompanionBuilder,
+      $$FeatureFlagsTableUpdateCompanionBuilder,
+      (
+        FeatureFlagRow,
+        BaseReferences<_$AppDatabase, $FeatureFlagsTable, FeatureFlagRow>,
+      ),
+      FeatureFlagRow,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalEventsTableCreateCompanionBuilder =
+    LocalEventsCompanion Function({
+      required String id,
+      required String eventName,
+      required int occurredAtUtcMs,
+      required String appVersion,
+      required String featureFlags,
+      required String metaJson,
+      Value<int> rowid,
+    });
+typedef $$LocalEventsTableUpdateCompanionBuilder =
+    LocalEventsCompanion Function({
+      Value<String> id,
+      Value<String> eventName,
+      Value<int> occurredAtUtcMs,
+      Value<String> appVersion,
+      Value<String> featureFlags,
+      Value<String> metaJson,
+      Value<int> rowid,
+    });
+
+class $$LocalEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalEventsTable> {
+  $$LocalEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get eventName => $composableBuilder(
+    column: $table.eventName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get occurredAtUtcMs => $composableBuilder(
+    column: $table.occurredAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get featureFlags => $composableBuilder(
+    column: $table.featureFlags,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metaJson => $composableBuilder(
+    column: $table.metaJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalEventsTable> {
+  $$LocalEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get eventName => $composableBuilder(
+    column: $table.eventName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get occurredAtUtcMs => $composableBuilder(
+    column: $table.occurredAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get featureFlags => $composableBuilder(
+    column: $table.featureFlags,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metaJson => $composableBuilder(
+    column: $table.metaJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalEventsTable> {
+  $$LocalEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get eventName =>
+      $composableBuilder(column: $table.eventName, builder: (column) => column);
+
+  GeneratedColumn<int> get occurredAtUtcMs => $composableBuilder(
+    column: $table.occurredAtUtcMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get featureFlags => $composableBuilder(
+    column: $table.featureFlags,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get metaJson =>
+      $composableBuilder(column: $table.metaJson, builder: (column) => column);
+}
+
+class $$LocalEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalEventsTable,
+          LocalEventRow,
+          $$LocalEventsTableFilterComposer,
+          $$LocalEventsTableOrderingComposer,
+          $$LocalEventsTableAnnotationComposer,
+          $$LocalEventsTableCreateCompanionBuilder,
+          $$LocalEventsTableUpdateCompanionBuilder,
+          (
+            LocalEventRow,
+            BaseReferences<_$AppDatabase, $LocalEventsTable, LocalEventRow>,
+          ),
+          LocalEventRow,
+          PrefetchHooks Function()
+        > {
+  $$LocalEventsTableTableManager(_$AppDatabase db, $LocalEventsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalEventsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> eventName = const Value.absent(),
+                Value<int> occurredAtUtcMs = const Value.absent(),
+                Value<String> appVersion = const Value.absent(),
+                Value<String> featureFlags = const Value.absent(),
+                Value<String> metaJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalEventsCompanion(
+                id: id,
+                eventName: eventName,
+                occurredAtUtcMs: occurredAtUtcMs,
+                appVersion: appVersion,
+                featureFlags: featureFlags,
+                metaJson: metaJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String eventName,
+                required int occurredAtUtcMs,
+                required String appVersion,
+                required String featureFlags,
+                required String metaJson,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalEventsCompanion.insert(
+                id: id,
+                eventName: eventName,
+                occurredAtUtcMs: occurredAtUtcMs,
+                appVersion: appVersion,
+                featureFlags: featureFlags,
+                metaJson: metaJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalEventsTable,
+      LocalEventRow,
+      $$LocalEventsTableFilterComposer,
+      $$LocalEventsTableOrderingComposer,
+      $$LocalEventsTableAnnotationComposer,
+      $$LocalEventsTableCreateCompanionBuilder,
+      $$LocalEventsTableUpdateCompanionBuilder,
+      (
+        LocalEventRow,
+        BaseReferences<_$AppDatabase, $LocalEventsTable, LocalEventRow>,
+      ),
+      LocalEventRow,
+      PrefetchHooks Function()
+    >;
+typedef $$KpiDailyRollupsTableCreateCompanionBuilder =
+    KpiDailyRollupsCompanion Function({
+      required String dayKey,
+      required String segment,
+      required String segmentStrategy,
+      required int sampleThreshold,
+      required int computedAtUtcMs,
+      required int clarityOkCount,
+      required int clarityTotalCount,
+      required bool clarityInsufficient,
+      Value<String?> clarityInsufficientReason,
+      Value<String?> clarityFailureBucketCountsJson,
+      required int ttfaSampleCount,
+      Value<int?> ttfaP50Ms,
+      Value<int?> ttfaP90Ms,
+      required bool ttfaInsufficient,
+      Value<String?> ttfaInsufficientReason,
+      required int mainlineCompletedCount,
+      required bool mainlineInsufficient,
+      Value<String?> mainlineInsufficientReason,
+      required int journalOpenedCount,
+      required int journalCompletedCount,
+      required bool journalInsufficient,
+      Value<String?> journalInsufficientReason,
+      required int activeDayCount,
+      Value<bool?> r7Retained,
+      required bool r7Insufficient,
+      Value<String?> r7InsufficientReason,
+      required int inboxPendingCount,
+      required int inboxCreatedCount,
+      required int inboxProcessedCount,
+      Value<int> rowid,
+    });
+typedef $$KpiDailyRollupsTableUpdateCompanionBuilder =
+    KpiDailyRollupsCompanion Function({
+      Value<String> dayKey,
+      Value<String> segment,
+      Value<String> segmentStrategy,
+      Value<int> sampleThreshold,
+      Value<int> computedAtUtcMs,
+      Value<int> clarityOkCount,
+      Value<int> clarityTotalCount,
+      Value<bool> clarityInsufficient,
+      Value<String?> clarityInsufficientReason,
+      Value<String?> clarityFailureBucketCountsJson,
+      Value<int> ttfaSampleCount,
+      Value<int?> ttfaP50Ms,
+      Value<int?> ttfaP90Ms,
+      Value<bool> ttfaInsufficient,
+      Value<String?> ttfaInsufficientReason,
+      Value<int> mainlineCompletedCount,
+      Value<bool> mainlineInsufficient,
+      Value<String?> mainlineInsufficientReason,
+      Value<int> journalOpenedCount,
+      Value<int> journalCompletedCount,
+      Value<bool> journalInsufficient,
+      Value<String?> journalInsufficientReason,
+      Value<int> activeDayCount,
+      Value<bool?> r7Retained,
+      Value<bool> r7Insufficient,
+      Value<String?> r7InsufficientReason,
+      Value<int> inboxPendingCount,
+      Value<int> inboxCreatedCount,
+      Value<int> inboxProcessedCount,
+      Value<int> rowid,
+    });
+
+class $$KpiDailyRollupsTableFilterComposer
+    extends Composer<_$AppDatabase, $KpiDailyRollupsTable> {
+  $$KpiDailyRollupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dayKey => $composableBuilder(
+    column: $table.dayKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get segment => $composableBuilder(
+    column: $table.segment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get segmentStrategy => $composableBuilder(
+    column: $table.segmentStrategy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sampleThreshold => $composableBuilder(
+    column: $table.sampleThreshold,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get computedAtUtcMs => $composableBuilder(
+    column: $table.computedAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get clarityOkCount => $composableBuilder(
+    column: $table.clarityOkCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get clarityTotalCount => $composableBuilder(
+    column: $table.clarityTotalCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get clarityInsufficient => $composableBuilder(
+    column: $table.clarityInsufficient,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clarityInsufficientReason => $composableBuilder(
+    column: $table.clarityInsufficientReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clarityFailureBucketCountsJson =>
+      $composableBuilder(
+        column: $table.clarityFailureBucketCountsJson,
+        builder: (column) => ColumnFilters(column),
+      );
+
+  ColumnFilters<int> get ttfaSampleCount => $composableBuilder(
+    column: $table.ttfaSampleCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ttfaP50Ms => $composableBuilder(
+    column: $table.ttfaP50Ms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ttfaP90Ms => $composableBuilder(
+    column: $table.ttfaP90Ms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get ttfaInsufficient => $composableBuilder(
+    column: $table.ttfaInsufficient,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ttfaInsufficientReason => $composableBuilder(
+    column: $table.ttfaInsufficientReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mainlineCompletedCount => $composableBuilder(
+    column: $table.mainlineCompletedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get mainlineInsufficient => $composableBuilder(
+    column: $table.mainlineInsufficient,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mainlineInsufficientReason => $composableBuilder(
+    column: $table.mainlineInsufficientReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get journalOpenedCount => $composableBuilder(
+    column: $table.journalOpenedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get journalCompletedCount => $composableBuilder(
+    column: $table.journalCompletedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get journalInsufficient => $composableBuilder(
+    column: $table.journalInsufficient,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get journalInsufficientReason => $composableBuilder(
+    column: $table.journalInsufficientReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get activeDayCount => $composableBuilder(
+    column: $table.activeDayCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get r7Retained => $composableBuilder(
+    column: $table.r7Retained,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get r7Insufficient => $composableBuilder(
+    column: $table.r7Insufficient,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get r7InsufficientReason => $composableBuilder(
+    column: $table.r7InsufficientReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get inboxPendingCount => $composableBuilder(
+    column: $table.inboxPendingCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get inboxCreatedCount => $composableBuilder(
+    column: $table.inboxCreatedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get inboxProcessedCount => $composableBuilder(
+    column: $table.inboxProcessedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$KpiDailyRollupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KpiDailyRollupsTable> {
+  $$KpiDailyRollupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dayKey => $composableBuilder(
+    column: $table.dayKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get segment => $composableBuilder(
+    column: $table.segment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get segmentStrategy => $composableBuilder(
+    column: $table.segmentStrategy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sampleThreshold => $composableBuilder(
+    column: $table.sampleThreshold,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get computedAtUtcMs => $composableBuilder(
+    column: $table.computedAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get clarityOkCount => $composableBuilder(
+    column: $table.clarityOkCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get clarityTotalCount => $composableBuilder(
+    column: $table.clarityTotalCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get clarityInsufficient => $composableBuilder(
+    column: $table.clarityInsufficient,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clarityInsufficientReason => $composableBuilder(
+    column: $table.clarityInsufficientReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clarityFailureBucketCountsJson =>
+      $composableBuilder(
+        column: $table.clarityFailureBucketCountsJson,
+        builder: (column) => ColumnOrderings(column),
+      );
+
+  ColumnOrderings<int> get ttfaSampleCount => $composableBuilder(
+    column: $table.ttfaSampleCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ttfaP50Ms => $composableBuilder(
+    column: $table.ttfaP50Ms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ttfaP90Ms => $composableBuilder(
+    column: $table.ttfaP90Ms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get ttfaInsufficient => $composableBuilder(
+    column: $table.ttfaInsufficient,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ttfaInsufficientReason => $composableBuilder(
+    column: $table.ttfaInsufficientReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get mainlineCompletedCount => $composableBuilder(
+    column: $table.mainlineCompletedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get mainlineInsufficient => $composableBuilder(
+    column: $table.mainlineInsufficient,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mainlineInsufficientReason => $composableBuilder(
+    column: $table.mainlineInsufficientReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get journalOpenedCount => $composableBuilder(
+    column: $table.journalOpenedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get journalCompletedCount => $composableBuilder(
+    column: $table.journalCompletedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get journalInsufficient => $composableBuilder(
+    column: $table.journalInsufficient,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get journalInsufficientReason => $composableBuilder(
+    column: $table.journalInsufficientReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get activeDayCount => $composableBuilder(
+    column: $table.activeDayCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get r7Retained => $composableBuilder(
+    column: $table.r7Retained,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get r7Insufficient => $composableBuilder(
+    column: $table.r7Insufficient,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get r7InsufficientReason => $composableBuilder(
+    column: $table.r7InsufficientReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get inboxPendingCount => $composableBuilder(
+    column: $table.inboxPendingCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get inboxCreatedCount => $composableBuilder(
+    column: $table.inboxCreatedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get inboxProcessedCount => $composableBuilder(
+    column: $table.inboxProcessedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KpiDailyRollupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KpiDailyRollupsTable> {
+  $$KpiDailyRollupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dayKey =>
+      $composableBuilder(column: $table.dayKey, builder: (column) => column);
+
+  GeneratedColumn<String> get segment =>
+      $composableBuilder(column: $table.segment, builder: (column) => column);
+
+  GeneratedColumn<String> get segmentStrategy => $composableBuilder(
+    column: $table.segmentStrategy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sampleThreshold => $composableBuilder(
+    column: $table.sampleThreshold,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get computedAtUtcMs => $composableBuilder(
+    column: $table.computedAtUtcMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get clarityOkCount => $composableBuilder(
+    column: $table.clarityOkCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get clarityTotalCount => $composableBuilder(
+    column: $table.clarityTotalCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get clarityInsufficient => $composableBuilder(
+    column: $table.clarityInsufficient,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get clarityInsufficientReason => $composableBuilder(
+    column: $table.clarityInsufficientReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get clarityFailureBucketCountsJson =>
+      $composableBuilder(
+        column: $table.clarityFailureBucketCountsJson,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get ttfaSampleCount => $composableBuilder(
+    column: $table.ttfaSampleCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get ttfaP50Ms =>
+      $composableBuilder(column: $table.ttfaP50Ms, builder: (column) => column);
+
+  GeneratedColumn<int> get ttfaP90Ms =>
+      $composableBuilder(column: $table.ttfaP90Ms, builder: (column) => column);
+
+  GeneratedColumn<bool> get ttfaInsufficient => $composableBuilder(
+    column: $table.ttfaInsufficient,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ttfaInsufficientReason => $composableBuilder(
+    column: $table.ttfaInsufficientReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get mainlineCompletedCount => $composableBuilder(
+    column: $table.mainlineCompletedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get mainlineInsufficient => $composableBuilder(
+    column: $table.mainlineInsufficient,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mainlineInsufficientReason => $composableBuilder(
+    column: $table.mainlineInsufficientReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get journalOpenedCount => $composableBuilder(
+    column: $table.journalOpenedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get journalCompletedCount => $composableBuilder(
+    column: $table.journalCompletedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get journalInsufficient => $composableBuilder(
+    column: $table.journalInsufficient,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get journalInsufficientReason => $composableBuilder(
+    column: $table.journalInsufficientReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get activeDayCount => $composableBuilder(
+    column: $table.activeDayCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get r7Retained => $composableBuilder(
+    column: $table.r7Retained,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get r7Insufficient => $composableBuilder(
+    column: $table.r7Insufficient,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get r7InsufficientReason => $composableBuilder(
+    column: $table.r7InsufficientReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get inboxPendingCount => $composableBuilder(
+    column: $table.inboxPendingCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get inboxCreatedCount => $composableBuilder(
+    column: $table.inboxCreatedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get inboxProcessedCount => $composableBuilder(
+    column: $table.inboxProcessedCount,
+    builder: (column) => column,
+  );
+}
+
+class $$KpiDailyRollupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KpiDailyRollupsTable,
+          KpiDailyRollupRow,
+          $$KpiDailyRollupsTableFilterComposer,
+          $$KpiDailyRollupsTableOrderingComposer,
+          $$KpiDailyRollupsTableAnnotationComposer,
+          $$KpiDailyRollupsTableCreateCompanionBuilder,
+          $$KpiDailyRollupsTableUpdateCompanionBuilder,
+          (
+            KpiDailyRollupRow,
+            BaseReferences<
+              _$AppDatabase,
+              $KpiDailyRollupsTable,
+              KpiDailyRollupRow
+            >,
+          ),
+          KpiDailyRollupRow,
+          PrefetchHooks Function()
+        > {
+  $$KpiDailyRollupsTableTableManager(
+    _$AppDatabase db,
+    $KpiDailyRollupsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KpiDailyRollupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KpiDailyRollupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KpiDailyRollupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> dayKey = const Value.absent(),
+                Value<String> segment = const Value.absent(),
+                Value<String> segmentStrategy = const Value.absent(),
+                Value<int> sampleThreshold = const Value.absent(),
+                Value<int> computedAtUtcMs = const Value.absent(),
+                Value<int> clarityOkCount = const Value.absent(),
+                Value<int> clarityTotalCount = const Value.absent(),
+                Value<bool> clarityInsufficient = const Value.absent(),
+                Value<String?> clarityInsufficientReason = const Value.absent(),
+                Value<String?> clarityFailureBucketCountsJson =
+                    const Value.absent(),
+                Value<int> ttfaSampleCount = const Value.absent(),
+                Value<int?> ttfaP50Ms = const Value.absent(),
+                Value<int?> ttfaP90Ms = const Value.absent(),
+                Value<bool> ttfaInsufficient = const Value.absent(),
+                Value<String?> ttfaInsufficientReason = const Value.absent(),
+                Value<int> mainlineCompletedCount = const Value.absent(),
+                Value<bool> mainlineInsufficient = const Value.absent(),
+                Value<String?> mainlineInsufficientReason =
+                    const Value.absent(),
+                Value<int> journalOpenedCount = const Value.absent(),
+                Value<int> journalCompletedCount = const Value.absent(),
+                Value<bool> journalInsufficient = const Value.absent(),
+                Value<String?> journalInsufficientReason = const Value.absent(),
+                Value<int> activeDayCount = const Value.absent(),
+                Value<bool?> r7Retained = const Value.absent(),
+                Value<bool> r7Insufficient = const Value.absent(),
+                Value<String?> r7InsufficientReason = const Value.absent(),
+                Value<int> inboxPendingCount = const Value.absent(),
+                Value<int> inboxCreatedCount = const Value.absent(),
+                Value<int> inboxProcessedCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KpiDailyRollupsCompanion(
+                dayKey: dayKey,
+                segment: segment,
+                segmentStrategy: segmentStrategy,
+                sampleThreshold: sampleThreshold,
+                computedAtUtcMs: computedAtUtcMs,
+                clarityOkCount: clarityOkCount,
+                clarityTotalCount: clarityTotalCount,
+                clarityInsufficient: clarityInsufficient,
+                clarityInsufficientReason: clarityInsufficientReason,
+                clarityFailureBucketCountsJson: clarityFailureBucketCountsJson,
+                ttfaSampleCount: ttfaSampleCount,
+                ttfaP50Ms: ttfaP50Ms,
+                ttfaP90Ms: ttfaP90Ms,
+                ttfaInsufficient: ttfaInsufficient,
+                ttfaInsufficientReason: ttfaInsufficientReason,
+                mainlineCompletedCount: mainlineCompletedCount,
+                mainlineInsufficient: mainlineInsufficient,
+                mainlineInsufficientReason: mainlineInsufficientReason,
+                journalOpenedCount: journalOpenedCount,
+                journalCompletedCount: journalCompletedCount,
+                journalInsufficient: journalInsufficient,
+                journalInsufficientReason: journalInsufficientReason,
+                activeDayCount: activeDayCount,
+                r7Retained: r7Retained,
+                r7Insufficient: r7Insufficient,
+                r7InsufficientReason: r7InsufficientReason,
+                inboxPendingCount: inboxPendingCount,
+                inboxCreatedCount: inboxCreatedCount,
+                inboxProcessedCount: inboxProcessedCount,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String dayKey,
+                required String segment,
+                required String segmentStrategy,
+                required int sampleThreshold,
+                required int computedAtUtcMs,
+                required int clarityOkCount,
+                required int clarityTotalCount,
+                required bool clarityInsufficient,
+                Value<String?> clarityInsufficientReason = const Value.absent(),
+                Value<String?> clarityFailureBucketCountsJson =
+                    const Value.absent(),
+                required int ttfaSampleCount,
+                Value<int?> ttfaP50Ms = const Value.absent(),
+                Value<int?> ttfaP90Ms = const Value.absent(),
+                required bool ttfaInsufficient,
+                Value<String?> ttfaInsufficientReason = const Value.absent(),
+                required int mainlineCompletedCount,
+                required bool mainlineInsufficient,
+                Value<String?> mainlineInsufficientReason =
+                    const Value.absent(),
+                required int journalOpenedCount,
+                required int journalCompletedCount,
+                required bool journalInsufficient,
+                Value<String?> journalInsufficientReason = const Value.absent(),
+                required int activeDayCount,
+                Value<bool?> r7Retained = const Value.absent(),
+                required bool r7Insufficient,
+                Value<String?> r7InsufficientReason = const Value.absent(),
+                required int inboxPendingCount,
+                required int inboxCreatedCount,
+                required int inboxProcessedCount,
+                Value<int> rowid = const Value.absent(),
+              }) => KpiDailyRollupsCompanion.insert(
+                dayKey: dayKey,
+                segment: segment,
+                segmentStrategy: segmentStrategy,
+                sampleThreshold: sampleThreshold,
+                computedAtUtcMs: computedAtUtcMs,
+                clarityOkCount: clarityOkCount,
+                clarityTotalCount: clarityTotalCount,
+                clarityInsufficient: clarityInsufficient,
+                clarityInsufficientReason: clarityInsufficientReason,
+                clarityFailureBucketCountsJson: clarityFailureBucketCountsJson,
+                ttfaSampleCount: ttfaSampleCount,
+                ttfaP50Ms: ttfaP50Ms,
+                ttfaP90Ms: ttfaP90Ms,
+                ttfaInsufficient: ttfaInsufficient,
+                ttfaInsufficientReason: ttfaInsufficientReason,
+                mainlineCompletedCount: mainlineCompletedCount,
+                mainlineInsufficient: mainlineInsufficient,
+                mainlineInsufficientReason: mainlineInsufficientReason,
+                journalOpenedCount: journalOpenedCount,
+                journalCompletedCount: journalCompletedCount,
+                journalInsufficient: journalInsufficient,
+                journalInsufficientReason: journalInsufficientReason,
+                activeDayCount: activeDayCount,
+                r7Retained: r7Retained,
+                r7Insufficient: r7Insufficient,
+                r7InsufficientReason: r7InsufficientReason,
+                inboxPendingCount: inboxPendingCount,
+                inboxCreatedCount: inboxCreatedCount,
+                inboxProcessedCount: inboxProcessedCount,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$KpiDailyRollupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KpiDailyRollupsTable,
+      KpiDailyRollupRow,
+      $$KpiDailyRollupsTableFilterComposer,
+      $$KpiDailyRollupsTableOrderingComposer,
+      $$KpiDailyRollupsTableAnnotationComposer,
+      $$KpiDailyRollupsTableCreateCompanionBuilder,
+      $$KpiDailyRollupsTableUpdateCompanionBuilder,
+      (
+        KpiDailyRollupRow,
+        BaseReferences<_$AppDatabase, $KpiDailyRollupsTable, KpiDailyRollupRow>,
+      ),
+      KpiDailyRollupRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7951,4 +12020,10 @@ class $AppDatabaseManager {
       $$TodayPlanItemsTableTableManager(_db, _db.todayPlanItems);
   $$WeaveLinksTableTableManager get weaveLinks =>
       $$WeaveLinksTableTableManager(_db, _db.weaveLinks);
+  $$FeatureFlagsTableTableManager get featureFlags =>
+      $$FeatureFlagsTableTableManager(_db, _db.featureFlags);
+  $$LocalEventsTableTableManager get localEvents =>
+      $$LocalEventsTableTableManager(_db, _db.localEvents);
+  $$KpiDailyRollupsTableTableManager get kpiDailyRollups =>
+      $$KpiDailyRollupsTableTableManager(_db, _db.kpiDailyRollups);
 }

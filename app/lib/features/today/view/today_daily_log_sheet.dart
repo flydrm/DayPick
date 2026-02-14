@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:domain/domain.dart' as domain;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/local_events/local_events_provider.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../ui/tokens/dp_insets.dart';
 import '../../../ui/tokens/dp_spacing.dart';
@@ -22,6 +25,7 @@ class _TodayDailyLogSheetState extends ConsumerState<TodayDailyLogSheet> {
   final _controller = TextEditingController();
   bool _initialized = false;
   bool _saving = false;
+  bool _journalOpenedRecorded = false;
 
   @override
   void dispose() {
@@ -80,6 +84,7 @@ class _TodayDailyLogSheetState extends ConsumerState<TodayDailyLogSheet> {
     if (!_initialized && canInit) {
       _initialized = true;
       _controller.text = generated;
+      unawaited(_recordJournalOpened(dayKey: dateLabel));
     }
 
     Future<void> regenerate() async {
@@ -105,6 +110,7 @@ class _TodayDailyLogSheetState extends ConsumerState<TodayDailyLogSheet> {
             kind: domain.NoteKind.longform,
             triageStatus: domain.TriageStatus.scheduledLater,
           );
+          await _recordJournalCompleted(dayKey: dateLabel, body: body);
           if (!context.mounted) return;
           Navigator.of(context).pop(created.id);
           return;
@@ -119,6 +125,7 @@ class _TodayDailyLogSheetState extends ConsumerState<TodayDailyLogSheet> {
           kind: domain.NoteKind.longform,
           triageStatus: domain.TriageStatus.scheduledLater,
         );
+        await _recordJournalCompleted(dayKey: dateLabel, body: body);
         if (!context.mounted) return;
         Navigator.of(context).pop(updated.id);
       } on domain.NoteTitleEmptyException {
@@ -272,6 +279,73 @@ class _TodayDailyLogSheetState extends ConsumerState<TodayDailyLogSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _recordJournalOpened({required String dayKey}) async {
+    if (_journalOpenedRecorded) return;
+    _journalOpenedRecorded = true;
+    await ref
+        .read(localEventsServiceProvider)
+        .record(
+          eventName: domain.LocalEventNames.journalOpened,
+          metaJson: <String, Object?>{
+            'day_key': dayKey,
+            'source': 'today_daily_log_sheet',
+          },
+        );
+  }
+
+  Future<void> _recordJournalCompleted({
+    required String dayKey,
+    required String body,
+  }) async {
+    await ref
+        .read(localEventsServiceProvider)
+        .record(
+          eventName: domain.LocalEventNames.journalCompleted,
+          metaJson: <String, Object?>{
+            'day_key': dayKey,
+            'answered_prompts_count': _answeredPromptsCount(body),
+            'refs_count': _refsCount(body),
+            'has_text': body.trim().isNotEmpty,
+          },
+        );
+  }
+
+  int _answeredPromptsCount(String body) {
+    final lines = body.split(String.fromCharCode(10));
+    var count = 0;
+    for (final heading in const ['## 一句话总结', '## 留痕（进展）', '## 备注']) {
+      if (_sectionHasMeaningfulText(lines: lines, heading: heading)) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  bool _sectionHasMeaningfulText({
+    required List<String> lines,
+    required String heading,
+  }) {
+    final startIndex = lines.indexOf(heading);
+    if (startIndex < 0) return false;
+    for (var i = startIndex + 1; i < lines.length; i++) {
+      final line = lines[i].trim();
+      if (line.startsWith('## ')) break;
+      if (line.isEmpty ||
+          line == '-' ||
+          line == '- ' ||
+          line == '- （可选）' ||
+          line == '- （空）') {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  int _refsCount(String body) {
+    return RegExp(RegExp.escape('[[route:')).allMatches(body).length;
   }
 
   String _dayLabel(DateTime day) {

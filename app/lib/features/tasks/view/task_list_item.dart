@@ -15,6 +15,7 @@ class TaskListItem extends StatelessWidget {
     this.selectionMode = false,
     this.selected = false,
     this.trailing,
+    this.highlighted = false,
   });
 
   final domain.Task task;
@@ -24,6 +25,7 @@ class TaskListItem extends StatelessWidget {
   final bool selectionMode;
   final bool selected;
   final Widget? trailing;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,12 @@ class TaskListItem extends StatelessWidget {
     final dueLabelColor = _dueLabelColor(task.dueAt, startOfToday, colorScheme);
     final triageBadge = _triageBadge(task, colorScheme);
     final verticalPadding = dense ? DpSpacing.sm : DpSpacing.md;
+    final highlightColor = highlighted
+        ? colorScheme.primary.withAlpha(16)
+        : Colors.transparent;
+    final highlightBorder = highlighted
+        ? Border.all(color: colorScheme.primary, width: 1)
+        : null;
 
     return Semantics(
       button: true,
@@ -49,88 +57,97 @@ class TaskListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(DpRadius.md),
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: DpSpacing.md,
-            vertical: verticalPadding,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: highlightColor,
+            border: highlightBorder,
+            borderRadius: BorderRadius.circular(DpRadius.md),
           ),
-          child: Row(
-            children: [
-              if (selectionMode) ...[
-                Icon(
-                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                  size: 20,
-                  color: selected
-                      ? colorScheme.primary
-                      : colorScheme.mutedForeground,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: DpSpacing.md,
+              vertical: verticalPadding,
+            ),
+            child: Row(
+              children: [
+                if (selectionMode) ...[
+                  Icon(
+                    selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 20,
+                    color: selected
+                        ? colorScheme.primary
+                        : colorScheme.mutedForeground,
+                  ),
+                  const SizedBox(width: DpSpacing.md),
+                ],
+                Tooltip(
+                  message: statusLabel,
+                  child: Icon(
+                    statusIcon,
+                    size: 20,
+                    color: task.status == domain.TaskStatus.inProgress
+                        ? colorScheme.primary
+                        : colorScheme.mutedForeground,
+                  ),
                 ),
                 const SizedBox(width: DpSpacing.md),
-              ],
-              Tooltip(
-                message: statusLabel,
-                child: Icon(
-                  statusIcon,
-                  size: 20,
-                  color: task.status == domain.TaskStatus.inProgress
-                      ? colorScheme.primary
-                      : colorScheme.mutedForeground,
-                ),
-              ),
-              const SizedBox(width: DpSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      task.title.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: shadTheme.textTheme.small.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.foreground,
-                      ),
-                    ),
-                    if (triageBadge != null) ...[
-                      const SizedBox(height: DpSpacing.xs),
-                      triageBadge,
-                    ],
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        subtitle,
+                        task.title.value,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: shadTheme.textTheme.muted.copyWith(
-                          color: colorScheme.mutedForeground,
+                        style: shadTheme.textTheme.small.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.foreground,
                         ),
                       ),
+                      if (triageBadge != null) ...[
+                        const SizedBox(height: DpSpacing.xs),
+                        triageBadge,
+                      ],
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: shadTheme.textTheme.muted.copyWith(
+                            color: colorScheme.mutedForeground,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: DpSpacing.sm),
-              if (dueText != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: DpSpacing.sm),
-                  child: Text(
-                    dueText,
-                    style: shadTheme.textTheme.muted.copyWith(
-                      color: dueLabelColor,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
-              trailing ??
-                  Tooltip(
-                    message: priorityLabel,
-                    child: Icon(
-                      priorityIcon,
-                      size: 18,
-                      color: colorScheme.mutedForeground,
+                const SizedBox(width: DpSpacing.sm),
+                if (dueText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: DpSpacing.sm),
+                    child: Text(
+                      dueText,
+                      style: shadTheme.textTheme.muted.copyWith(
+                        color: dueLabelColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-            ],
+                trailing ??
+                    Tooltip(
+                      message: priorityLabel,
+                      child: Icon(
+                        priorityIcon,
+                        size: 18,
+                        color: colorScheme.mutedForeground,
+                      ),
+                    ),
+              ],
+            ),
           ),
         ),
       ),

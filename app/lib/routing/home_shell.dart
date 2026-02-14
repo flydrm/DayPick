@@ -1,32 +1,121 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../core/feature_flags/feature_flag_keys.dart';
+import '../core/local_events/today_3s_session_controller.dart';
+import '../core/providers/app_providers.dart';
+import '../ui/capture/capture_bar.dart';
 import '../ui/tokens/dp_motion.dart';
 import '../ui/tokens/dp_radius.dart';
 import '../ui/tokens/dp_spacing.dart';
+import 'home_tab.dart';
 
-class HomeShell extends StatelessWidget {
-  const HomeShell({super.key, required this.navigationShell});
+class HomeShell extends ConsumerStatefulWidget {
+  const HomeShell({
+    super.key,
+    required this.navigationShell,
+    required this.state,
+  });
 
   final StatefulNavigationShell navigationShell;
+  final GoRouterState state;
+
+  @override
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  bool _didRecordInitialTodayOpened = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final currentIndex = widget.navigationShell.currentIndex;
+    ref.read(homeTabIndexProvider.notifier).state = currentIndex;
+
+    if (currentIndex == 2 && !_didRecordInitialTodayOpened) {
+      _didRecordInitialTodayOpened = true;
+      unawaited(
+        ref.read(today3sSessionControllerProvider.notifier).recordTodayOpened(
+          source: 'redirect',
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final captureBarEnabled = ref
+        .watch(featureFlagEnabledProvider(FeatureFlagKeys.captureBar))
+        .maybeWhen(data: (v) => v, orElse: () => false);
+
+    final path = widget.state.uri.path;
+    final tabIndex = widget.navigationShell.currentIndex;
+    final captureBarVisible =
+        captureBarEnabled && _captureBarVisibleFor(path: path, tabIndex: tabIndex);
+
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          Expanded(child: widget.navigationShell),
+          if (captureBarEnabled)
+            Offstage(
+              offstage: !captureBarVisible,
+              child: const DpCaptureBar(),
+            ),
+        ],
+      ),
       bottomNavigationBar: _DpBottomNavBar(
         key: const ValueKey('bottom_navigation'),
-        currentIndex: navigationShell.currentIndex,
+        currentIndex: widget.navigationShell.currentIndex,
         onSelect: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
+          final currentIndex = widget.navigationShell.currentIndex;
+          if (index == currentIndex) {
+            widget.navigationShell.goBranch(index, initialLocation: true);
+            return;
+          }
+
+          ref.read(homeTabIndexProvider.notifier).state = index;
+
+          final fromTab = homeTabName(homeTabForIndex(currentIndex));
+          final toTab = homeTabName(homeTabForIndex(index));
+
+          if (currentIndex == 2) {
+            unawaited(
+              ref
+                  .read(today3sSessionControllerProvider.notifier)
+                  .recordTabSwitched(fromTab: fromTab, toTab: toTab),
+            );
+          }
+
+          if (index == 2) {
+            unawaited(
+              ref
+                  .read(today3sSessionControllerProvider.notifier)
+                  .recordTodayOpened(source: 'tab'),
+            );
+          }
+
+          widget.navigationShell.goBranch(index, initialLocation: false);
         },
       ),
     );
   }
+}
+
+bool _captureBarVisibleFor({
+  required String path,
+  required int tabIndex,
+}) {
+  // Notes / Today / Tasks.
+  if (tabIndex != 1 && tabIndex != 2 && tabIndex != 3) return false;
+
+  return path == '/notes' || path == '/today' || path == '/tasks';
 }
 
 class _DpBottomNavBar extends StatelessWidget {

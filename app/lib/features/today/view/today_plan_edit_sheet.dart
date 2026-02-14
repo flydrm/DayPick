@@ -6,7 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/capture/capture_highlight_target.dart';
+import '../../../core/capture/capture_submit_result.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../routing/app_router.dart';
+import '../../../ui/capture/capture_submit_feedback.dart';
+import '../../../ui/kit/dp_action_toast.dart';
 import '../../../ui/sheets/quick_create_sheet.dart';
 import '../../focus/view/select_task_sheet.dart';
 import '../../tasks/providers/task_providers.dart';
@@ -498,26 +503,16 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: todayPlanTasks.length,
                             buildDefaultDragHandles: false,
-                            onReorder: (oldIndex, newIndex) {
-                              if (newIndex > oldIndex) newIndex -= 1;
-                              final ids = visibleTodayPlanIds.toList();
-                              if (oldIndex < 0 || oldIndex >= ids.length) {
-                                return;
-                              }
-                              final moved = ids.removeAt(oldIndex);
-                              final insertIndex = newIndex.clamp(0, ids.length);
-                              ids.insert(insertIndex, moved);
-                              setState(() => _overrideTodayPlanIds = ids);
-                              unawaited(
-                                ref
-                                    .read(todayPlanRepositoryProvider)
-                                    .replaceTasks(
-                                      day: day,
-                                      taskIds: ids,
-                                      section: domain.TodayPlanSection.today,
-                                    ),
-                              );
-                            },
+                            onReorder: (oldIndex, newIndex) => unawaited(
+                              _reorderSection(
+                                day: day,
+                                section: domain.TodayPlanSection.today,
+                                oldIndex: oldIndex,
+                                newIndex: newIndex,
+                                visibleTodayPlanIds: visibleTodayPlanIds,
+                                visibleEveningPlanIds: visibleEveningPlanIds,
+                              ),
+                            ),
                             itemBuilder: (context, index) {
                               final task = todayPlanTasks[index];
                               return _PlanTaskRow(
@@ -542,21 +537,16 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
                                     ),
                                   ),
                                 ),
-                                onRemove: () {
-                                  final ids = visibleTodayPlanIds.toList()
-                                    ..remove(task.id);
-                                  setState(() => _overrideTodayPlanIds = ids);
-                                  unawaited(
-                                    ref
-                                        .read(todayPlanRepositoryProvider)
-                                        .replaceTasks(
-                                          day: day,
-                                          taskIds: ids,
-                                          section:
-                                              domain.TodayPlanSection.today,
-                                        ),
-                                  );
-                                },
+                                onRemove: () => unawaited(
+                                  _removeTaskFromSection(
+                                    day: day,
+                                    section: domain.TodayPlanSection.today,
+                                    taskId: task.id,
+                                    visibleTodayPlanIds: visibleTodayPlanIds,
+                                    visibleEveningPlanIds:
+                                        visibleEveningPlanIds,
+                                  ),
+                                ),
                                 dragHandle: ReorderableDragStartListener(
                                   index: index,
                                   child: const Icon(Icons.drag_handle),
@@ -580,26 +570,16 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: eveningPlanTasks.length,
                             buildDefaultDragHandles: false,
-                            onReorder: (oldIndex, newIndex) {
-                              if (newIndex > oldIndex) newIndex -= 1;
-                              final ids = visibleEveningPlanIds.toList();
-                              if (oldIndex < 0 || oldIndex >= ids.length) {
-                                return;
-                              }
-                              final moved = ids.removeAt(oldIndex);
-                              final insertIndex = newIndex.clamp(0, ids.length);
-                              ids.insert(insertIndex, moved);
-                              setState(() => _overrideEveningPlanIds = ids);
-                              unawaited(
-                                ref
-                                    .read(todayPlanRepositoryProvider)
-                                    .replaceTasks(
-                                      day: day,
-                                      taskIds: ids,
-                                      section: domain.TodayPlanSection.evening,
-                                    ),
-                              );
-                            },
+                            onReorder: (oldIndex, newIndex) => unawaited(
+                              _reorderSection(
+                                day: day,
+                                section: domain.TodayPlanSection.evening,
+                                oldIndex: oldIndex,
+                                newIndex: newIndex,
+                                visibleTodayPlanIds: visibleTodayPlanIds,
+                                visibleEveningPlanIds: visibleEveningPlanIds,
+                              ),
+                            ),
                             itemBuilder: (context, index) {
                               final task = eveningPlanTasks[index];
                               return _PlanTaskRow(
@@ -623,21 +603,16 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
                                     ),
                                   ),
                                 ),
-                                onRemove: () {
-                                  final ids = visibleEveningPlanIds.toList()
-                                    ..remove(task.id);
-                                  setState(() => _overrideEveningPlanIds = ids);
-                                  unawaited(
-                                    ref
-                                        .read(todayPlanRepositoryProvider)
-                                        .replaceTasks(
-                                          day: day,
-                                          taskIds: ids,
-                                          section:
-                                              domain.TodayPlanSection.evening,
-                                        ),
-                                  );
-                                },
+                                onRemove: () => unawaited(
+                                  _removeTaskFromSection(
+                                    day: day,
+                                    section: domain.TodayPlanSection.evening,
+                                    taskId: task.id,
+                                    visibleTodayPlanIds: visibleTodayPlanIds,
+                                    visibleEveningPlanIds:
+                                        visibleEveningPlanIds,
+                                  ),
+                                ),
                                 dragHandle: ReorderableDragStartListener(
                                   index: index,
                                   child: const Icon(Icons.drag_handle),
@@ -657,11 +632,157 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
     );
   }
 
+  _PlanArrangementState _currentArrangementState() {
+    final today =
+        (_overrideTodayPlanIds ??
+                ref.read(todayPlanTaskIdsProvider).valueOrNull ??
+                const <String>[])
+            .toList();
+    final evening =
+        (_overrideEveningPlanIds ??
+                ref.read(todayEveningPlanTaskIdsProvider).valueOrNull ??
+                const <String>[])
+            .toList();
+    return _PlanArrangementState(todayIds: today, eveningIds: evening);
+  }
+
+  _PlanArrangementState _snapshotFromVisible({
+    required List<String> visibleTodayPlanIds,
+    required List<String> visibleEveningPlanIds,
+  }) {
+    return _PlanArrangementState(
+      todayIds: visibleTodayPlanIds.toList(),
+      eveningIds: visibleEveningPlanIds.toList(),
+    );
+  }
+
+  Future<void> _reorderSection({
+    required DateTime day,
+    required domain.TodayPlanSection section,
+    required int oldIndex,
+    required int newIndex,
+    required List<String> visibleTodayPlanIds,
+    required List<String> visibleEveningPlanIds,
+  }) async {
+    final previous = _snapshotFromVisible(
+      visibleTodayPlanIds: visibleTodayPlanIds,
+      visibleEveningPlanIds: visibleEveningPlanIds,
+    );
+
+    if (newIndex > oldIndex) newIndex -= 1;
+    final ids = switch (section) {
+      domain.TodayPlanSection.today => visibleTodayPlanIds.toList(),
+      domain.TodayPlanSection.evening => visibleEveningPlanIds.toList(),
+    };
+
+    if (oldIndex < 0 || oldIndex >= ids.length) return;
+
+    final moved = ids.removeAt(oldIndex);
+    final insertIndex = newIndex.clamp(0, ids.length);
+    ids.insert(insertIndex, moved);
+
+    if (!mounted) return;
+    setState(() {
+      if (section == domain.TodayPlanSection.today) {
+        _overrideTodayPlanIds = ids;
+      } else {
+        _overrideEveningPlanIds = ids;
+      }
+    });
+
+    await ref
+        .read(todayPlanRepositoryProvider)
+        .replaceTasks(day: day, taskIds: ids, section: section);
+
+    if (!mounted) return;
+    final label = section == domain.TodayPlanSection.today
+        ? '已调整 Today 顺序'
+        : '已调整 This Evening 顺序';
+    _showArrangementUpdatedToast(day: day, previous: previous, message: label);
+  }
+
+  Future<void> _removeTaskFromSection({
+    required DateTime day,
+    required domain.TodayPlanSection section,
+    required String taskId,
+    required List<String> visibleTodayPlanIds,
+    required List<String> visibleEveningPlanIds,
+  }) async {
+    final previous = _snapshotFromVisible(
+      visibleTodayPlanIds: visibleTodayPlanIds,
+      visibleEveningPlanIds: visibleEveningPlanIds,
+    );
+    final ids = switch (section) {
+      domain.TodayPlanSection.today => visibleTodayPlanIds.toList(),
+      domain.TodayPlanSection.evening => visibleEveningPlanIds.toList(),
+    }..remove(taskId);
+
+    if (!mounted) return;
+    setState(() {
+      if (section == domain.TodayPlanSection.today) {
+        _overrideTodayPlanIds = ids;
+      } else {
+        _overrideEveningPlanIds = ids;
+      }
+    });
+
+    await ref
+        .read(todayPlanRepositoryProvider)
+        .replaceTasks(day: day, taskIds: ids, section: section);
+
+    if (!mounted) return;
+    _showArrangementUpdatedToast(
+      day: day,
+      previous: previous,
+      message: '已移除 1 条计划项',
+    );
+  }
+
+  Future<void> _restoreArrangementState({
+    required DateTime day,
+    required _PlanArrangementState snapshot,
+  }) async {
+    if (!mounted) return;
+    setState(() {
+      _overrideTodayPlanIds = snapshot.todayIds.toList();
+      _overrideEveningPlanIds = snapshot.eveningIds.toList();
+    });
+
+    final repo = ref.read(todayPlanRepositoryProvider);
+    await repo.replaceTasks(
+      day: day,
+      taskIds: snapshot.todayIds,
+      section: domain.TodayPlanSection.today,
+    );
+    await repo.replaceTasks(
+      day: day,
+      taskIds: snapshot.eveningIds,
+      section: domain.TodayPlanSection.evening,
+    );
+  }
+
+  void _showArrangementUpdatedToast({
+    required DateTime day,
+    required _PlanArrangementState previous,
+    required String message,
+  }) {
+    ref
+        .read(actionToastServiceProvider)
+        .showSuccess(
+          message,
+          undo: DpActionToastUndoAction(
+            label: '撤销',
+            onPressed: () =>
+                _restoreArrangementState(day: day, snapshot: previous),
+          ),
+        );
+  }
+
   Future<void> _createTaskForToday() async {
     if (_adding) return;
     setState(() => _adding = true);
     try {
-      await showModalBottomSheet<void>(
+      final result = await showModalBottomSheet<CaptureSubmitResult>(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
@@ -670,6 +791,9 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
           initialTaskAddToToday: true,
         ),
       );
+      if (!mounted || result == null) return;
+      final container = ProviderScope.containerOf(context, listen: false);
+      showCaptureSubmitSuccessToast(container: container, result: result);
     } finally {
       if (mounted) setState(() => _adding = false);
     }
@@ -753,9 +877,7 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
       _overrideEveningPlanIds = eveningBase;
     });
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('已填充 ${ids.length} 条计划')));
+    _showPlanUpdatedToast(message: '已填充 ${ids.length} 条计划', taskIds: ids);
   }
 
   Future<void> _clearPlan(DateTime day) async {
@@ -785,9 +907,7 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
       _overrideEveningPlanIds = const [];
     });
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('已清空今天计划')));
+    ref.read(actionToastServiceProvider).showSuccess('已清空今天计划');
   }
 
   Future<void> _moveTaskToSection({
@@ -795,18 +915,12 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
     required String taskId,
     required domain.TodayPlanSection section,
   }) async {
+    final previous = _currentArrangementState();
+
     if (!mounted) return;
     setState(() {
-      final todayBase =
-          (_overrideTodayPlanIds ??
-                  ref.read(todayPlanTaskIdsProvider).valueOrNull ??
-                  const <String>[])
-              .toList();
-      final eveningBase =
-          (_overrideEveningPlanIds ??
-                  ref.read(todayEveningPlanTaskIdsProvider).valueOrNull ??
-                  const <String>[])
-              .toList();
+      final todayBase = previous.todayIds.toList();
+      final eveningBase = previous.eveningIds.toList();
       todayBase.remove(taskId);
       eveningBase.remove(taskId);
 
@@ -826,6 +940,12 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
     await ref
         .read(todayPlanRepositoryProvider)
         .moveTaskToSection(day: day, taskId: taskId, section: section);
+
+    if (!mounted) return;
+    final label = section == domain.TodayPlanSection.today
+        ? '已移回 Today'
+        : '已移到 This Evening';
+    _showArrangementUpdatedToast(day: day, previous: previous, message: label);
   }
 
   Future<void> _appendPlanIds(
@@ -855,9 +975,36 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
           section: domain.TodayPlanSection.today,
         );
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('已加入 ${toAdd.length} 条到今天计划')));
+    _showPlanUpdatedToast(message: '已加入 ${toAdd.length} 条到今天计划', taskIds: ids);
+  }
+
+  void _showPlanUpdatedToast({
+    required String message,
+    required List<String> taskIds,
+  }) {
+    if (taskIds.isEmpty) {
+      ref.read(actionToastServiceProvider).showSuccess(message);
+      return;
+    }
+
+    final target = CaptureHighlightTarget(
+      kind: CaptureHighlightKind.task,
+      entryId: taskIds.first,
+    );
+    final encoded = Uri.encodeQueryComponent(target.serialized);
+
+    ref
+        .read(actionToastServiceProvider)
+        .showSuccess(
+          message,
+          bridge: DpActionToastBridgeAction(
+            label: '回到今天',
+            entryId: taskIds.first,
+            onPressed: (_) async {
+              ref.read(goRouterProvider).go('/today?highlight=$encoded');
+            },
+          ),
+        );
   }
 
   Widget? _subtitleFor(domain.Task task) {
@@ -892,6 +1039,16 @@ class _TodayPlanEditSheetState extends ConsumerState<TodayPlanEditSheet> {
     }
     return true;
   }
+}
+
+class _PlanArrangementState {
+  const _PlanArrangementState({
+    required this.todayIds,
+    required this.eveningIds,
+  });
+
+  final List<String> todayIds;
+  final List<String> eveningIds;
 }
 
 class _PlanTaskRow extends StatelessWidget {

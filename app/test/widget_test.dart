@@ -9,10 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:domain/domain.dart' as domain;
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'package:daypick/app/daypick_app.dart';
 import 'package:daypick/core/providers/app_providers.dart';
 import 'package:daypick/routing/app_router.dart';
+import 'package:daypick/features/ai/providers/ai_providers.dart';
 import 'package:daypick/features/focus/providers/focus_providers.dart';
 import 'package:daypick/features/tasks/providers/task_providers.dart';
 import 'package:daypick/features/today/providers/today_plan_providers.dart';
@@ -222,6 +224,81 @@ void main() {
       scrollable: todayScrollable,
     );
     expect(find.text('昨天回顾'), findsOneWidget);
+    await disposeApp(tester);
+  });
+
+  testWidgets('AI 页有继续今天 CTA，且返回 Today 不新增层级', (WidgetTester tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        tasksStreamProvider.overrideWith(
+          (ref) => Stream.value(const <domain.Task>[]),
+        ),
+        notesStreamProvider.overrideWith(
+          (ref) => Stream.value(const <domain.Note>[]),
+        ),
+        unprocessedNotesStreamProvider.overrideWith(
+          (ref) => Stream.value(const <domain.Note>[]),
+        ),
+        todayPomodoroSessionsProvider.overrideWith(
+          (ref) => Stream.value(const <domain.PomodoroSession>[]),
+        ),
+        yesterdayPomodoroSessionsProvider.overrideWith(
+          (ref) => Stream.value(const <domain.PomodoroSession>[]),
+        ),
+        anyPomodoroSessionCountProvider.overrideWith(
+          (ref) => Stream.value(0),
+        ),
+        pomodoroConfigProvider.overrideWith(
+          (ref) => Stream.value(const domain.PomodoroConfig()),
+        ),
+        todayPlanTaskIdsProvider.overrideWith(
+          (ref) => Stream.value(const <String>[]),
+        ),
+        todayPlanTaskIdsForDayProvider.overrideWith(
+          (ref, day) => Stream.value(const <String>[]),
+        ),
+        appearanceConfigProvider.overrideWith(
+          (ref) => Stream.value(const domain.AppearanceConfig()),
+        ),
+        activePomodoroProvider.overrideWith((ref) => Stream.value(null)),
+        aiConfigProvider.overrideWith((ref) async => null),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const DayPickApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final router = container.read(goRouterProvider);
+    expect(router.routeInformationProvider.value.uri.path, '/today');
+    expect(router.canPop(), isFalse);
+
+    final bottomNav = find.byKey(const ValueKey('bottom_navigation'));
+    await tester.tap(
+      find.descendant(of: bottomNav, matching: find.text('AI')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, '/ai');
+    expect(find.byKey(const ValueKey('ai_continue_today')), findsOneWidget);
+
+    final primaryButtons = tester
+        .widgetList<ShadButton>(find.byType(ShadButton))
+        .where((b) => b.variant == ShadButtonVariant.primary)
+        .length;
+    expect(primaryButtons, 1);
+
+    await tester.tap(find.byKey(const ValueKey('ai_continue_today')));
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, '/today');
+    expect(router.canPop(), isFalse);
+
     await disposeApp(tester);
   });
 

@@ -1,4 +1,7 @@
 import 'package:daypick/app/daypick_app.dart';
+import 'package:daypick/core/local_events/local_events_guard.dart';
+import 'package:daypick/core/local_events/local_events_provider.dart';
+import 'package:daypick/core/local_events/local_events_service.dart';
 import 'package:daypick/core/providers/app_providers.dart';
 import 'package:daypick/features/focus/providers/focus_providers.dart';
 import 'package:daypick/features/notes/providers/note_providers.dart';
@@ -44,6 +47,49 @@ class _CapturingNoteRepository implements domain.NoteRepository {
 
   @override
   Future<void> deleteNote(String noteId) async {}
+}
+
+class _CapturingLocalEventsRepository implements domain.LocalEventsRepository {
+  final List<domain.LocalEvent> inserted = <domain.LocalEvent>[];
+
+  @override
+  Future<void> insert(domain.LocalEvent event) async {
+    inserted.add(event);
+  }
+
+  @override
+  Future<List<domain.LocalEvent>> getAll({int? limit}) async =>
+      List<domain.LocalEvent>.from(inserted);
+
+  @override
+  Future<List<domain.LocalEvent>> getBetween({
+    required int minOccurredAtUtcMsInclusive,
+    required int maxOccurredAtUtcMsExclusive,
+    List<String>? eventNames,
+    int? limit,
+  }) async {
+    return inserted
+        .where(
+          (event) =>
+              event.occurredAtUtcMs >= minOccurredAtUtcMsInclusive &&
+              event.occurredAtUtcMs < maxOccurredAtUtcMsExclusive,
+        )
+        .where(
+          (event) => eventNames == null || eventNames.contains(event.eventName),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> prune({
+    required int minOccurredAtUtcMs,
+    required int maxEvents,
+  }) async {
+    inserted.removeWhere((event) => event.occurredAtUtcMs < minOccurredAtUtcMs);
+    if (inserted.length > maxEvents) {
+      inserted.removeRange(0, inserted.length - maxEvents);
+    }
+  }
 }
 
 class _FakeTodayPlanRepository implements domain.TodayPlanRepository {
@@ -162,6 +208,16 @@ void main() {
       now: () => now,
     );
 
+    final localEventsRepo = _CapturingLocalEventsRepository();
+    final localEventsService = LocalEventsService(
+      repository: localEventsRepo,
+      guard: LocalEventsGuard(),
+      generateId: () => 'evt-',
+      nowUtcMs: () => now.toUtc().millisecondsSinceEpoch,
+      appVersion: () => 'test+1',
+      featureFlagsSnapshot: () => '{}',
+    );
+
     final router = GoRouter(
       initialLocation: '/today',
       routes: [
@@ -206,6 +262,7 @@ void main() {
             (ref) => Stream.value(const <domain.PomodoroSession>[]),
           ),
           createNoteUseCaseProvider.overrideWithValue(createNote),
+          localEventsServiceProvider.overrideWithValue(localEventsService),
         ],
         child: const DayPickApp(),
       ),
@@ -232,6 +289,27 @@ void main() {
     expect(created.title.value, contains('· 今日记录'));
     expect(created.body, contains('[[route:/tasks/t-1]]'));
     expect(created.body, contains('[[route:/tasks/t-2]]'));
+
+    final dayKey = [
+      today.year.toString().padLeft(4, '0'),
+      today.month.toString().padLeft(2, '0'),
+      today.day.toString().padLeft(2, '0'),
+    ].join('-');
+    final opened = localEventsRepo.inserted.firstWhere(
+      (event) => event.eventName == domain.LocalEventNames.journalOpened,
+    );
+    expect(opened.metaJson, <String, Object?>{
+      'day_key': dayKey,
+      'source': 'today_daily_log_sheet',
+    });
+
+    final completed = localEventsRepo.inserted.firstWhere(
+      (event) => event.eventName == domain.LocalEventNames.journalCompleted,
+    );
+    expect(completed.metaJson['day_key'], dayKey);
+    expect(completed.metaJson['answered_prompts_count'], isA<int>());
+    expect(completed.metaJson['refs_count'], greaterThanOrEqualTo(2));
+    expect(completed.metaJson['has_text'], isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

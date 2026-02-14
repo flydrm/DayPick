@@ -12,6 +12,7 @@ class DpActionCard extends StatelessWidget {
     required this.cta,
     required this.onTap,
     this.leading,
+    this.ctaVariant = ShadButtonVariant.primary,
     this.enabled = true,
   });
 
@@ -20,6 +21,7 @@ class DpActionCard extends StatelessWidget {
   final String cta;
   final VoidCallback onTap;
   final Widget? leading;
+  final ShadButtonVariant ctaVariant;
   final bool enabled;
 
   @override
@@ -66,7 +68,11 @@ class DpActionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: DpSpacing.md),
-          ShadButton(onPressed: enabled ? onTap : null, child: Text(cta)),
+          ShadButton.raw(
+            variant: ctaVariant,
+            onPressed: enabled ? onTap : null,
+            child: Text(cta),
+          ),
         ],
       ),
     );
